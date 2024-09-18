@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "me.timvinci.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ChestBlockMixin",
+		"DoubleInventoryAccessor",
+		"EntityAccessor",
+		"LockableContainerBlockEntityAccessor",
+		"LockableContainerBlockEntityMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

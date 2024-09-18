@@ -1,0 +1,73 @@
+plugins {
+	id 'fabric-loom' version '1.7-SNAPSHOT'
+	id 'maven-publish'
+}
+version = project.mod_version + "+1.21-1.21.1"
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenCentral()
+	maven { url "https://maven.terraformersmc.com/releases/" }
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"terrastorage" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API.
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	// NightConfig.
+	modImplementation "com.electronwill.night-config:core:${project.night_config_version}"
+	modImplementation "com.electronwill.night-config:toml:${project.night_config_version}"
+	include "com.electronwill.night-config:core:${project.night_config_version}"
+	include "com.electronwill.night-config:toml:${project.night_config_version}"
+
+	// ModMenu integration.
+	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.base.archivesName.get()}"}
+	}
+}

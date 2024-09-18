@@ -1,0 +1,11 @@
+name: Ask a question
+description: Have any questions or just want to say something? you can do it here.
+title: "[Question] "
+labels: ["question"]
+body:
+  - type: textarea
+    attributes:
+      label: Your Question
+      description: Feel free to ask away!
+    validations:
+      required: true

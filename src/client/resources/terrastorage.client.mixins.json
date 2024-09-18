@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "me.timvinci.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ChestBlockEntityRendererMixin",
+		"HandledScreenMixin",
+		"InventoryScreenMixin",
+		"PressableWidgetAccessor",
+		"ShulkerBoxBlockEntityRendererMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

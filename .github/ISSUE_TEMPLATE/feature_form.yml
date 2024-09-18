@@ -1,0 +1,15 @@
+name: Make a suggestion
+description: Have a suggestion of any kind? this is the place.
+title: "[Suggestion] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to make a suggestion for Terrastorage!
+  - type: textarea
+    attributes:
+      label: Description
+      description: Describe your idea.
+    validations:
+      required: true
