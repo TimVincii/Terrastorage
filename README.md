@@ -62,7 +62,7 @@ With that out of the way, let's dive into the feature showcase:
 ![Options Screen](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/options_screen.png)
 
 ### Client side:
-The client side features an options screen that can be accessed with the `/tsclient options` command, it allows for the configuration of the following settings:
+The client side features an options screen that can be accessed with [mod menu](https://github.com/TerraformersMC/ModMenu) or with the `/tsclient options` command, it allows for the configuration of the following settings:
 * **Options Button** - Controls whether an "Options" button, which takes the player to the options screen, is added to the storage screens.
 * **Hotbar Protection** - Determines whether the hotbar is excluded from storage actions.
 * **Buttons Style** - Controls the style of the buttons added to storage inventory screens. It can be set to:
@@ -73,7 +73,7 @@ The client side features an options screen that can be accessed with the `/tscli
 
   * Right - Buttons are placed on the right side of storage screens.
   * Left - Buttons are placed on the left side of storage screens.
-* **Sort By** - Determines the property by which items are sorted when using "Sort Items" or "Sort Inventory." It can be set to:
+* **Sort By** - Determines the property by which items are sorted when using "Sort Items" or "Sort Inventory". It can be set to:
 
   * Item Group - Items are sorted by their group.
   * Item Count - Items are sorted by quantity (from highest to lowest).
