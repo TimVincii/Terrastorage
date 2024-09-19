@@ -23,7 +23,7 @@ With that out of the way, let's dive into the feature showcase:
 * **Loot All** - Transfers all items from storage to the player's inventory.
 * **Deposit All** - Transfers all items from the player's inventory to storage.
 
-ℹ️ Items are first stacked with existing ones in the opposite inventory before being moved to an empty slot.
+⏺️ Items are first stacked with existing ones in the opposite inventory before being moved to an empty slot.
 
 ---
 
@@ -32,7 +32,7 @@ With that out of the way, let's dive into the feature showcase:
 * **Quick Stack** - Transfers items from the player's inventory into existing stacks in storage.
 * **Restock** - Transfers items from storage into existing stacks in the player's inventory.
 
-ℹ️ Items are combined up to their max stack size, so empty slots in the receiving inventory remain unaffected.
+⏺️ Items are combined up to their max stack size, so empty slots in the receiving inventory remain unaffected.
 
 ---
 
@@ -43,7 +43,7 @@ With that out of the way, let's dive into the feature showcase:
 
 ✳️ The sorting method for both Sort Items and Sort Inventory is controlled by a single configurable setting.
 
-ℹ️ Renamed storage blocks display nametags either above them or on the side facing the player if there’s a block above.
+⏺️ Renamed storage blocks display nametags either above them or on the side facing the player if there’s a block above.
 
 ---
 
