@@ -20,8 +20,8 @@ With that out of the way, let's dive into the feature showcase:
 # Features
 ![Showcase Loot And Deposit](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_loot_and_deposit.gif)
 **Loot and Deposit All**:
-* **Loot All** - Transfers all items from storage to the player's inventory.
-* **Deposit All** - Transfers all items from the player's inventory to storage.
+* **Loot All** - Transfers all items from the storage to the player's inventory.
+* **Deposit All** - Transfers all items from the the player's inventory to the storage.
 
 ⏺️ Items are first stacked with existing ones in the opposite inventory before being moved to an empty slot.
 
@@ -29,8 +29,8 @@ With that out of the way, let's dive into the feature showcase:
 
 ![Showcase Quick Stack And Restock](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_quick_stack_and_restock.gif)
 **Quick Stack and Restock**:
-* **Quick Stack** - Transfers items from the player's inventory into existing stacks in storage.
-* **Restock** - Transfers items from storage into existing stacks in the player's inventory.
+* **Quick Stack** - Transfers items from the player's inventory into existing stacks in the storage.
+* **Restock** - Transfers items from the storage into existing stacks in the player's inventory.
 
 ⏺️ Items are combined up to their max stack size, so empty slots in the receiving inventory remain unaffected.
 
