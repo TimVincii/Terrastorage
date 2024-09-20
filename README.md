@@ -21,7 +21,7 @@ With that out of the way, let's dive into the feature showcase:
 ![Showcase Loot And Deposit](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_loot_and_deposit.gif)
 **Loot and Deposit All**:
 * **Loot All** - Transfers all items from the storage to the player's inventory.
-* **Deposit All** - Transfers all items from the the player's inventory to the storage.
+* **Deposit All** - Transfers all items from the player's inventory to the storage.
 
 ⏺️ Items are first stacked with existing ones in the opposite inventory before being moved to an empty slot.
 
