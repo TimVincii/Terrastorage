@@ -7,10 +7,8 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.ShulkerBoxScreenHandler;
+import net.minecraft.screen.slot.ShulkerBoxSlot;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 /**
@@ -45,22 +43,16 @@ public record StorageActionPayload(StorageAction action, boolean hotbarProtectio
             TerrastorageCore.quickStackToNearbyStorages(player, hotbarProtection);
             return;
         }
-        Inventory storageInventory;
-        boolean storageIsShulkerBox = false;
 
-        // Get the storage's inventory from a generic container (chests, barrels, etc...)
-        if (player.currentScreenHandler instanceof GenericContainerScreenHandler genericContainerScreenHandler) {
-            storageInventory = genericContainerScreenHandler.getInventory();
-        }
-        // Get the storage's inventory from a shulker box.
-        else if (player.currentScreenHandler instanceof ShulkerBoxScreenHandler shulkerBoxScreenHandler) {
-            storageInventory = shulkerBoxScreenHandler.slots.getFirst().inventory;
-            storageIsShulkerBox = true;
-        }
-        else {
-            player.sendMessage(Text.literal(Reference.MOD_NAME + ": Unknown storage type."));
+        if (player.currentScreenHandler.slots.size() - 36 < 27) {
             return;
         }
+
+        // Get the storage's inventory from the player's screen handler.
+        Inventory storageInventory = player.currentScreenHandler.slots.getFirst().inventory;
+
+        // Check if the storage is a shulker box.
+        boolean storageIsShulkerBox = player.currentScreenHandler.slots.getFirst() instanceof ShulkerBoxSlot;
 
         switch (action) {
             case LOOT_ALL -> TerrastorageCore.lootAll(player.getInventory(), storageInventory, hotbarProtection);

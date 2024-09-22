@@ -16,7 +16,6 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -48,14 +47,14 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
         if (MinecraftClient.getInstance().player.isSpectator())
             return;
 
-        boolean isEnderChest = false;
-        if (this.getScreenHandler() instanceof GenericContainerScreenHandler) {
-            if (this.getTitle().equals(Text.translatable("container.enderchest"))) {
-                isEnderChest = true;
-            }
-        }
-        else if (!(this.getScreenHandler() instanceof ShulkerBoxScreenHandler)) {
+        // Return if the slot count (excluding the 36 player inventory slots) is smaller than 27.
+        if (this.getScreenHandler().slots.size() - 36 < 27) {
             return;
+        }
+
+        boolean isEnderChest = false;
+        if (this.getScreenHandler() instanceof GenericContainerScreenHandler && this.getTitle().equals(Text.translatable("container.enderchest"))) {
+            isEnderChest = true;
         }
 
         // Set the button sizes and their spacing.

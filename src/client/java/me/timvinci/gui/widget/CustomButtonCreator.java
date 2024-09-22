@@ -1,8 +1,9 @@
 package me.timvinci.gui.widget;
 
+import me.timvinci.gui.RenameScreen;
 import me.timvinci.network.ClientNetworkHandler;
-import me.timvinci.util.RenamingUtil;
 import me.timvinci.util.StorageAction;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
@@ -28,7 +29,13 @@ public class CustomButtonCreator {
         if (buttonText.equals(Text.translatable("terrastorage.button.sort_items"))) {
             onPress = button -> ClientNetworkHandler.sendStorageSortPayload();
         } else if (buttonText.equals(Text.translatable("terrastorage.button.rename"))) {
-            onPress = button -> RenamingUtil.getNameAndOpenScreen();
+            onPress = button -> {
+                MinecraftClient client = MinecraftClient.getInstance();
+                String name = client.currentScreen.getTitle().getString();
+                client.execute(() -> {
+                    client.setScreen(new RenameScreen(client.currentScreen, name));
+                });
+            };
         } else {
             // Get the StorageAction enum constant from the text of the button.
             StorageAction action = StorageAction.valueOf(buttonText.getString().replaceAll(" ", "_").toUpperCase());

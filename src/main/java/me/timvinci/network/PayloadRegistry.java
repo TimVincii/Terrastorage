@@ -2,7 +2,6 @@ package me.timvinci.network;
 
 import me.timvinci.network.c2s.*;
 import me.timvinci.network.s2c.BlockRenamedPayload;
-import me.timvinci.network.s2c.ScreenTitleUpdatePayload;
 import me.timvinci.network.s2c.ServerConfigPayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -37,7 +36,6 @@ public class PayloadRegistry {
         });
 
         PayloadTypeRegistry.playS2C().register(BlockRenamedPayload.ID, BlockRenamedPayload.renamedCodec);
-        PayloadTypeRegistry.playS2C().register(ScreenTitleUpdatePayload.ID, ScreenTitleUpdatePayload.titleUpdateCodec);
         PayloadTypeRegistry.playS2C().register(ServerConfigPayload.ID, ServerConfigPayload.configCodec);
     }
 }

@@ -2,19 +2,22 @@ package me.timvinci.inventory;
 
 import me.timvinci.config.ConfigManager;
 import me.timvinci.item.GhostItemEntity;
+import me.timvinci.mixin.DoubleInventoryAccessor;
 import me.timvinci.util.ComparatorTypes;
 import me.timvinci.util.SortType;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.*;
 import net.minecraft.block.enums.ChestType;
-import net.minecraft.entity.vehicle.HopperMinecartEntity;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.vehicle.VehicleEntity;
-import net.minecraft.entity.vehicle.VehicleInventory;
 import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
+import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.property.Property;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -215,29 +218,24 @@ public class InventoryUtils {
             }
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity) {
-                if (lootableContainerBlockEntity instanceof LidOpenable) {
-                    Vec3d losPoint = hasLineOfSight(player, world, pos);
-                    if (losPoint == Vec3d.ZERO) {
-                        return;
-                    }
-
-                    processChestBlockEntity(world, (ChestBlockEntity) lootableContainerBlockEntity, losPoint, pos, nearbyStorages, processedChests);
+            if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
+                Vec3d losPoint = hasLineOfSight(player, world, pos);
+                if (losPoint == Vec3d.ZERO) {
+                    return;
                 }
-                else if (lootableContainerBlockEntity.size() >= 27) {
-                    Vec3d losPoint = hasLineOfSight(player, world, pos);
-                    if (losPoint == Vec3d.ZERO) {
-                        return;
-                    }
 
-                    nearbyStorages.add(Pair.of(lootableContainerBlockEntity, losPoint));
+                if (blockEntity instanceof LidOpenable) {
+                    processChestBlockEntity(world, (ChestBlockEntity) blockEntity, losPoint, pos, nearbyStorages, processedChests);
+                }
+                else {
+                    nearbyStorages.add(Pair.of((Inventory) blockEntity, losPoint));
                 }
             }
         });
 
         Box searchBox = new Box(playerPos).expand(range);
         world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
-        !(entity instanceof HopperMinecartEntity) && entity instanceof VehicleInventory)
+        entity instanceof Inventory inventory && inventory.size() >= 27)
             .forEach(entity -> {
                 if (hasLineOfSightToEntity(player, world, entity)) {
                     nearbyStorages.add(Pair.of((Inventory) entity, entity.getBoundingBox().getCenter()));
@@ -255,11 +253,11 @@ public class InventoryUtils {
      * @param nearbyStorages The list to which inventories and positions are added.
      */
     private static void getNearbyStorages(ServerPlayerEntity player, World world, int range, List<Pair<Inventory, Vec3d>> nearbyStorages) {
-        Set<BlockPos> processedChests = new HashSet<>();
+        Set<BlockPos> processedPositions = new HashSet<>();
         BlockPos playerPos = player.getBlockPos();
 
         BlockPos.iterateOutwards(playerPos, range, range, range).forEach(pos -> {
-            if (processedChests.contains(pos)) {
+            if (processedPositions.contains(pos)) {
                 return;
             }
 
@@ -269,19 +267,21 @@ public class InventoryUtils {
             }
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity) {
-                if (lootableContainerBlockEntity instanceof LidOpenable) {
-                    processChestBlockEntity(world, (ChestBlockEntity) lootableContainerBlockEntity, pos.toCenterPos(), pos, nearbyStorages, processedChests);
+            if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
+                // TODO - Find a proper way to check if a block entity is a part of a double chest, one that will be
+                //  compatible with block entities that don't implement LidOpenable.
+                if (blockEntity instanceof LidOpenable) {
+                    processChestBlockEntity(world, (ChestBlockEntity) blockEntity, pos.toCenterPos(), pos, nearbyStorages, processedPositions);
                 }
-                else if (lootableContainerBlockEntity.size() >= 27) {
-                    nearbyStorages.add(Pair.of(lootableContainerBlockEntity, pos.toCenterPos()));
+                else {
+                    nearbyStorages.add(Pair.of((Inventory) blockEntity, pos.toCenterPos()));
                 }
             }
         });
 
         Box searchBox = new Box(playerPos).expand(range);
         world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
-        !(entity instanceof HopperMinecartEntity) && entity instanceof VehicleInventory)
+        entity instanceof Inventory inventory && inventory.size() >= 27)
             .forEach(entity -> {
                 nearbyStorages.add(Pair.of((Inventory) entity, entity.getBoundingBox().getCenter()));
             }

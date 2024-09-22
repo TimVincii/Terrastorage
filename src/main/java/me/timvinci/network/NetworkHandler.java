@@ -2,7 +2,6 @@ package me.timvinci.network;
 
 import me.timvinci.config.ConfigManager;
 import me.timvinci.network.s2c.BlockRenamedPayload;
-import me.timvinci.network.s2c.ScreenTitleUpdatePayload;
 import me.timvinci.network.s2c.ServerConfigPayload;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -34,12 +33,6 @@ public class NetworkHandler {
     public static void sendBlockRenamedPayload(ServerPlayerEntity player, BlockPos pos, String newName) {
         if (ServerPlayNetworking.canSend(player, BlockRenamedPayload.ID)) {
             ServerPlayNetworking.send(player, new BlockRenamedPayload(pos, newName));
-        }
-    }
-
-    public static void sendScreenTitleUpdatePayload(ServerPlayerEntity player, String newTitle) {
-        if (ServerPlayNetworking.canSend(player, ScreenTitleUpdatePayload.ID)) {
-            ServerPlayNetworking.send(player, new ScreenTitleUpdatePayload(newTitle));
         }
     }
 

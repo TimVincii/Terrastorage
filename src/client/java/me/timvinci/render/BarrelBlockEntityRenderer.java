@@ -7,27 +7,15 @@ import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
 
 /**
- * A custom barrel block entity renderer, adds nametag support to barrel blocks.
+ * An empty custom barrel block entity renderer.
+ * This renderer makes the barrel block entity get passed to the BlockEntityRenderDispatcher, which then renders the
+ * nametag above it.
+ * TODO - this is a temporary solution, and will be improved on.
  */
 public class BarrelBlockEntityRenderer implements BlockEntityRenderer<BarrelBlockEntity> {
-    // Define a nametag renderer instance.
-    private final NametagRenderer nametagRenderer;
 
-    /**
-     * Instantiates the nametag renderer once the barrel block entity renderer is instantiated.
-     * @param ctx The block entity renderer factory context.
-     */
-    public BarrelBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
-        this.nametagRenderer = new NametagRenderer(ctx.getRenderDispatcher(), ctx.getTextRenderer());
-    }
+    public BarrelBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {}
 
-    /**
-     * Adds nametag rendering.
-     */
     @Override
-    public void render(BarrelBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-        if (nametagRenderer.hasLabel(entity)) {
-            nametagRenderer.renderBarrelNametag(entity, entity.getCustomName(), matrices, vertexConsumers);
-        }
-    }
+    public void render(BarrelBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {}
 }

@@ -11,12 +11,10 @@ import net.minecraft.text.Text;
  * The rename screen.
  */
 public class RenameScreen extends Screen {
-    private final Screen parent;
     private final String currentName;
 
     public RenameScreen(Screen parent, String currentName) {
         super(Text.empty());
-        this.parent = parent;
         this.currentName = currentName;
     }
 
@@ -42,7 +40,7 @@ public class RenameScreen extends Screen {
             textFieldWidth,
             height,
             Text.empty());
-        nameTextField.setMaxLength(20);
+        nameTextField.setMaxLength(25);
         nameTextField.setText(currentName);
         this.addDrawableChild(nameTextField);
 
@@ -66,12 +64,6 @@ public class RenameScreen extends Screen {
             .position(renameButtonX, renameButtonY)
         .build();
         this.addDrawableChild(renameButtonWidget);
-    }
-
-    @Override
-    public void close() {
-        // Set the screen to the parent screen when this screen is closed.
-        this.client.setScreen(parent);
     }
 
     /**

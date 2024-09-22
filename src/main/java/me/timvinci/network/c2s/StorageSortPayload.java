@@ -7,8 +7,6 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.ShulkerBoxScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 
@@ -36,20 +34,11 @@ public record StorageSortPayload(SortType type) implements CustomPayload {
      * @param type The sorting type of the player.
      */
     public static void receive(ServerPlayerEntity player, SortType type) {
-        Inventory inventoryToSort;
-
-        // Get the storage's inventory from a generic container (chests, barrels, etc...)
-        if (player.currentScreenHandler instanceof GenericContainerScreenHandler genericContainerScreenHandler) {
-            inventoryToSort = genericContainerScreenHandler.getInventory();
-        }
-        // Get the storage's inventory from a shulker box.
-        else if (player.currentScreenHandler instanceof ShulkerBoxScreenHandler shulkerBoxScreenHandler) {
-            inventoryToSort = shulkerBoxScreenHandler.slots.getFirst().inventory;
-        }
-        else {
-            throw new IllegalArgumentException("Unknown storage type: " + type);
+        if (player.currentScreenHandler.slots.size() - 36 < 27) {
+            return;
         }
 
-        TerrastorageCore.sortStorageItems(inventoryToSort, type);
+        Inventory storageInventory = player.currentScreenHandler.slots.getFirst().inventory;
+        TerrastorageCore.sortStorageItems(storageInventory, type);
     }
 }

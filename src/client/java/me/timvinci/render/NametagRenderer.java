@@ -1,7 +1,7 @@
 package me.timvinci.render;
 
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
@@ -125,10 +125,10 @@ public class NametagRenderer {
 
     /**
      * Checks if a nametag should be rendered for a block entity.
-     * @param entity The block entity as a LockableContainerBlockEntity.
+     * @param entity The block entity as a LootableContainerBlockEntity.
      * @return True if the entity has a custom name and is targeted by the player, false otherwise.
      */
-    public boolean hasLabel(LockableContainerBlockEntity entity) {
+    public boolean hasLabel(LootableContainerBlockEntity entity) {
         if (!entity.hasCustomName()) {
             return false;
         }

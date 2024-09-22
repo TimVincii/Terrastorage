@@ -6,5 +6,5 @@ package me.timvinci.util;
 public class Reference {
     public static final String MOD_ID = "terrastorage";
     public static final String MOD_NAME = "Terrastorage";
-    public static final String MOD_VERSION = "1.0.0";
+    public static final String MOD_VERSION = "1.0.1";
 }
