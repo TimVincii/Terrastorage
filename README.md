@@ -175,7 +175,7 @@ Compatibility with modded storage blocks varies. Some will work without any issu
 * By default, when using the Quick Stack to Nearby Storages feature, the entire inventory of a double chest is considered, even if only one half is in the player’s line of sight. However, for double chests whose block entities do not extend LidOpenable, the feature only recognizes the individual inventory of the visible chest block entity. This results in items only being stacked into the visible half of the double chest, instead of the entire inventory.
 
   This issue is particularly noticeable with chests from the [Expanded Storage mod](https://github.com/quinn-semele/expanded-storage), consider disabling the line of sight check to mitigate this issue by using `/terrastorage line-of-sight-check false`.
-* Renaming of block entities that don't extend LockableContainerBlockEntity is currently not supported.
+* Renaming block entities that do not extend LockableContainerBlockEntity is currently unsupported. This issue is particularly noticeable with the [Expanded Storage mod](https://github.com/quinn-semele/expanded-storage), as none of its added storage types currently support renaming
 
 # Feedback & Support
 If you've got a question, a suggestion, or run into any issues, don't hesitate to [submit an issue](https://github.com/TimVincii/Terrastorage/issues)!
