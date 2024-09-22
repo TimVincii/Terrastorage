@@ -8,8 +8,9 @@
 		"TimVinci"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://modrinth.com/mod/terrastorage",
+		"sources": "https://github.com/TimVincii/Terrastorage",
+		"issues": "https://github.com/TimVincii/Terrastorage/issues"
 	},
 	"license": "MIT",
 	"icon": "assets/terrastorage/icon.png",
