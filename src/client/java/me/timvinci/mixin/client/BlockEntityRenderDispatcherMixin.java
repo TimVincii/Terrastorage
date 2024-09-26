@@ -1,7 +1,7 @@
 package me.timvinci.mixin.client;
 
+import me.timvinci.render.BlockNametagRenderer;
 import me.timvinci.render.NametagRenderer;
-import net.minecraft.block.entity.BarrelBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.font.TextRenderer;
@@ -37,7 +37,7 @@ public class BlockEntityRenderDispatcherMixin {
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    public void onInit(TextRenderer textRenderer, EntityModelLoader entityModelLoader, Supplier<BlockRenderManager> blockRenderManager, Supplier<ItemRenderer> itemRenderer, Supplier<EntityRenderDispatcher> entityRenderDispatcher, CallbackInfo ci) {
+    private void onInit(TextRenderer textRenderer, EntityModelLoader entityModelLoader, Supplier<BlockRenderManager> blockRenderManager, Supplier<ItemRenderer> itemRenderer, Supplier<EntityRenderDispatcher> entityRenderDispatcher, CallbackInfo ci) {
         BlockEntityRenderDispatcher dispatcher = (BlockEntityRenderDispatcher) (Object) this;
         nametagRenderer = new NametagRenderer(dispatcher, textRenderer);
     }
@@ -45,7 +45,7 @@ public class BlockEntityRenderDispatcherMixin {
     /**
      * Adds nametag rendering after the block entity rendering has finished.
      */
-    @Inject(method = "render(Lnet/minecraft/client/render/block/entity/BlockEntityRenderer;Lnet/minecraft/block/entity/BlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;)V", at = @At("HEAD"))
+    @Inject(method = "render(Lnet/minecraft/client/render/block/entity/BlockEntityRenderer;Lnet/minecraft/block/entity/BlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;)V", at = @At("HEAD"), cancellable = true)
     private static <T extends BlockEntity> void render(BlockEntityRenderer<T> renderer, T blockEntity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
         World world = blockEntity.getWorld();
         int i;
@@ -57,13 +57,13 @@ public class BlockEntityRenderDispatcherMixin {
 
         renderer.render(blockEntity, tickDelta, matrices, vertexConsumers, i, OverlayTexture.DEFAULT_UV);
         if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity && nametagRenderer.hasLabel(lootableContainerBlockEntity)) {
-            // TODO - Get the nametag rendering of the barrel block out of here.
-            if (blockEntity instanceof BarrelBlockEntity) {
-                nametagRenderer.renderBarrelNametag(blockEntity, lootableContainerBlockEntity.getCustomName(), matrices, vertexConsumers);
+            if (renderer instanceof BlockNametagRenderer) {
+                nametagRenderer.renderBlockNametag(blockEntity, lootableContainerBlockEntity.getCustomName(), matrices, vertexConsumers);
             }
             else {
                 nametagRenderer.renderNametag(blockEntity, lootableContainerBlockEntity.getCustomName(), matrices, vertexConsumers, i);
             }
         }
+        ci.cancel();
     }
 }

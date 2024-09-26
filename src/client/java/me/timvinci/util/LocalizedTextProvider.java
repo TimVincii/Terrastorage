@@ -3,45 +3,22 @@ package me.timvinci.util;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.text.Text;
 
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.Map;
+
 /**
  * Helper class that involves getting text from the language file.
  */
 public class LocalizedTextProvider {
+    public static final Map<StorageAction, Text> buttonTextCache = new EnumMap<>(StorageAction.class);
+    public static final Map<StorageAction, Tooltip> buttonTooltipCache = new EnumMap<>(StorageAction.class);
 
-    public static Text[] getButtonsText(boolean removeRename) {
-        String[] buttonKeys = {
-                "terrastorage.button.loot_all",
-                "terrastorage.button.deposit_all",
-                "terrastorage.button.quick_stack",
-                "terrastorage.button.restock",
-                "terrastorage.button.sort_items",
-                "terrastorage.button.rename"
-        };
-
-        Text[] buttonsText = new Text[removeRename ? buttonKeys.length - 1 : buttonKeys.length];
-        for (int i = 0; i < buttonsText.length; i++) {
-            buttonsText[i] = Text.translatable(buttonKeys[i]);
+    public static void initializeButtonCaches() {
+        for (StorageAction action : StorageAction.values()) {
+            buttonTextCache.put(action, Text.translatable("terrastorage.button." + action.name().toLowerCase(Locale.ENGLISH)));
+            buttonTooltipCache.put(action, Tooltip.of(Text.translatable("terrastorage.button.tooltip." + action.name().toLowerCase(Locale.ENGLISH))));
         }
-
-        return buttonsText;
-    }
-
-    public static Tooltip[] getButtonsTooltip(boolean removeRename) {
-        String[] tooltipKeys = {
-                "terrastorage.button.tooltip.loot_all",
-                "terrastorage.button.tooltip.deposit_all",
-                "terrastorage.button.tooltip.quick_stack",
-                "terrastorage.button.tooltip.restock",
-                "terrastorage.button.tooltip.sort_items",
-                "terrastorage.button.tooltip.rename"
-        };
-
-        Tooltip[] buttonsTooltips = new Tooltip[removeRename ? tooltipKeys.length - 1 : tooltipKeys.length];
-        for (int i = 0; i < buttonsTooltips.length; i++) {
-            buttonsTooltips[i] = Tooltip.of(Text.translatable(tooltipKeys[i]));
-        }
-
-        return buttonsTooltips;
     }
 
     public static Tooltip[] getOptionButtonsTooltip() {
@@ -83,6 +60,6 @@ public class LocalizedTextProvider {
     public static <T extends Enum<T>> Text getEnumOptionText(String propertyKey, T currentValue) {
         return Text.translatable("terrastorage.option." + propertyKey)
                 .append(": ")
-                .append(Text.translatable("terrastorage.option." + propertyKey + "." + currentValue.name().toLowerCase()));
+                .append(Text.translatable("terrastorage.option." + propertyKey + "." + currentValue.name().toLowerCase(Locale.ENGLISH)));
     }
 }

@@ -9,9 +9,9 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
 /**
- * Provides a method for creating custom buttons.
+ * Provides a method for creating storage buttons.
  */
-public class CustomButtonCreator {
+public class StorageButtonCreator {
 
     /**
      * Creates a custom button to be used by the HandledScreenMixin.
@@ -23,26 +23,20 @@ public class CustomButtonCreator {
      * @param height The height.
      * @return A custom button with the aforementioned properties.
      */
-    public static CustomButtonWidget createCustomButton(Text buttonText, Tooltip buttonTooltip, int x, int y, int width, int height) {
-        ButtonWidget.PressAction onPress;
-        // Modify the press action based on which custom button is being created.
-        if (buttonText.equals(Text.translatable("terrastorage.button.sort_items"))) {
-            onPress = button -> ClientNetworkHandler.sendStorageSortPayload();
-        } else if (buttonText.equals(Text.translatable("terrastorage.button.rename"))) {
-            onPress = button -> {
+    public static StorageButtonWidget createStorageButton(StorageAction action, Text buttonText, Tooltip buttonTooltip, int x, int y, int width, int height) {
+        ButtonWidget.PressAction onPress = switch (action) {
+            case SORT_ITEMS -> button -> ClientNetworkHandler.sendStorageSortPayload();
+            case RENAME -> button -> {
                 MinecraftClient client = MinecraftClient.getInstance();
                 String name = client.currentScreen.getTitle().getString();
                 client.execute(() -> {
                     client.setScreen(new RenameScreen(client.currentScreen, name));
                 });
             };
-        } else {
-            // Get the StorageAction enum constant from the text of the button.
-            StorageAction action = StorageAction.valueOf(buttonText.getString().replaceAll(" ", "_").toUpperCase());
-            onPress = button -> ClientNetworkHandler.sendActionPayload(action);
-        }
+            default -> button -> ClientNetworkHandler.sendActionPayload(action);
+        };
 
-        return new CustomButtonWidget(
+        return new StorageButtonWidget(
             x,
             y,
             width,

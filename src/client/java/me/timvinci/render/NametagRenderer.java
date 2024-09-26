@@ -59,7 +59,7 @@ public class NametagRenderer {
      * @param matrices The matrix stack used for positioning transformations.
      * @param vertexConsumers The vertex consumer provider for rendering.
      */
-    public void renderBarrelNametag(BlockEntity entity, Text customName, MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
+    public void renderBlockNametag(BlockEntity entity, Text customName, MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
         BlockPos entityPos = entity.getPos();
         Vec3d renderPos = Vec3d.ofCenter(entityPos);
         int light;

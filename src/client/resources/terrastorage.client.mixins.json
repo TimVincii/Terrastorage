@@ -4,6 +4,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
+		"BlockEntityRendererFactoriesMixin",
 		"HandledScreenMixin",
 		"InventoryScreenMixin",
 		"PressableWidgetAccessor"

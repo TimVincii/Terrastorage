@@ -8,5 +8,7 @@ public enum StorageAction {
     DEPOSIT_ALL,
     QUICK_STACK,
     RESTOCK,
+    SORT_ITEMS,
+    RENAME,
     QUICK_STACK_TO_NEARBY
 }

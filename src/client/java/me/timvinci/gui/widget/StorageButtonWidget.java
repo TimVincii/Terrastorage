@@ -14,9 +14,9 @@ import net.minecraft.util.math.MathHelper;
 /**
  * A customized button widget.
  */
-public class CustomButtonWidget extends ButtonWidget {
+public class StorageButtonWidget extends ButtonWidget {
 
-    public CustomButtonWidget(int x, int y, int width, int height, Text message, Tooltip toolTip, PressAction onPress) {
+    public StorageButtonWidget(int x, int y, int width, int height, Text message, Tooltip toolTip, PressAction onPress) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
         this.setTooltip(toolTip);
     }

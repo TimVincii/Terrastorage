@@ -4,8 +4,6 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import net.fabricmc.loader.api.FabricLoader;
-import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.IntegerRange;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -82,7 +80,7 @@ public abstract class BaseConfigManager<T> {
 
                 if (field.isAnnotationPresent(PropertyRange.class)) {
                     PropertyRange range = field.getAnnotation(PropertyRange.class);
-                    loadIntegerProperty(fileConfig, propertyKey, value -> setFieldValue(field, value, propertyKey), IntegerRange.of(range.min(), range.max()));
+                    loadIntegerProperty(fileConfig, propertyKey, value -> setFieldValue(field, value, propertyKey), range.min(), range.max());
                 }
                 else if (field.getType().isEnum()) {
                     loadEnumProperty(fileConfig, propertyKey, value -> setFieldValue(field, value, propertyKey), (Class<Enum>) field.getType());
@@ -210,10 +208,11 @@ public abstract class BaseConfigManager<T> {
         }
 
         String enumAsString = fileConfig.get(propertyKey);
-        P enumValue = EnumUtils.getEnum(enumClass, enumAsString);
-        if (enumValue != null) {
+        try {
+            P enumValue = P.valueOf(enumClass, enumAsString);
             propertySetter.accept(enumValue);
-        } else {
+        }
+        catch (IllegalArgumentException e) {
             logger.error("Configuration property '{}' isn't properly set in the config file, using default value instead.", propertyKey);
         }
     }
@@ -223,15 +222,16 @@ public abstract class BaseConfigManager<T> {
      * @param fileConfig The CommentedFileConfig created from the config file.
      * @param propertyKey The key of the property.
      * @param propertySetter The setter method of the field.
-     * @param range The range of the property.
+     * @param min The minimum value allowed for the property.
+     * @param max The maximum value allowed for the property.
      */
-    protected void loadIntegerProperty(CommentedFileConfig fileConfig, String propertyKey, Consumer<Integer> propertySetter, IntegerRange range) {
+    protected void loadIntegerProperty(CommentedFileConfig fileConfig, String propertyKey, Consumer<Integer> propertySetter, int min, int max) {
         if (missingProperty(fileConfig, propertyKey)) {
             return;
         }
 
         int propertyValue = fileConfig.getInt(propertyKey);
-        if (range.contains(propertyValue)) {
+        if (propertyValue >= min && propertyValue <= max) {
             propertySetter.accept(propertyValue);
         } else {
             logger.error("Configuration property '{}' isn't in its bound range, using default value instead.", propertyKey);

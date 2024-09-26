@@ -29,9 +29,9 @@ public class TerrastorageCommands {
             dispatcher.register(CommandManager.literal(Reference.MOD_ID)
                 .requires(source -> source.hasPermissionLevel(2))
                 .then(CommandManager.literal("action-cooldown")
-                    .executes(context -> executeGetValue(context, config::getActionCooldown, "action cooldown", "ticks"))
+                    .executes(context -> executeGetValue(context, config::getActionCooldown, "action cooldown", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(2, 100))
-                        .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setActionCooldown, "Action Cooldown", "ticks")))
+                        .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setActionCooldown, "Action Cooldown", " ticks")))
                 )
                 .then(CommandManager.literal("line-of-sight-check")
                     .executes(context -> executeGetValue(context, config::getLineOfSightCheck, "line of sight check", ""))
@@ -39,21 +39,21 @@ public class TerrastorageCommands {
                         .executes(context -> executeSetValue(context, BoolArgumentType.getBool(context, "value"), config::setLineOfSightCheck, "Line Of Sight Check", "")))
                 )
                 .then(CommandManager.literal("quick-stack-range")
-                    .executes(context -> executeGetValue(context, config::getQuickStackRange, "quick stack range", "blocks"))
+                    .executes(context -> executeGetValue(context, config::getQuickStackRange, "quick stack range", " blocks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(3, 16))
-                        .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setQuickStackRange, "Quick Stack Range", "blocks"))
+                        .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setQuickStackRange, "Quick Stack Range", " blocks"))
                     )
                 )
                 .then(CommandManager.literal("item-animation-length")
-                    .executes(context -> executeGetValue(context, config::getItemAnimationLength, "item animation length", "ticks"))
+                    .executes(context -> executeGetValue(context, config::getItemAnimationLength, "item animation length", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(10, 200))
-                        .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationLength, "Item Animation Length", "ticks"))
+                        .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationLength, "Item Animation Length", " ticks"))
                     )
                 )
                 .then(CommandManager.literal("item-animation-interval")
-                    .executes(context -> executeGetValue(context, config::getItemAnimationInterval, "item animation interval", "ticks"))
+                    .executes(context -> executeGetValue(context, config::getItemAnimationInterval, "item animation interval", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 20))
-                            .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationInterval, "Item Animation Interval", "ticks"))
+                            .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationInterval, "Item Animation Interval", " ticks"))
                     )
                 )
             )
@@ -71,7 +71,7 @@ public class TerrastorageCommands {
     private static <T> int executeGetValue(CommandContext<ServerCommandSource> context, Supplier<T> getter, String propertyName, String valueUnit) {
         T currentValue = getter.get();
         context.getSource().sendFeedback(
-                () -> TextStyler.styleKeyValue("Current " + propertyName, currentValue + " " + valueUnit + "."),
+                () -> TextStyler.styleKeyValue("Current " + propertyName, currentValue + valueUnit + "."),
                 false
         );
 
@@ -93,7 +93,7 @@ public class TerrastorageCommands {
             context.getSource().sendFeedback(
                     () -> TextStyler.styleTitle(propertyName + " Updated")
                             .append("\n")
-                            .append(TextStyler.styleKeyValue("New value", value + " " + valueUnit + ".")),
+                            .append(TextStyler.styleKeyValue("New value", value + valueUnit + ".")),
                     true
             );
 
