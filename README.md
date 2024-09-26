@@ -171,7 +171,6 @@ Compatibility with modded storage blocks varies. Some will work without any issu
 
 ### Known Issues
 **I'm actively working on addressing these issues and aim to implement fixes in the near future. Thank you for your patience and understanding!**
-* Nametags of renamed block entities that lack a custom BlockEntityRenderer are not rendered correctly. This issue is noticeable with barrels from the [Reinforced Barrels mod](https://github.com/Aton-Kish/reinforced-barrels).
 * By default, when using the Quick Stack to Nearby Storages feature, the entire inventory of a double chest is considered, even if only one half is in the player’s line of sight. However, for double chests whose block entities do not extend LidOpenable, the feature only recognizes the individual inventory of the visible chest block entity. This results in items only being stacked into the visible half of the double chest, instead of the entire inventory.
 
   This issue is particularly noticeable with chests from the [Expanded Storage mod](https://github.com/quinn-semele/expanded-storage), consider disabling the line of sight check to mitigate this issue by using `/terrastorage line-of-sight-check false`.
