@@ -36,12 +36,16 @@ public class BlockEntityRendererManager {
                 return;
             }
 
-            BlockEntity blockEntity = blockEntityType.instantiate(BlockPos.ORIGIN, state);
-            if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity && lootableContainerBlockEntity.size() >= 27) {
-                BlockEntityType<LootableContainerBlockEntity> lootableType = (BlockEntityType<LootableContainerBlockEntity>) blockEntityType;
-                BlockEntityRendererFactories.register(lootableType, BlockNametagRenderer::new);
-                // TODO - Get rid of this logging if version 1.0.4 works well.
-                TerrastorageClient.CLIENT_LOGGER.info("Registered a block nametag renderer to '{}' and its block entity type.", state.getBlock().getName().getString());
+            try {
+                BlockEntity blockEntity = blockEntityType.instantiate(BlockPos.ORIGIN, state);
+                if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity && lootableContainerBlockEntity.size() >= 27) {
+                    BlockEntityType<LootableContainerBlockEntity> lootableType = (BlockEntityType<LootableContainerBlockEntity>) blockEntityType;
+                    BlockEntityRendererFactories.register(lootableType, BlockNametagRenderer::new);
+                    TerrastorageClient.CLIENT_LOGGER.info("Registered a block nametag renderer to '{}' and its block entity type.", state.getBlock().getName().getString());
+                }
+            }
+            catch (Exception e) {
+                TerrastorageClient.CLIENT_LOGGER.error("Failed to instantiate a block entity instance for the '{}' block, skipping block nametag renderer registration check.", state.getBlock().getName().getString(), e);
             }
         });
     }
