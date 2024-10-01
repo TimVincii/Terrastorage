@@ -12,6 +12,17 @@ base {
 repositories {
 	mavenCentral()
 	maven { url "https://maven.terraformersmc.com/releases/" }
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		filter {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 loom {
@@ -42,6 +53,9 @@ dependencies {
 
 	// ModMenu integration.
 	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
+
+	// Expanded Storage compatibility.
+	modCompileOnlyApi "maven.modrinth:expanded-storage:${project.expanded_storage_version}"
 }
 
 processResources {

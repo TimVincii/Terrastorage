@@ -2,6 +2,7 @@ package me.timvinci;
 
 import me.timvinci.command.TerrastorageCommands;
 import me.timvinci.config.ConfigManager;
+import me.timvinci.inventory.InventoryUtils;
 import me.timvinci.network.NetworkHandler;
 import me.timvinci.network.PayloadRegistry;
 import me.timvinci.item.ItemGroupCache;
@@ -10,6 +11,7 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.resource.featuretoggle.FeatureFlags;
 
@@ -31,6 +33,10 @@ public class Terrastorage implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Initializing " + Reference.MOD_NAME + " [" + Reference.MOD_VERSION + "].");
+
+		if (FabricLoader.getInstance().isModLoaded("expandedstorage")) {
+			InventoryUtils.expandedStorageLoaded = true;
+		}
 
 		ConfigManager.init();
 		TerrastorageCommands.registerCommands();

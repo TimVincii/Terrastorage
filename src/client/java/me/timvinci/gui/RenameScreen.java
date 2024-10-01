@@ -89,10 +89,8 @@ public class RenameScreen extends Screen {
     private void rename(String newName) {
         if (!newName.equals(currentName)) {
             ClientNetworkHandler.sendRenamePayload(newName);
-            this.client.setScreen(null);
         }
-        else {
-            this.close();
-        }
+
+        this.close();
     }
 }

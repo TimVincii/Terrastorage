@@ -47,6 +47,11 @@ public record RenamePayload(String newName) implements CustomPayload {
     public static void receive(ServerPlayerEntity player, String newName) {
         Text newCustomName = newName.isEmpty() ? null : Text.literal(newName);
 
+        if (player.currentScreenHandler == null) {
+            return;
+        }
+
+        NamedScreenHandlerFactory factory;
         Inventory containerInventory = player.currentScreenHandler.slots.getFirst().inventory;
         if (containerInventory instanceof VehicleInventory vehicleInventory) {
             Entity entity = (Entity) vehicleInventory;
@@ -55,29 +60,30 @@ public record RenamePayload(String newName) implements CustomPayload {
             }
 
             entity.setCustomName(newCustomName);
-
-            if (entity instanceof NamedScreenHandlerFactory entityScreen) {
-                player.openHandledScreen(entityScreen);
-            }
+            factory = (NamedScreenHandlerFactory) entity;
         }
         else if (containerInventory instanceof DoubleInventoryAccessor accessor) {
-            LockableContainerBlockEntity firstPart = (LockableContainerBlockEntity) accessor.first();
-            LockableContainerBlockEntity secondPart = (LockableContainerBlockEntity) accessor.second();
+            if (accessor.first() instanceof LockableContainerBlockEntity firstPart &&
+                accessor.second() instanceof LockableContainerBlockEntity secondPart) {
 
-            if (newName.equals("Large " + ((LockableContainerBlockEntityAccessor)firstPart).invokeGetContainerName().getString())) {
-                newCustomName = null;
+                if (newName.equals("Large " + ((LockableContainerBlockEntityAccessor) firstPart).invokeGetContainerName().getString())) {
+                    newCustomName = null;
+                }
+
+                ((LockableContainerBlockEntityAccessor) firstPart).setCustomName(newCustomName);
+                ((LockableContainerBlockEntityAccessor) secondPart).setCustomName(newCustomName);
+
+                firstPart.markDirty();
+                secondPart.markDirty();
+
+                NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                factory = firstPart.getCachedState().createScreenHandlerFactory(player.getWorld(), firstPart.getPos());
             }
-
-            ((LockableContainerBlockEntityAccessor)firstPart).setCustomName(newCustomName);
-            ((LockableContainerBlockEntityAccessor)secondPart).setCustomName(newCustomName);
-
-            firstPart.markDirty();
-            secondPart.markDirty();
-
-            NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
-            NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
-            NamedScreenHandlerFactory factory = firstPart.getCachedState().createScreenHandlerFactory(player.getWorld(), firstPart.getPos());
-            player.openHandledScreen(factory);
+            else {
+                player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
+                return;
+            }
         }
         else if (containerInventory instanceof LockableContainerBlockEntity lockableContainerBlockEntity) {
             LockableContainerBlockEntityAccessor accessor = (LockableContainerBlockEntityAccessor) lockableContainerBlockEntity;
@@ -90,11 +96,14 @@ public record RenamePayload(String newName) implements CustomPayload {
             lockableContainerBlockEntity.markDirty();
 
             NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
-            NamedScreenHandlerFactory factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(player.getWorld(), lockableContainerBlockEntity.getPos());
-            player.openHandledScreen(factory);
+            factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(player.getWorld(), lockableContainerBlockEntity.getPos());
         }
         else {
             player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
+            return;
         }
+
+        player.closeHandledScreen();
+        player.openHandledScreen(factory);
     }
 }

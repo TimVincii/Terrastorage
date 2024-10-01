@@ -169,12 +169,8 @@ Terrastorage works smoothly with all the vanilla storage blocks like chests, bar
 
 Compatibility with modded storage blocks varies. Some will work without any issues, while others might not be compatible right away. If you come across a storage block from another mod that doesn’t seem to work with Terrastorage, feel free to open an issue on GitHub, and I’ll see what I can do!
 
-### Known Issues
-**I'm actively working on addressing these issues and aim to implement fixes in the near future. Thank you for your patience and understanding!**
-* By default, when using the Quick Stack to Nearby Storages feature, the entire inventory of a double chest is considered, even if only one half is in the player’s line of sight. However, for double chests whose block entities do not extend LidOpenable, the feature only recognizes the individual inventory of the visible chest block entity. This results in items only being stacked into the visible half of the double chest, instead of the entire inventory.
-
-  This issue is particularly noticeable with chests from the [Expanded Storage mod](https://github.com/quinn-semele/expanded-storage), consider disabling the line of sight check to mitigate this issue by using `/terrastorage line-of-sight-check false`.
-* Renaming block entities that do not extend LockableContainerBlockEntity is currently unsupported. This issue is particularly noticeable with the [Expanded Storage mod](https://github.com/quinn-semele/expanded-storage), as none of its added storage types currently support renaming
+### Feature Limitations
+Renaming modded storage blocks that do not extend `LockableContainerBlockEntity` or modded storage entities that do not extend `VehicleInventory` is currently not supported. This is a limitation that would be difficult to overcome and is likely to remain for the foreseeable future.
 
 # Feedback & Support
 If you've got a question, a suggestion, or run into any issues, don't hesitate to [submit an issue](https://github.com/TimVincii/Terrastorage/issues)!

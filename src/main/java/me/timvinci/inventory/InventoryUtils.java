@@ -2,22 +2,17 @@ package me.timvinci.inventory;
 
 import me.timvinci.config.ConfigManager;
 import me.timvinci.item.GhostItemEntity;
-import me.timvinci.mixin.DoubleInventoryAccessor;
 import me.timvinci.util.ComparatorTypes;
 import me.timvinci.util.SortType;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.*;
 import net.minecraft.block.enums.ChestType;
-import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.vehicle.VehicleEntity;
 import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Property;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -28,14 +23,18 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.minecraft.entity.Entity;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
+
+import compasses.expandedstorage.api.ExpandedStorageAccessors;
 
 /**
  * A utility class for inventory/item related operations.
  */
 public class InventoryUtils {
+    public static boolean expandedStorageLoaded = false;
 
     /**
      * Transfers a stack from an inventory to another inventory, first attempts to transfer that stack to an existing
@@ -181,30 +180,11 @@ public class InventoryUtils {
     public static List<Pair<Inventory, Vec3d>> getNearbyStorages(ServerPlayerEntity player) {
         World world = player.getWorld();
         List<Pair<Inventory, Vec3d>> nearbyStorages = new ArrayList<>();
+        Set<BlockPos> processedChests = new HashSet<>();
 
+        // Getting the range, and whether the los check is enabled.
         int range = ConfigManager.getInstance().getConfig().getQuickStackRange();
         boolean performLosCheck = ConfigManager.getInstance().getConfig().getLineOfSightCheck();
-
-        if (performLosCheck) {
-            getNearbyStoragesWithLos(player, world, range, nearbyStorages);
-        }
-        else {
-            getNearbyStorages(player, world, range, nearbyStorages);
-        }
-
-        return nearbyStorages;
-    }
-
-    /**
-     * Adds the nearby storages that the player has a line of sight to, including storages of block entities and
-     * entities, to the nearby storages list.
-     * @param player The player.
-     * @param world The world.
-     * @param range The range of the scan.
-     * @param nearbyStorages The list to which inventories and positions are added.
-     */
-    private static void getNearbyStoragesWithLos(ServerPlayerEntity player, World world, int range, List<Pair<Inventory, Vec3d>> nearbyStorages) {
-        Set<BlockPos> processedChests = new HashSet<>();
         BlockPos playerPos = player.getBlockPos();
 
         BlockPos.iterateOutwards(playerPos, range, range, range).forEach(pos -> {
@@ -219,16 +199,48 @@ public class InventoryUtils {
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
-                Vec3d losPoint = hasLineOfSight(player, world, pos);
-                if (losPoint == Vec3d.ZERO) {
-                    return;
-                }
-
-                if (blockEntity instanceof LidOpenable) {
-                    processChestBlockEntity(world, (ChestBlockEntity) blockEntity, losPoint, pos, nearbyStorages, processedChests);
+                Vec3d losPoint;
+                if (performLosCheck) {
+                    losPoint = hasLineOfSight(player, world, pos);
+                    // Return if the player doesn't have line of sight to the block entity.
+                    if (losPoint == Vec3d.ZERO) {
+                        return;
+                    }
                 }
                 else {
-                    nearbyStorages.add(Pair.of((Inventory) blockEntity, losPoint));
+                    losPoint = pos.toCenterPos();
+                }
+
+                if (blockEntity instanceof ChestBlockEntity) {
+                    ChestType chestType = state.get(ChestBlock.CHEST_TYPE);
+                    if (chestType == ChestType.SINGLE) {
+                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        return;
+                    }
+
+                    BlockPos neighboringChestPos = getNeighboringChestPos(pos, chestType, state.get(ChestBlock.FACING));
+                    Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
+                    Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
+
+                    nearbyStorages.add(Pair.of(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
+                    processedChests.add(neighboringChestPos);
+                }
+                else if (expandedStorageLoaded) {
+                    Optional<Direction> attachedChestDirection = ExpandedStorageAccessors.getAttachedChestDirection(state);
+                    if (attachedChestDirection.isEmpty()) {
+                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        return;
+                    }
+
+                    BlockPos neighboringChestPos = pos.offset(attachedChestDirection.get());
+                    Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
+                    Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
+
+                    nearbyStorages.add(Pair.of(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
+                    processedChests.add(neighboringChestPos);
+                }
+                else {
+                    nearbyStorages.add(Pair.of(inventory, losPoint));
                 }
             }
         });
@@ -237,87 +249,45 @@ public class InventoryUtils {
         world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
         entity instanceof Inventory inventory && inventory.size() >= 27)
             .forEach(entity -> {
-                if (hasLineOfSightToEntity(player, world, entity)) {
-                    nearbyStorages.add(Pair.of((Inventory) entity, entity.getBoundingBox().getCenter()));
-                }
-            }
-        );
-    }
-
-    /**
-     * Adds the storages nearby the player, including storages of block entities and
-     * entities, to the nearby storages list.
-     * @param player The player.
-     * @param world The world.
-     * @param range The range of the scan.
-     * @param nearbyStorages The list to which inventories and positions are added.
-     */
-    private static void getNearbyStorages(ServerPlayerEntity player, World world, int range, List<Pair<Inventory, Vec3d>> nearbyStorages) {
-        Set<BlockPos> processedPositions = new HashSet<>();
-        BlockPos playerPos = player.getBlockPos();
-
-        BlockPos.iterateOutwards(playerPos, range, range, range).forEach(pos -> {
-            if (processedPositions.contains(pos)) {
-                return;
-            }
-
-            BlockState state = world.getBlockState(pos);
-            if (state.isAir() || !state.hasBlockEntity()) {
-                return;
-            }
-
-            BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
-                // TODO - Find a proper way to check if a block entity is a part of a double chest, one that will be
-                //  compatible with block entities that don't implement LidOpenable.
-                if (blockEntity instanceof LidOpenable) {
-                    processChestBlockEntity(world, (ChestBlockEntity) blockEntity, pos.toCenterPos(), pos, nearbyStorages, processedPositions);
+                Vec3d losPoint;
+                if (performLosCheck) {
+                    losPoint = hasLineOfSightToEntity(player, world, entity);
+                    if (losPoint == Vec3d.ZERO) {
+                        return;
+                    }
                 }
                 else {
-                    nearbyStorages.add(Pair.of((Inventory) blockEntity, pos.toCenterPos()));
+                    losPoint = entity.getBoundingBox().getCenter();
                 }
-            }
-        });
 
-        Box searchBox = new Box(playerPos).expand(range);
-        world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
-        entity instanceof Inventory inventory && inventory.size() >= 27)
-            .forEach(entity -> {
-                nearbyStorages.add(Pair.of((Inventory) entity, entity.getBoundingBox().getCenter()));
+                nearbyStorages.add(Pair.of((Inventory) entity, losPoint));
             }
         );
+
+        return nearbyStorages;
     }
 
     /**
-     * Adds the chest inventory (single or double) to the nearby storages list.
-     * Handles both single and double chests, calculating the center position for double chests.
-     * @param world The world in which the player and the chest block entity are in.
-     * @param chestBlockEntity The chest block entity.
-     * @param losPoint The position of the chest block entity to which the player has line of sight to.
-     * @param chestBlockPos The block pos of the chest block entity.
-     * @param nearbyStorages The list to which inventories and positions are added.
-     * @param processedChests A set of block positions that were already processed.
+     * Calculates the block position of the second chest in a double chest setup based on its orientation.
+     * @param chestBlockPos The position of one part of the double chest.
+     * @param chestType The chest type (LEFT or RIGHT).
+     * @param facing The direction the double chest is facing.
+     * @return The block position of the neighboring chest.
      */
-    private static void processChestBlockEntity(World world, ChestBlockEntity chestBlockEntity, Vec3d losPoint, BlockPos chestBlockPos, List<Pair<Inventory, Vec3d>> nearbyStorages, Set<BlockPos> processedChests) {
-        BlockState chestBlockState = chestBlockEntity.getCachedState();
-        if (chestBlockState.get(ChestBlock.CHEST_TYPE) == ChestType.SINGLE) {
-            nearbyStorages.add(Pair.of(chestBlockEntity, losPoint));
-        }
-        else {
-            ChestType chestType = chestBlockState.get(ChestBlock.CHEST_TYPE);
-            Direction facingDirection = chestBlockState.get(ChestBlock.FACING);
+    private static BlockPos getNeighboringChestPos(BlockPos chestBlockPos, ChestType chestType, Direction facing) {
+        return chestBlockPos.offset(chestType == ChestType.LEFT ?
+                facing.rotateYClockwise() :
+                facing.rotateYCounterclockwise());
+    }
 
-            BlockPos neighboringChestPos = chestBlockPos.offset(chestType == ChestType.LEFT ?
-                    facingDirection.rotateYClockwise() :
-                    facingDirection.rotateYCounterclockwise());
-
-            ChestBlockEntity neighboringChestEntity = (ChestBlockEntity) world.getBlockEntity(neighboringChestPos);
-            // Calculate the center of the double chest.
-            Vec3d doubleChestCenter = (losPoint.add(neighboringChestPos.toCenterPos().x, losPoint.y, neighboringChestPos.toCenterPos().z)).multiply(0.5);
-            nearbyStorages.add(Pair.of(new DoubleInventory(chestBlockEntity, neighboringChestEntity), doubleChestCenter));
-
-            processedChests.add(neighboringChestPos);
-        }
+    /**
+     * Calculates the center point of a double chest, averaging the positions of both chest parts.
+     * @param losPoint The line of sight point from the player to one part of the double chest.
+     * @param secondChestCenter The center position of the second chest block in the double chest.
+     * @return The center point of the entire double chest.
+     */
+    private static Vec3d getDoubleChestCenter(Vec3d losPoint, Vec3d secondChestCenter) {
+        return (losPoint.add(secondChestCenter.x, losPoint.y, secondChestCenter.z)).multiply(0.5);
     }
 
     /**
@@ -326,7 +296,7 @@ public class InventoryUtils {
      * @param player The player.
      * @param world The world in which the player and the block entity are in.
      * @param pos The block position of the block entity
-     * @return The point that the player has line of sight to.
+     * @return The point that the player has line of sight to, or Vec3d.ZERO if the player doesn't have line of sight.
      */
     private static Vec3d hasLineOfSight(ServerPlayerEntity player, World world, BlockPos pos) {
         Vec3d playerEyes = player.getEyePos();
@@ -352,13 +322,13 @@ public class InventoryUtils {
     }
 
     /**
-     * Checks if the player's line of sight to the entity's center is unobstructed.
+     * Checks if the player has line of sight to the entity's center.
      * @param player The player.
      * @param world The world in which the player and the entity are in.
      * @param entity The entity.
-     * @return True if the line of sight isn't interrupted by a block, false otherwise.
+     * @return The center of the entity, or Vec3d.ZERO if the player doesn't have line of sight.
      */
-    private static boolean hasLineOfSightToEntity(ServerPlayerEntity player, World world, Entity entity) {
+    private static Vec3d hasLineOfSightToEntity(ServerPlayerEntity player, World world, Entity entity) {
         Vec3d playerEyes = player.getEyePos();
         Vec3d end = entity.getBoundingBox().getCenter();
 
@@ -369,7 +339,7 @@ public class InventoryUtils {
                 player
         ));
 
-        return result.getType() == HitResult.Type.MISS;
+        return result.getType() == HitResult.Type.MISS ? end : Vec3d.ZERO;
     }
 
     /**
