@@ -1,10 +1,10 @@
 package me.timvinci.network;
 
 import me.timvinci.config.ConfigManager;
-import me.timvinci.network.s2c.BlockRenamedPayload;
-import me.timvinci.network.s2c.ServerConfigPayload;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -13,42 +13,49 @@ import net.minecraft.util.math.BlockPos;
 import java.util.Collection;
 
 /**
- * Handles server to client payload sending.
+ * Handles server to client packet sending.
  */
 public class NetworkHandler {
 
     /**
-     * Sends a block renamed payload to all players who are tracking the renamed block entity.
+     * Sends a block renamed packet to all players who are tracking the renamed block entity.
      * @param serverWorld The server world.
      * @param pos The position of the renamed block entity.
      * @param newName The new name of the block entity.
      */
-    public static void sendGlobalBlockRenamedPayload(ServerWorld serverWorld, BlockPos pos, String newName) {
+    public static void sendGlobalBlockRenamedPacket(ServerWorld serverWorld, BlockPos pos, String newName) {
         Collection<ServerPlayerEntity> serverPlayersInRange = PlayerLookup.tracking(serverWorld, pos);
         for (ServerPlayerEntity serverPlayer : serverPlayersInRange) {
-            sendBlockRenamedPayload(serverPlayer, pos, newName);
+            sendBlockRenamedPacket(serverPlayer, pos, newName);
         }
     }
 
-    public static void sendBlockRenamedPayload(ServerPlayerEntity player, BlockPos pos, String newName) {
-        if (ServerPlayNetworking.canSend(player, BlockRenamedPayload.ID)) {
-            ServerPlayNetworking.send(player, new BlockRenamedPayload(pos, newName));
+    public static void sendBlockRenamedPacket(ServerPlayerEntity player, BlockPos pos, String newName) {
+        if (ServerPlayNetworking.canSend(player, PacketRegistry.blockRenamedIdentifier)) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeBlockPos(pos);
+            buf.writeString(newName);
+
+            ServerPlayNetworking.send(player, PacketRegistry.blockRenamedIdentifier, buf);
         }
     }
 
     /**
-     * Sends a server config payload to all players present on the server.
+     * Sends a server config packet to all players present on the server.
      * @param server The server.
      */
-    public static void sendGlobalServerConfigPayload(MinecraftServer server) {
+    public static void sendGlobalServerConfigPacket(MinecraftServer server) {
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            sendServerConfigPayload(player);
+            sendServerConfigPacket(player);
         }
     }
 
-    public static void sendServerConfigPayload(ServerPlayerEntity player) {
-        if (ServerPlayNetworking.canSend(player, ServerConfigPayload.ID)) {
-            ServerPlayNetworking.send(player, new ServerConfigPayload(ConfigManager.getInstance().getConfig().getActionCooldown()));
+    public static void sendServerConfigPacket(ServerPlayerEntity player) {
+        if (ServerPlayNetworking.canSend(player, PacketRegistry.serverConfigIdentifier)) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeInt(ConfigManager.getInstance().getConfig().getActionCooldown());
+
+            ServerPlayNetworking.send(player, PacketRegistry.serverConfigIdentifier, buf);
         }
     }
 

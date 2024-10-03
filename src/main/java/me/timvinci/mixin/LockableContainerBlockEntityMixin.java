@@ -5,8 +5,10 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.Text;
+import net.minecraft.util.JsonSerializing;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,14 +29,13 @@ public class LockableContainerBlockEntityMixin extends BlockEntity {
 
     /**
      * Add the custom name to the initial chunk nbt data.
-     * @param registryLookup A registry lookup wrapper.
      * @return The initial chunk data nbt with the added custom name.
      */
     @Override
-    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
+    public NbtCompound toInitialChunkDataNbt() {
         NbtCompound nbt = new NbtCompound();
         if (customName != null) {
-            nbt.putString("CustomName", Text.Serialization.toJsonString(customName, registryLookup));
+            nbt.putString("CustomName", Text.Serializer.toJson(customName));
         }
 
         return nbt;

@@ -21,7 +21,7 @@ public class LocalizedTextProvider {
         }
     }
 
-    public static Tooltip[] getOptionButtonsTooltip() {
+    public static Text[] getOptionButtonsTooltipText() {
         String[] tooltipKeys = {
                 "terrastorage.option.tooltip.display_options_button",
                 "terrastorage.option.tooltip.hotbar_protection",
@@ -30,36 +30,11 @@ public class LocalizedTextProvider {
                 "terrastorage.option.tooltip.sort_type"
         };
 
-        Tooltip[] configButtonsTooltips = new Tooltip[tooltipKeys.length];
+        Text[] optionButtonsTooltipText = new Text[tooltipKeys.length];
         for (int i = 0; i < tooltipKeys.length; i++) {
-            configButtonsTooltips[i] = Tooltip.of(Text.translatable(tooltipKeys[i]));
+            optionButtonsTooltipText[i] = Text.translatable(tooltipKeys[i]);
         }
 
-        return configButtonsTooltips;
-    }
-
-    /**
-     * Retrieves the text that is displayed on boolean options in the Terrastorage options screen.
-     * @param propertyKey The key of the option.
-     * @param currentValue The current value of the option.
-     * @return The text to be displayed on the button.
-     */
-    public static Text getBooleanOptionText(String propertyKey, boolean currentValue) {
-        return Text.translatable("terrastorage.option." + propertyKey)
-                .append(": ")
-                .append(Text.translatable("terrastorage.option." + propertyKey + "." + currentValue));
-    }
-
-    /**
-     * Retrieves the text that is displayed on enum options in the Terrastorage options screen.
-     * @param propertyKey The key of the option.
-     * @param currentValue The current value of the option.
-     * @return The text to be displayed on the button.
-     * @param <T> The enum class of the option.
-     */
-    public static <T extends Enum<T>> Text getEnumOptionText(String propertyKey, T currentValue) {
-        return Text.translatable("terrastorage.option." + propertyKey)
-                .append(": ")
-                .append(Text.translatable("terrastorage.option." + propertyKey + "." + currentValue.name().toLowerCase(Locale.ENGLISH)));
+        return optionButtonsTooltipText;
     }
 }

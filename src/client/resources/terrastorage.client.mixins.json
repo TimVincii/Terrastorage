@@ -1,13 +1,12 @@
 {
 	"required": true,
 	"package": "me.timvinci.mixin.client",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_17",
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
 		"BlockEntityRendererFactoriesMixin",
 		"HandledScreenMixin",
-		"InventoryScreenMixin",
-		"PressableWidgetAccessor"
+		"InventoryScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

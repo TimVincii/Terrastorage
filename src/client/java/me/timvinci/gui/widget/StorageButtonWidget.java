@@ -2,7 +2,6 @@ package me.timvinci.gui.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.timvinci.config.ClientConfigManager;
-import me.timvinci.mixin.client.PressableWidgetAccessor;
 import me.timvinci.util.ButtonsStyle;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -26,7 +25,7 @@ public class StorageButtonWidget extends ButtonWidget {
      * Supports not drawing the background of the button.
      */
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         context.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
@@ -34,11 +33,22 @@ public class StorageButtonWidget extends ButtonWidget {
 
         // Draw the button background if the option buttons style is set to default.
         if (ClientConfigManager.getInstance().getConfig().getButtonsStyle() == ButtonsStyle.DEFAULT) {
-            context.drawGuiTexture(PressableWidgetAccessor.getTextures().get(this.active, this.isSelected()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+            context.drawNineSlicedTexture(WIDGETS_TEXTURE, this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, getTextureY());
         }
         context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         // Change the text color to yellow if the button is hovered.
         int i = this.hovered ? 16776960 : 16777215;
         this.drawMessage(context, minecraftClient.textRenderer, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
+    }
+
+    private int getTextureY() {
+        int i = 1;
+        if (!this.active) {
+            i = 0;
+        } else if (this.isSelected()) {
+            i = 2;
+        }
+
+        return 46 + i * 20;
     }
 }

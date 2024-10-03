@@ -7,7 +7,6 @@ import me.timvinci.util.SortType;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.*;
 import net.minecraft.block.enums.ChestType;
-import net.minecraft.entity.vehicle.VehicleEntity;
 import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
@@ -79,7 +78,7 @@ public class InventoryUtils {
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
             ItemStack existingStack = to.getStack(slotWithItem);
-            if (!Objects.equals(existingStack.getComponents(), stackToTransfer.getComponents())) {
+            if (!Objects.equals(existingStack.getNbt(), stackToTransfer.getNbt())) {
                 continue;  // Skip if NBT data is different.
             }
 
@@ -246,7 +245,7 @@ public class InventoryUtils {
         });
 
         Box searchBox = new Box(playerPos).expand(range);
-        world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
+        world.getEntitiesByType(TypeFilter.instanceOf(Entity.class), searchBox, entity ->
         entity instanceof Inventory inventory && inventory.size() >= 27)
             .forEach(entity -> {
                 Vec3d losPoint;

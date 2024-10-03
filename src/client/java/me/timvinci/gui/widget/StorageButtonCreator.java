@@ -25,15 +25,13 @@ public class StorageButtonCreator {
      */
     public static StorageButtonWidget createStorageButton(StorageAction action, Text buttonText, Tooltip buttonTooltip, int x, int y, int width, int height) {
         ButtonWidget.PressAction onPress = switch (action) {
-            case SORT_ITEMS -> button -> ClientNetworkHandler.sendStorageSortPayload();
+            case SORT_ITEMS -> button -> ClientNetworkHandler.sendStorageSortPacket();
             case RENAME -> button -> {
                 MinecraftClient client = MinecraftClient.getInstance();
                 String name = client.currentScreen.getTitle().getString();
-                client.execute(() -> {
-                    client.setScreen(new RenameScreen(client.currentScreen, name));
-                });
+                client.execute(() -> client.setScreen(new RenameScreen(client.currentScreen, name)));
             };
-            default -> button -> ClientNetworkHandler.sendActionPayload(action);
+            default -> button -> ClientNetworkHandler.sendActionPacket(action);
         };
 
         return new StorageButtonWidget(

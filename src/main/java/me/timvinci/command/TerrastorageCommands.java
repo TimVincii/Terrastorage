@@ -99,7 +99,7 @@ public class TerrastorageCommands {
 
             // Action cooldown is the only value that is held on the client side.
             if (propertyName.equals("Action Cooldown")) {
-                NetworkHandler.sendGlobalServerConfigPayload(context.getSource().getServer());
+                NetworkHandler.sendGlobalServerConfigPacket(context.getSource().getServer());
             }
         }
         else {

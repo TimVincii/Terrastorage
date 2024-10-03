@@ -4,7 +4,7 @@ import me.timvinci.command.TerrastorageCommands;
 import me.timvinci.config.ConfigManager;
 import me.timvinci.inventory.InventoryUtils;
 import me.timvinci.network.NetworkHandler;
-import me.timvinci.network.PayloadRegistry;
+import me.timvinci.network.PacketRegistry;
 import me.timvinci.item.ItemGroupCache;
 import me.timvinci.util.Reference;
 import net.fabricmc.api.ModInitializer;
@@ -40,7 +40,7 @@ public class Terrastorage implements ModInitializer {
 
 		ConfigManager.init();
 		TerrastorageCommands.registerCommands();
-		PayloadRegistry.registerPayloads();
+		PacketRegistry.registerPacketReceivers();
 
 		ServerLifecycleEvents.SERVER_STARTING.register((listener) -> {
 			if (populatedItemGroups) {
@@ -55,7 +55,7 @@ public class Terrastorage implements ModInitializer {
 		});
 
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			NetworkHandler.sendServerConfigPayload(handler.player);
+			NetworkHandler.sendServerConfigPacket(handler.player);
 		});
 	}
 }

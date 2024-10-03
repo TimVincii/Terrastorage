@@ -1,15 +1,16 @@
 package me.timvinci.network;
 
 import me.timvinci.config.ClientConfigManager;
-import me.timvinci.network.c2s.*;
 import me.timvinci.util.StorageAction;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
 /**
- * Handled client to server payload sending.
+ * Handled client to server packet sending.
  * Carries out a cooldown check before sending payloads.
  */
 public class ClientNetworkHandler {
@@ -17,41 +18,52 @@ public class ClientNetworkHandler {
     private static long lastActionWorldTime = 0;
     private static World lastWorld = null;
 
-    public static void sendActionPayload(StorageAction action) {
-        if (!ClientPlayNetworking.canSend(StorageActionPayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+
+    public static void sendActionPacket(StorageAction action) {
+        if (!ClientPlayNetworking.canSend(PacketRegistry.storageActionIdentifier)) {
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_packet"));
             return;
         }
 
         if (canPerformAction()) {
-            ClientPlayNetworking.send(new StorageActionPayload(action, ClientConfigManager.getInstance().getConfig().getHotbarProtection()));
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeEnumConstant(action);
+            buf.writeBoolean(ClientConfigManager.getInstance().getConfig().getHotbarProtection());
+
+            ClientPlayNetworking.send(PacketRegistry.storageActionIdentifier, buf);
         }
         else {
             MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
         }
     }
 
-    public static void sendStorageSortPayload() {
-        if (!ClientPlayNetworking.canSend(StorageActionPayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+    public static void sendStorageSortPacket() {
+        if (!ClientPlayNetworking.canSend(PacketRegistry.storageSortIdentifier)) {
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_packet"));
             return;
         }
 
         if (canPerformAction()) {
-            ClientPlayNetworking.send(new StorageSortPayload(ClientConfigManager.getInstance().getConfig().getSortType()));
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeEnumConstant(ClientConfigManager.getInstance().getConfig().getSortType());
+
+            ClientPlayNetworking.send(PacketRegistry.storageSortIdentifier, buf);
         } else {
             MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
         }
     }
 
-    public static void sendRenamePayload(String newName) {
-        if (!ClientPlayNetworking.canSend(RenamePayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+    public static void sendRenamePacket(String newName) {
+        if (!ClientPlayNetworking.canSend(PacketRegistry.renameIdentifier)) {
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_packet"));
             return;
         }
 
         if (canPerformAction()) {
-            ClientPlayNetworking.send(new RenamePayload(newName));
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeString(newName);
+
+            ClientPlayNetworking.send(PacketRegistry.renameIdentifier, buf);
         }
         else {
             MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
@@ -59,17 +71,18 @@ public class ClientNetworkHandler {
 
     }
 
-    public static void sendPlayerSortPayload() {
-        if (!ClientPlayNetworking.canSend(PlayerSortPayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+    public static void sendPlayerSortPacket() {
+        if (!ClientPlayNetworking.canSend(PacketRegistry.playerSortIdentifier)) {
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_packet"));
             return;
         }
 
         if (canPerformAction()) {
-            ClientPlayNetworking.send(new PlayerSortPayload(
-                    ClientConfigManager.getInstance().getConfig().getSortType(),
-                    ClientConfigManager.getInstance().getConfig().getHotbarProtection()
-            ));
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeEnumConstant(ClientConfigManager.getInstance().getConfig().getSortType());
+            buf.writeBoolean(ClientConfigManager.getInstance().getConfig().getHotbarProtection());
+
+            ClientPlayNetworking.send(PacketRegistry.playerSortIdentifier, buf);
         }
         else {
             MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));

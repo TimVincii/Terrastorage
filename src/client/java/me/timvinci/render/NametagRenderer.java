@@ -113,7 +113,7 @@ public class NametagRenderer {
             );
 
             matrices.multiply(getRotation());
-            matrices.scale(0.025F, -0.025F, 0.025F);
+            matrices.scale(-0.025F, -0.025F, 0.025F);
             Matrix4f matrix4f = matrices.peek().getPositionMatrix();
             float xPos = (float)(-textRenderer.getWidth(customName) / 2);
 

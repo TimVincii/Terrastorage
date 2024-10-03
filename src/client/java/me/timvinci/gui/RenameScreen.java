@@ -1,6 +1,7 @@
 package me.timvinci.gui;
 
 import me.timvinci.network.ClientNetworkHandler;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -68,6 +69,15 @@ public class RenameScreen extends Screen {
         this.addDrawableChild(renameButtonWidget);
     }
 
+    /**
+     * Adds background rendering.
+     */
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackground(context);
+        super.render(context, mouseX, mouseY, delta);
+    }
+
     @Override
     public void close() {
         // Set the screen to the parent screen when this screen is closed.
@@ -88,7 +98,7 @@ public class RenameScreen extends Screen {
      */
     private void rename(String newName) {
         if (!newName.equals(currentName)) {
-            ClientNetworkHandler.sendRenamePayload(newName);
+            ClientNetworkHandler.sendRenamePacket(newName);
         }
 
         this.close();

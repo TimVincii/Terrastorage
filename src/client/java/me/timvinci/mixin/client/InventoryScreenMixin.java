@@ -3,7 +3,6 @@ package me.timvinci.mixin.client;
 import me.timvinci.network.ClientNetworkHandler;
 import me.timvinci.util.Reference;
 import me.timvinci.util.StorageAction;
-import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
@@ -30,15 +29,9 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
     @Unique
     private TexturedButtonWidget quickStackButton;
     @Unique
-    private final ButtonTextures sortButtonTexture = new ButtonTextures(
-            Identifier.of(Reference.MOD_ID, "sort_inventory"),
-            Identifier.of(Reference.MOD_ID, "sort_inventory_highlighted")
-    );
+    private final Identifier sortButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/sort_inventory.png");
     @Unique
-    private final ButtonTextures quickStackButtonTexture = new ButtonTextures(
-            Identifier.of(Reference.MOD_ID, "quick_stack"),
-            Identifier.of(Reference.MOD_ID, "quick_stack_highlighted")
-    );
+    private final Identifier quickStackButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/quick_stack.png");
 
     public InventoryScreenMixin(PlayerScreenHandler screenHandler, PlayerInventory playerInventory, Text text) {
         super(screenHandler, playerInventory, text);
@@ -61,10 +54,13 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
                 buttonY,
                 20,
                 18,
+                0,
+                0,
+                18,
                 quickStackButtonTexture,
-                onPress -> {
-                    ClientNetworkHandler.sendActionPayload(StorageAction.QUICK_STACK_TO_NEARBY);
-                }
+                20,
+                36,
+                onPress -> ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY)
         );
         quickStackButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.quick_stack_to_nearby")));
         this.addDrawableChild(quickStackButton);
@@ -75,10 +71,13 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
                 buttonY,
                 20,
                 18,
+                0,
+                0,
+                18,
                 sortButtonTexture,
-                onPress -> {
-                    ClientNetworkHandler.sendPlayerSortPayload();
-                }
+                20,
+                36,
+                onPress -> ClientNetworkHandler.sendPlayerSortPacket()
         );
         sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
         this.addDrawableChild(sortInventoryButton);
@@ -92,8 +91,8 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
      */
     @ModifyArg(method = "init", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/widget/TexturedButtonWidget;<init>(IIIILnet/minecraft/client/gui/screen/ButtonTextures;Lnet/minecraft/client/gui/widget/ButtonWidget$PressAction;)V"
-        )
+            target = "Lnet/minecraft/client/gui/widget/TexturedButtonWidget;<init>(IIIIIIILnet/minecraft/util/Identifier;Lnet/minecraft/client/gui/widget/ButtonWidget$PressAction;)V"
+    )
     )
     private ButtonWidget.PressAction modifyRecipeBookButtonPress(ButtonWidget.PressAction original) {
         if (client.player.isSpectator()) {

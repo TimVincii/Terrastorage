@@ -4,7 +4,10 @@
 # against bad commits.
 
 name: build
-on: [pull_request, push]
+on:
+  push:
+    tags: []  # Exclude all tag pushes
+  pull_request:
 
 jobs:
   build:
@@ -12,6 +15,7 @@ jobs:
       matrix:
         # Use these Java versions
         java: [
+          17,    # Current Java LTS & minimum supported by Minecraft
           21,    # Current Java LTS
         ]
         # and run on both Linux and Windows

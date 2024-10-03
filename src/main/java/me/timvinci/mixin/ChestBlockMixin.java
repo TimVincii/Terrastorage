@@ -41,7 +41,7 @@ public class ChestBlockMixin {
                     ((LockableContainerBlockEntityAccessor)chestNeighborBlockEntity).setCustomName(chestBlockEntity.getCustomName());
 
                     chestNeighborBlockEntity.markDirty();
-                    NetworkHandler.sendGlobalBlockRenamedPayload(serverWorld, neighborPos, chestBlockEntity.getCustomName().getString());
+                    NetworkHandler.sendGlobalBlockRenamedPacket(serverWorld, neighborPos, chestBlockEntity.getCustomName().getString());
                 });
             }
         }

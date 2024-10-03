@@ -2,7 +2,7 @@ package me.timvinci;
 
 import me.timvinci.command.TerrastorageClientCommands;
 import me.timvinci.config.ClientConfigManager;
-import me.timvinci.network.ClientReceiverRegistry;
+import me.timvinci.network.ClientPacketRegistry;
 import me.timvinci.util.BlockEntityRendererManager;
 import me.timvinci.util.LocalizedTextProvider;
 import me.timvinci.util.Reference;
@@ -27,7 +27,7 @@ public class TerrastorageClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		ClientConfigManager.init();
 		TerrastorageClientCommands.registerCommands();
-		ClientReceiverRegistry.registerReceivers();
+		ClientPacketRegistry.registerReceivers();
 		LocalizedTextProvider.initializeButtonCaches();
 
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());

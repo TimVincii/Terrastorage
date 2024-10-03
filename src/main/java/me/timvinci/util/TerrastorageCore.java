@@ -3,10 +3,19 @@ package me.timvinci.util;
 import me.timvinci.inventory.CompactInventoryState;
 import me.timvinci.inventory.CompleteInventoryState;
 import me.timvinci.inventory.InventoryUtils;
+import me.timvinci.mixin.DoubleInventoryAccessor;
+import me.timvinci.mixin.EntityAccessor;
+import me.timvinci.mixin.LockableContainerBlockEntityAccessor;
+import me.timvinci.network.NetworkHandler;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.vehicle.VehicleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
+import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -148,6 +157,71 @@ public class TerrastorageCore {
         }
 
         storageInventory.markDirty();
+    }
+
+    /**
+     * Handles the renaming of an entity or block entity that the player is interacting with.
+     * Updates the name of the entity or block entity and sends the new name to all players tracking it.
+     * Also reopens the screen for the player who initiated the rename action.
+     * @param player The player initiating the rename action.
+     * @param newName The new name to apply to the entity or block entity. If empty, the name will be reset to default.
+     */
+    public static void renameStorage(ServerPlayerEntity player, String newName) {
+        Text newCustomName = newName.isEmpty() ? null : Text.literal(newName);
+        NamedScreenHandlerFactory factory;
+        Inventory containerInventory = player.currentScreenHandler.slots.get(0).inventory;
+        if (containerInventory instanceof VehicleInventory vehicleInventory) {
+            Entity entity = (Entity) vehicleInventory;
+            if (newName.equals(((EntityAccessor)entity).invokeGetDefaultName().getString())) {
+                newCustomName = null;
+            }
+
+            entity.setCustomName(newCustomName);
+            factory = (NamedScreenHandlerFactory) entity;
+        }
+        else if (containerInventory instanceof DoubleInventoryAccessor accessor) {
+            if (accessor.first() instanceof LockableContainerBlockEntity firstPart &&
+                    accessor.second() instanceof LockableContainerBlockEntity secondPart) {
+
+                if (newName.equals("Large " + ((LockableContainerBlockEntityAccessor) firstPart).invokeGetContainerName().getString())) {
+                    newCustomName = null;
+                }
+
+                ((LockableContainerBlockEntityAccessor) firstPart).setCustomName(newCustomName);
+                ((LockableContainerBlockEntityAccessor) secondPart).setCustomName(newCustomName);
+
+                firstPart.markDirty();
+                secondPart.markDirty();
+
+                NetworkHandler.sendGlobalBlockRenamedPacket(player.getServerWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                NetworkHandler.sendGlobalBlockRenamedPacket(player.getServerWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                factory = firstPart.getCachedState().createScreenHandlerFactory(player.getWorld(), firstPart.getPos());
+            }
+            else {
+                player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
+                return;
+            }
+        }
+        else if (containerInventory instanceof LockableContainerBlockEntity lockableContainerBlockEntity) {
+            LockableContainerBlockEntityAccessor accessor = (LockableContainerBlockEntityAccessor) lockableContainerBlockEntity;
+
+            if (newName.equals(accessor.invokeGetContainerName().getString())) {
+                newCustomName = null;
+            }
+
+            accessor.setCustomName(newCustomName);
+            lockableContainerBlockEntity.markDirty();
+
+            NetworkHandler.sendGlobalBlockRenamedPacket(player.getServerWorld(), lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
+            factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(player.getWorld(), lockableContainerBlockEntity.getPos());
+        }
+        else {
+            player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
+            return;
+        }
+
+        player.closeHandledScreen();
+        player.openHandledScreen(factory);
     }
 
     /**

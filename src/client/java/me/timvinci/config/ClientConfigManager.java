@@ -1,17 +1,17 @@
 package me.timvinci.config;
 
+import com.mojang.serialization.Codec;
 import me.timvinci.TerrastorageClient;
 import me.timvinci.util.LocalizedTextProvider;
 import me.timvinci.util.Reference;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.client.option.SimpleOption;
+import net.minecraft.text.Text;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Manages the client config.
@@ -42,9 +42,9 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
      * @return A list of ClickableWidgets, containing the buttons.
      */
     @SuppressWarnings("unchecked")
-    public List<ClickableWidget> asOptions() {
-        List<ClickableWidget> options = new ArrayList<>();
-        Tooltip[] optionButtonsTooltip = LocalizedTextProvider.getOptionButtonsTooltip();
+    public <E extends Enum<E>> SimpleOption<?>[] asOption() {
+        List<SimpleOption<?>> options = new ArrayList<>();
+        Text[] optionButtonTooltipText = LocalizedTextProvider.getOptionButtonsTooltipText();
         int i = 0;
 
         for (Field field : config.getClass().getDeclaredFields()) {
@@ -55,45 +55,44 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
             if (field.trySetAccessible()) {
                 ConfigProperty property = field.getAnnotation(ConfigProperty.class);
                 String propertyKey = property.key();
+                String translationKey = "terrastorage.option." + propertyKey;
 
                 Object fieldValue = getFieldValue(field, config, propertyKey);
                 if (fieldValue != null) {
-                    ButtonWidget optionButton = null;
-                    int finalI = i;
-
+                    SimpleOption<?> option = null;
                     if (fieldValue.getClass().equals(Boolean.class)) {
-                        optionButton = ButtonWidget.builder(
-                                LocalizedTextProvider.getBooleanOptionText(propertyKey, (Boolean) fieldValue),
-                                onPress -> {
-                                    boolean currentValue = (Boolean) getFieldValue(field, config, propertyKey);
-                                    currentValue = !currentValue;
-                                    setFieldValue(field, currentValue, propertyKey);
-                                    options.get(finalI).setMessage(LocalizedTextProvider.getBooleanOptionText(propertyKey, currentValue));
-                                }
-                        ).build();
-                    } else if (fieldValue.getClass().isEnum()) {
-                        optionButton = ButtonWidget.builder(
-                                LocalizedTextProvider.getEnumOptionText(propertyKey, (Enum) fieldValue),
-                                onPress -> {
-                                    Enum<?> currentValue = (Enum<?>) getFieldValue(field, config, propertyKey);
-                                    try {
-                                        // Get the next method of the enum class.
-                                        Method nextMethod = currentValue.getClass().getMethod("next", currentValue.getClass());
-                                        // Use the next method to iterate over the enum constants.
-                                        currentValue = (Enum) nextMethod.invoke(currentValue.getClass(), currentValue);
-                                        setFieldValue(field, currentValue, propertyKey);
-                                        options.get(finalI).setMessage(LocalizedTextProvider.getEnumOptionText(propertyKey, (Enum) currentValue));
-                                    } catch (NoSuchMethodException | InvocationTargetException |
-                                             IllegalAccessException e) {
-                                        logger.error("Failed to find or invoke the next method for the '{}' enum class.", currentValue.getClass().getName(), e);
-                                    }
-                                }
-                        ).build();
+                        option = SimpleOption.ofBoolean(
+                                translationKey,
+                                SimpleOption.constantTooltip(optionButtonTooltipText[i]),
+                                (text, value) -> Text.translatable(translationKey + (value ? ".true" : ".false")),
+                                (Boolean) fieldValue,
+                                newValue -> setFieldValue(field, newValue,propertyKey)
+                        );
+                    }
+                    else if (fieldValue.getClass().isEnum()) {
+                        E currentValue = (E)fieldValue;
+                        Class<E> enumClass = currentValue.getDeclaringClass();
+                        option = new SimpleOption<>(
+                                translationKey,
+                                SimpleOption.constantTooltip(optionButtonTooltipText[i]),
+                                (text, value) -> Text.translatable(translationKey + "." + value.name().toLowerCase(Locale.ENGLISH)),
+                                new SimpleOption.PotentialValuesBasedCallbacks<>(
+                                        Arrays.asList(enumClass.getEnumConstants()),
+                                        Codec.STRING.xmap(
+                                                string -> Arrays.stream(enumClass.getEnumConstants())
+                                                        .filter(e -> e.name().equalsIgnoreCase(string))
+                                                        .findFirst()
+                                                        .orElse(null),
+                                                newValue -> newValue.name().toLowerCase(Locale.ENGLISH)
+                                        )
+                                ),
+                                currentValue,
+                                newValue -> setFieldValue(field, newValue, propertyKey)
+                        );
                     }
 
-                    if (optionButton != null) {
-                        optionButton.setTooltip(optionButtonsTooltip[i]);
-                        options.add(i++, optionButton);
+                    if (option != null) {
+                        options.add(i++, option);
                     }
                 }
             }
@@ -102,6 +101,6 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
             }
         }
 
-        return options;
+        return options.toArray(SimpleOption[]::new);
     }
 }
