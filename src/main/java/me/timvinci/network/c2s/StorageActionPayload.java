@@ -44,7 +44,7 @@ public record StorageActionPayload(StorageAction action, boolean hotbarProtectio
             return;
         }
 
-        if (player.currentScreenHandler.slots.size() - 36 < 27) {
+        if (player.currentScreenHandler == null) {
             return;
         }
 

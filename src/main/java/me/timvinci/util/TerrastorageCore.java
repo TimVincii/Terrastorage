@@ -1,17 +1,27 @@
 package me.timvinci.util;
 
+import me.timvinci.api.ItemFavoritingUtils;
 import me.timvinci.inventory.CompactInventoryState;
 import me.timvinci.inventory.CompleteInventoryState;
 import me.timvinci.inventory.InventoryUtils;
+import me.timvinci.mixin.DoubleInventoryAccessor;
+import me.timvinci.mixin.EntityAccessor;
+import me.timvinci.mixin.LockableContainerBlockEntityAccessor;
+import me.timvinci.network.NetworkHandler;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.vehicle.VehicleInventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.Vec3d;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
-import java.util.List;
 
 /**
  * Utility class that stores the implementation of the core options provided by Terrastorage.
@@ -56,7 +66,7 @@ public class TerrastorageCore {
 
         for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.main.size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
                 continue;
             }
 
@@ -67,7 +77,7 @@ public class TerrastorageCore {
             for (int i = 0; i < PlayerInventory.getHotbarSize(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
 
-                if (playerStack.isEmpty() || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
                     continue;
                 }
 
@@ -95,7 +105,7 @@ public class TerrastorageCore {
         int startIndex = hotbarProtection ? PlayerInventory.getHotbarSize() : 0;
         for (int i = startIndex; i < playerInventory.main.size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || !storageInventoryState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !storageInventoryState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
                 continue;
             }
 
@@ -140,7 +150,7 @@ public class TerrastorageCore {
      * @param type The sorting type of the player.
      */
     public static void sortStorageItems(Inventory storageInventory, SortType type) {
-        List<ItemStack> sortedStacks = InventoryUtils.combineAndSortInventory(storageInventory, type, 0, storageInventory.size());
+        List<ItemStack> sortedStacks = InventoryUtils.combineAndSortInventory(storageInventory, type, 0, storageInventory.size(), false);
 
         int slotIndex = 0;
         for (ItemStack stack : sortedStacks) {
@@ -150,6 +160,64 @@ public class TerrastorageCore {
         storageInventory.markDirty();
     }
 
+    public static void renameStorage(ServerPlayerEntity player, String newName) {
+        Text newCustomName = newName.isEmpty() ? null : Text.literal(newName);
+        NamedScreenHandlerFactory factory;
+        Inventory containerInventory = player.currentScreenHandler.slots.getFirst().inventory;
+        if (containerInventory instanceof VehicleInventory vehicleInventory) {
+            Entity entity = (Entity) vehicleInventory;
+            if (newName.equals(((EntityAccessor)entity).invokeGetDefaultName().getString())) {
+                newCustomName = null;
+            }
+
+            entity.setCustomName(newCustomName);
+            factory = (NamedScreenHandlerFactory) entity;
+        }
+        else if (containerInventory instanceof DoubleInventoryAccessor accessor) {
+            if (accessor.first() instanceof LockableContainerBlockEntity firstPart &&
+                    accessor.second() instanceof LockableContainerBlockEntity secondPart) {
+
+                if (newName.equals("Large " + ((LockableContainerBlockEntityAccessor) firstPart).invokeGetContainerName().getString())) {
+                    newCustomName = null;
+                }
+
+                ((LockableContainerBlockEntityAccessor) firstPart).setCustomName(newCustomName);
+                ((LockableContainerBlockEntityAccessor) secondPart).setCustomName(newCustomName);
+
+                firstPart.markDirty();
+                secondPart.markDirty();
+
+                NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                factory = firstPart.getCachedState().createScreenHandlerFactory(player.getWorld(), firstPart.getPos());
+            }
+            else {
+                player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
+                return;
+            }
+        }
+        else if (containerInventory instanceof LockableContainerBlockEntity lockableContainerBlockEntity) {
+            LockableContainerBlockEntityAccessor accessor = (LockableContainerBlockEntityAccessor) lockableContainerBlockEntity;
+
+            if (newName.equals(accessor.invokeGetContainerName().getString())) {
+                newCustomName = null;
+            }
+
+            accessor.setCustomName(newCustomName);
+            lockableContainerBlockEntity.markDirty();
+
+            NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
+            factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(player.getWorld(), lockableContainerBlockEntity.getPos());
+        }
+        else {
+            player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
+            return;
+        }
+
+        player.closeHandledScreen();
+        player.openHandledScreen(factory);
+    }
+
     /**
      * Sorts the items of a player's inventory.
      * @param playerInventory The player's inventory.
@@ -157,17 +225,23 @@ public class TerrastorageCore {
      * @param hotbarProtection The hotbar protection value of the player.
      */
     public static void sortPlayerItems(PlayerInventory playerInventory, SortType type, boolean hotbarProtection) {
-        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type, hotbarProtection ? PlayerInventory.getHotbarSize() : 0, playerInventory.main.size());
+        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type, hotbarProtection ? PlayerInventory.getHotbarSize() : 0, playerInventory.main.size(), true);
         ArrayDeque<ItemStack> sortedStacks = new ArrayDeque<>(sortedList);
 
         int slotIndex = PlayerInventory.getHotbarSize();
         while (!sortedStacks.isEmpty() && slotIndex < 36) {
-            playerInventory.main.set(slotIndex++, sortedStacks.pollFirst());
+            if (playerInventory.main.get(slotIndex).isEmpty()) {
+                playerInventory.main.set(slotIndex, sortedStacks.pollFirst());
+            }
+            slotIndex++;
         }
         if (!hotbarProtection && !sortedStacks.isEmpty()) {
             slotIndex = 0;
             do {
-                playerInventory.main.set(slotIndex++, sortedStacks.pollFirst());
+                if (playerInventory.main.get(slotIndex).isEmpty()) {
+                    playerInventory.main.set(slotIndex, sortedStacks.pollFirst());
+                }
+                slotIndex++;
             }
             while (!sortedStacks.isEmpty());
         }
@@ -194,13 +268,13 @@ public class TerrastorageCore {
         boolean playerInventoryModified = false;
 
         for (Pair<Inventory, Vec3d> storagePair : nearbyStorages) {
-            Inventory storage = storagePair.getKey();
-            Vec3d storagePos = storagePair.getValue();
+            Inventory storage = storagePair.getLeft();
+            Vec3d storagePos = storagePair.getRight();
             CompactInventoryState storageState = new CompactInventoryState(storage);
 
             for (int i = startIndex; i < playerInventory.main.size(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
-                if (playerStack.isEmpty() || !storageState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !storageState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
                     continue;
                 }
 

@@ -35,6 +35,11 @@ public class PayloadRegistry {
            PlayerSortPayload.receive(context.player(), payload.type(), payload.hotbarProtection());
         });
 
+        PayloadTypeRegistry.playC2S().register(ItemFavoritePayload.ID, ItemFavoritePayload.toggleItemFavoritedCodec);
+        ServerPlayNetworking.registerGlobalReceiver(ItemFavoritePayload.ID, (payload, context) -> {
+            ItemFavoritePayload.receive(context.player(), payload.slotId(), payload.value());
+        });
+
         PayloadTypeRegistry.playS2C().register(BlockRenamedPayload.ID, BlockRenamedPayload.renamedCodec);
         PayloadTypeRegistry.playS2C().register(ServerConfigPayload.ID, ServerConfigPayload.configCodec);
     }

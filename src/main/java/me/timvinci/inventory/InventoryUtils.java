@@ -1,18 +1,29 @@
 package me.timvinci.inventory;
 
+import compasses.expandedstorage.api.ExpandedStorageAccessors;
 import me.timvinci.config.ConfigManager;
 import me.timvinci.item.GhostItemEntity;
 import me.timvinci.util.ComparatorTypes;
+import me.timvinci.api.ItemFavoritingUtils;
 import me.timvinci.util.SortType;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ChestBlock;
+import net.minecraft.block.ShulkerBoxBlock;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.enums.ChestType;
+import net.minecraft.component.ComponentMapImpl;
+import net.minecraft.component.ComponentType;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.vehicle.VehicleEntity;
 import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.*;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Pair;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -22,13 +33,9 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
-import net.minecraft.entity.Entity;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
-
-import compasses.expandedstorage.api.ExpandedStorageAccessors;
+import java.util.function.Predicate;
 
 /**
  * A utility class for inventory/item related operations.
@@ -79,8 +86,8 @@ public class InventoryUtils {
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
             ItemStack existingStack = to.getStack(slotWithItem);
-            if (!Objects.equals(existingStack.getComponents(), stackToTransfer.getComponents())) {
-                continue;  // Skip if NBT data is different.
+            if (!areComponentsEqual(existingStack, stackToTransfer)) {
+                continue; // Skip if NBT data is different, except for when the only difference is the favorite status.
             }
 
             int spaceLeft = existingStack.getMaxCount() - existingStack.getCount();
@@ -114,14 +121,17 @@ public class InventoryUtils {
      * @param endIndex The index at which item iteration ends.
      * @return A sorted list of items.
      */
-    public static List<ItemStack> combineAndSortInventory(Inventory inventory, SortType type, int startIndex, int endIndex) {
+    public static List<ItemStack> combineAndSortInventory(Inventory inventory, SortType type, int startIndex, int endIndex, boolean ignoreFavorites) {
         List<ItemStack> combinedStacks = new ArrayList<>();
         // Use a map in which the key is an item and the value is the last stack of that item.
         Map<Item, ItemStack> lastStackMap = new HashMap<>();
+        Predicate<ItemStack> shouldSkip = ignoreFavorites ?
+                stack -> stack.isEmpty() || ItemFavoritingUtils.isFavorite(stack) :
+                ItemStack::isEmpty;
 
         for (int i = startIndex; i < endIndex; i++) {
             ItemStack stack = inventory.getStack(i);
-            if (stack.isEmpty()) {
+            if (shouldSkip.test(stack)) {
                 continue;
             }
 
@@ -214,7 +224,7 @@ public class InventoryUtils {
                 if (blockEntity instanceof ChestBlockEntity) {
                     ChestType chestType = state.get(ChestBlock.CHEST_TYPE);
                     if (chestType == ChestType.SINGLE) {
-                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        nearbyStorages.add(new Pair<>(inventory, losPoint));
                         return;
                     }
 
@@ -222,13 +232,13 @@ public class InventoryUtils {
                     Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
                     Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
 
-                    nearbyStorages.add(Pair.of(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
+                    nearbyStorages.add(new Pair<>(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else if (expandedStorageLoaded) {
                     Optional<Direction> attachedChestDirection = ExpandedStorageAccessors.getAttachedChestDirection(state);
                     if (attachedChestDirection.isEmpty()) {
-                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        nearbyStorages.add(new Pair<>(inventory, losPoint));
                         return;
                     }
 
@@ -236,11 +246,11 @@ public class InventoryUtils {
                     Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
                     Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
 
-                    nearbyStorages.add(Pair.of(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
+                    nearbyStorages.add(new Pair<>(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else {
-                    nearbyStorages.add(Pair.of(inventory, losPoint));
+                    nearbyStorages.add(new Pair<>(inventory, losPoint));
                 }
             }
         });
@@ -260,7 +270,7 @@ public class InventoryUtils {
                     losPoint = entity.getBoundingBox().getCenter();
                 }
 
-                nearbyStorages.add(Pair.of((Inventory) entity, losPoint));
+                nearbyStorages.add(new Pair<>((Inventory) entity, losPoint));
             }
         );
 
@@ -377,5 +387,59 @@ public class InventoryUtils {
                 world.spawnEntity(ghostItem);
             }
         }
+    }
+
+    /**
+     * This method acts similarly to the original ItemStack.areItemsAndComponentsEqual, but it will also return true
+     * for any two item stacks whose only component difference is one being favorite while the other isn't.
+     */
+    public static boolean areItemsAndComponentsEqual(ItemStack firstStack, ItemStack secondStack) {
+        return ItemStack.areItemsEqual(firstStack, secondStack) && areComponentsEqual(firstStack, secondStack);
+    }
+
+    /**
+     * As stated in the description of the areItemsAndComponentsEqual method above, this method will also return true
+     * for any two item stacks whose only component difference is one being favorite while the other isn't.
+     */
+    private static boolean areComponentsEqual(ItemStack firstStack, ItemStack secondStack) {
+        if (Objects.equals(firstStack.getComponents(), secondStack.getComponents())) {
+            return true;
+        }
+
+        boolean firstStackIsFavorite = ItemFavoritingUtils.isFavorite(firstStack);
+        boolean secondStackIsFavorite = ItemFavoritingUtils.isFavorite(secondStack);
+
+        if (firstStackIsFavorite ^ secondStackIsFavorite) {
+            ComponentMapImpl firstComponentMap = new ComponentMapImpl(firstStack.getComponents());
+            ComponentMapImpl secondComponentMap = new ComponentMapImpl(secondStack.getComponents());
+            if (firstStackIsFavorite) { // Case 1 - First stack is favorite and the second stack isn't.
+                ItemFavoritingUtils.unFavorite(firstComponentMap);
+            }
+            else { // Case 2 - Second stack is favorite and the first stack isn't.
+                ItemFavoritingUtils.unFavorite(secondComponentMap);
+            }
+
+            return areComponentMapsEqual(firstComponentMap, secondComponentMap);
+        }
+        else {
+            return false;
+        }
+    }
+
+    private static boolean areComponentMapsEqual(ComponentMapImpl firstMap, ComponentMapImpl secondMap) {
+        if (firstMap.size() != secondMap.size()) {
+            return false;
+        }
+
+        for (ComponentType<?> type : firstMap.getTypes()) {
+            Object value1 = firstMap.get(type);
+            Object value2 = secondMap.get(type);
+
+            if (!Objects.equals(value1, value2)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

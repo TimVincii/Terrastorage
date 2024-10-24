@@ -18,6 +18,8 @@ public class TerrastorageConfig {
     @ConfigProperty(key = "item_animation_interval", comment = "The interval between animated flying items, in game ticks")
     @PropertyRange(min = 0, max = 20)
     private int itemAnimationInterval = 5;
+    @ConfigProperty(key = "keep_favorites_on_drop", comment = "Whether items will keep their favorite status once they are dropped as an item entity.")
+    private boolean keepFavoritesOnDrop = true;
 
     public int getActionCooldown() { return actionCooldown; }
 
@@ -38,4 +40,8 @@ public class TerrastorageConfig {
     public int getItemAnimationInterval() { return itemAnimationInterval; }
 
     public void setItemAnimationInterval(int itemAnimationInterval) { this.itemAnimationInterval = itemAnimationInterval; }
+
+    public boolean getKeepFavoritesOnDrop() { return keepFavoritesOnDrop; }
+
+    public void setKeepFavoritesOnDrop(boolean keepFavoritesOnDrop) { this.keepFavoritesOnDrop = keepFavoritesOnDrop; }
 }

@@ -6,8 +6,10 @@
 		"ChestBlockMixin",
 		"DoubleInventoryAccessor",
 		"EntityAccessor",
+		"ItemEntityMixin",
 		"LockableContainerBlockEntityAccessor",
-		"LockableContainerBlockEntityMixin"
+		"LockableContainerBlockEntityMixin",
+		"ScreenHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

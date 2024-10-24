@@ -34,7 +34,7 @@ public record StorageSortPayload(SortType type) implements CustomPayload {
      * @param type The sorting type of the player.
      */
     public static void receive(ServerPlayerEntity player, SortType type) {
-        if (player.currentScreenHandler.slots.size() - 36 < 27) {
+        if (player.currentScreenHandler == null) {
             return;
         }
 
