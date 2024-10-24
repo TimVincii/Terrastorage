@@ -1,5 +1,6 @@
 package me.timvinci.util;
 
+import me.timvinci.util.StorageAction;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.text.Text;
 

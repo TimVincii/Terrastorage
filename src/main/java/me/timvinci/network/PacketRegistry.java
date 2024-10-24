@@ -1,11 +1,11 @@
 package me.timvinci.network;
 
-import me.timvinci.util.Reference;
-import me.timvinci.util.SortType;
-import me.timvinci.util.StorageAction;
-import me.timvinci.util.TerrastorageCore;
+import me.timvinci.api.ItemFavoritingUtils;
+import me.timvinci.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.ShulkerBoxSlot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -18,6 +18,7 @@ public class PacketRegistry {
     public static final Identifier storageSortIdentifier = new Identifier(Reference.MOD_ID, "storage_sort_action");
     public static final Identifier renameIdentifier = new Identifier(Reference.MOD_ID, "rename_action");
     public static final Identifier playerSortIdentifier = new Identifier(Reference.MOD_ID, "player_sort_action");
+    public static final Identifier itemFavoriteIdentifier = new Identifier(Reference.MOD_ID, "item_favorite_action");
 
     public static final Identifier blockRenamedIdentifier = new Identifier(Reference.MOD_ID, "block_renamed_update");
     public static final Identifier serverConfigIdentifier = new Identifier(Reference.MOD_ID, "server_config_update");
@@ -49,6 +50,13 @@ public class PacketRegistry {
 
             server.execute(() -> processPlayerSortPacket(player, type, hotbarProtection));
         });
+
+        ServerPlayNetworking.registerGlobalReceiver(itemFavoriteIdentifier, (server, player, handler, buf, responseSender) -> {
+            int slotId = buf.readInt();
+            boolean value = buf.readBoolean();
+
+            server.execute(() -> processItemFavoritePacket(player, slotId, value));
+        });
     }
 
     /**
@@ -64,7 +72,7 @@ public class PacketRegistry {
             return;
         }
 
-        if (player.currentScreenHandler.slots.size() - 36 < 27) {
+        if (player.currentScreenHandler == null) {
             return;
         }
 
@@ -90,7 +98,7 @@ public class PacketRegistry {
      * @param type The sorting type of the player.
      */
     private static void processStorageSortPacket(ServerPlayerEntity player, SortType type) {
-        if (player.currentScreenHandler.slots.size() - 36 < 27) {
+        if (player.currentScreenHandler == null) {
             return;
         }
 
@@ -98,6 +106,9 @@ public class PacketRegistry {
         TerrastorageCore.sortStorageItems(storageInventory, type);
     }
 
+    /**
+     * Ensures the player's screen handler isn't null, before calling TerrastorageCore to perform the renaming.
+     */
     private static void processRenamePacket(ServerPlayerEntity player, String newName) {
         if (player.currentScreenHandler == null) {
             return;
@@ -108,5 +119,25 @@ public class PacketRegistry {
 
     private static void processPlayerSortPacket(ServerPlayerEntity player, SortType type, boolean hotbarProtection) {
         TerrastorageCore.sortPlayerItems(player.getInventory(), type, hotbarProtection);
+    }
+
+    /**
+     * Ensures the player's screen handler isn't null, and that the received slot id is in bounds, before modifying the
+     * favorite status of the ItemStack.
+     */
+    private static void processItemFavoritePacket(ServerPlayerEntity player, int slotId, boolean value) {
+        if (player.currentScreenHandler == null) {
+            return;
+        }
+
+        ScreenHandler playerScreenHandler = player.currentScreenHandler;
+        if (slotId < 0 || slotId >= playerScreenHandler.slots.size()) {
+            return;
+        }
+
+        ItemStack slotStack = playerScreenHandler.getSlot(slotId).getStack();
+        if (!slotStack.isEmpty()) {
+            ItemFavoritingUtils.setFavorite(slotStack, value);
+        }
     }
 }

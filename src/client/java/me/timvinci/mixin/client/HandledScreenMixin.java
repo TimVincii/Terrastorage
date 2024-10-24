@@ -1,37 +1,56 @@
 package me.timvinci.mixin.client;
 
+import me.timvinci.api.ItemFavoritingUtils;
 import me.timvinci.config.ClientConfigManager;
 import me.timvinci.gui.TerrastorageOptionsScreen;
 import me.timvinci.gui.widget.StorageButtonCreator;
+import me.timvinci.keybinding.TerrastorageKeybindings;
+import me.timvinci.network.ClientNetworkHandler;
 import me.timvinci.util.ButtonsPlacement;
 import me.timvinci.util.ButtonsStyle;
-import me.timvinci.gui.widget.StorageButtonWidget;
 import me.timvinci.util.LocalizedTextProvider;
-import me.timvinci.util.StorageAction;
+import me.timvinci.util.ScreenInteractionUtils;
+import me.timvinci.util.*;
+import me.timvinci.gui.widget.StorageButtonWidget;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.ScreenHandlerProvider;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Arrays;
 
 /**
- * A mixin of the HandledScreen class, adds the storage option buttons to storage screens.
+ * A mixin of the HandledScreen class, adds the storage option buttons to storage screens, and provides item favoriting
+ * support.
  * @param <T> The screen handler type.
  */
 @Mixin(HandledScreen.class )
-public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen implements ScreenHandlerProvider<T> {
+public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen {
+    @Unique
+    private final Identifier favoriteBorder = new Identifier(Reference.MOD_ID, "textures/gui/sprites/favorite_border.png");
+    @Shadow
+    protected T handler;
     @Shadow protected int backgroundWidth;
     @Shadow protected int backgroundHeight;
     @Shadow protected int x;
@@ -51,12 +70,12 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             return;
 
         // Return if the slot count (excluding the 36 player inventory slots) is smaller than 27.
-        if (this.getScreenHandler().slots.size() - 36 < 27) {
+        if (handler.slots.size() - 36 < 27) {
             return;
         }
 
         boolean isEnderChest = false;
-        if (this.getScreenHandler() instanceof GenericContainerScreenHandler && this.getTitle().equals(Text.translatable("container.enderchest"))) {
+        if (handler instanceof GenericContainerScreenHandler && this.getTitle().equals(Text.translatable("container.enderchest"))) {
             isEnderChest = true;
         }
 
@@ -124,5 +143,59 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
     private StorageAction[] getButtonsActions(boolean isEnderChest) {
         StorageAction[] allActions = StorageAction.values();
         return Arrays.copyOf(allActions, allActions.length - (isEnderChest ? 2 : 1));
+    }
+
+    /**
+     * Provides the ability to favorite items stacks.
+     */
+    @Inject(method = "mouseClicked",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/util/Util;getMeasuringTimeMs()J"),
+            locals = LocalCapture.CAPTURE_FAILEXCEPTION, cancellable = true)
+    private void mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+        if (button != 0 || slot == null || !slot.hasStack() || !handler.getCursorStack().isEmpty()) {
+            return;
+        }
+
+        boolean modifierIsPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode());
+        boolean playerOwnedSlot = slot.inventory instanceof PlayerInventory;
+
+        if (modifierIsPressed && playerOwnedSlot) {
+            ItemStack slotStack = slot.getStack();
+            int slotId = this.handler instanceof CreativeInventoryScreen.CreativeScreenHandler ? slot.getIndex() : slot.id;
+
+            boolean toggledValue = !ItemFavoritingUtils.isFavorite(slotStack);
+            if (ClientNetworkHandler.sendItemFavoritedPacket(slotId, toggledValue)) {
+                ItemFavoritingUtils.setFavorite(slotStack, toggledValue);
+            }
+            cir.setReturnValue(true);
+            cir.cancel();
+        }
+    }
+
+    /**
+     * Calls the ScreenInteractionUtils to process a slot click.
+     */
+    @Inject(method = "onMouseClick(Lnet/minecraft/screen/slot/Slot;IILnet/minecraft/screen/slot/SlotActionType;)V", at = @At("HEAD"), cancellable = true)
+    private void onMouseClick(Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
+        ScreenInteractionUtils.processSlotClick(this.client, handler.getCursorStack(), slot, slotId, button, actionType, ci);
+    }
+
+    /**
+     * Draws the favorite border on slots that hold a favorite item stack.
+     */
+    @Inject(method = "drawSlot",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/DrawContext;drawItemInSlot(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;IILjava/lang/String;)V",
+                    shift = At.Shift.BEFORE),
+            locals = LocalCapture.CAPTURE_FAILEXCEPTION)
+    private void drawSlot(DrawContext context, Slot slot, CallbackInfo ci, int i, int j, ItemStack itemStack) {
+        if (!(slot.inventory instanceof PlayerInventory) || !ItemFavoritingUtils.isFavorite(itemStack)) {
+            return;
+        }
+
+        context.drawTexture(favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
     }
 }

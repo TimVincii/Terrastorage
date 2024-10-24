@@ -54,13 +54,11 @@ public class CompactInventoryState implements InventoryState{
         if (!hotbarProtection) {
             for (int i = 0; i < PlayerInventory.getHotbarSize(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
-                if (playerStack.isEmpty()) {
+                if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxCount()) {
                     continue;
                 }
 
-                if (playerStack.getCount() != playerStack.getMaxCount()) {
-                    itemSlots.computeIfAbsent(playerStack.getItem(), k -> new ArrayList<>()).add(i);
-                }
+                itemSlots.computeIfAbsent(playerStack.getItem(), k -> new ArrayList<>()).add(i);
             }
         }
     }

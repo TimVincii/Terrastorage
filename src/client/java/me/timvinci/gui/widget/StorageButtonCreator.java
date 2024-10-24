@@ -2,16 +2,22 @@ package me.timvinci.gui.widget;
 
 import me.timvinci.gui.RenameScreen;
 import me.timvinci.network.ClientNetworkHandler;
+import me.timvinci.util.Reference;
 import me.timvinci.util.StorageAction;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 
 /**
- * Provides a method for creating storage buttons.
+ * Creates the buttons used by Terrastorage.
  */
 public class StorageButtonCreator {
+    public static final Identifier sortButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/sort_inventory.png");
+    public static final Identifier quickStackButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/quick_stack.png");
 
     /**
      * Creates a custom button to be used by the HandledScreenMixin.
@@ -43,5 +49,45 @@ public class StorageButtonCreator {
             buttonTooltip,
             onPress
         );
+    }
+
+    /**
+     * Creates the Sort Inventory and Quick Stack To Nearby Storages buttons.
+     * @param x The x position.
+     * @param y The y position.
+     * @return A pair of the inventory TexturedButtonWidgets.
+     */
+    public static Pair<TexturedButtonWidget, TexturedButtonWidget> createInventoryButtons(int x, int y) {
+        TexturedButtonWidget quickStackButton = new TexturedButtonWidget(
+                x,
+                y,
+                20,
+                18,
+                0,
+                0,
+                18,
+                quickStackButtonTexture,
+                20,
+                36,
+                onPress -> ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY)
+        );
+        quickStackButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.quick_stack_to_nearby")));
+
+        TexturedButtonWidget sortInventoryButton = new TexturedButtonWidget(
+                x + 24,
+                y,
+                20,
+                18,
+                0,
+                0,
+                18,
+                sortButtonTexture,
+                20,
+                36,
+                onPress -> ClientNetworkHandler.sendPlayerSortPacket()
+        );
+        sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
+
+        return new Pair<>(quickStackButton, sortInventoryButton);
     }
 }

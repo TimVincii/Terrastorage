@@ -1,17 +1,14 @@
 package me.timvinci.mixin.client;
 
-import me.timvinci.network.ClientNetworkHandler;
-import me.timvinci.util.Reference;
-import me.timvinci.util.StorageAction;
+import me.timvinci.gui.widget.StorageButtonCreator;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,18 +17,14 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * A mixin of the InventoryScreen class, adds the inventory option buttons to the inventory screen.
+ * A mixin of the InventoryScreen class, adds the inventory storage buttons to the survival inventory screen.
  */
 @Mixin(InventoryScreen.class)
 public abstract class InventoryScreenMixin extends AbstractInventoryScreen<PlayerScreenHandler> {
     @Unique
-    private TexturedButtonWidget sortInventoryButton;
-    @Unique
     private TexturedButtonWidget quickStackButton;
     @Unique
-    private final Identifier sortButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/sort_inventory.png");
-    @Unique
-    private final Identifier quickStackButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/quick_stack.png");
+    private TexturedButtonWidget sortInventoryButton;
 
     public InventoryScreenMixin(PlayerScreenHandler screenHandler, PlayerInventory playerInventory, Text text) {
         super(screenHandler, playerInventory, text);
@@ -49,37 +42,11 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
 
         int buttonX = this.x + 128;
         int buttonY = this.height / 2 - 22;
-        quickStackButton = new TexturedButtonWidget(
-                buttonX,
-                buttonY,
-                20,
-                18,
-                0,
-                0,
-                18,
-                quickStackButtonTexture,
-                20,
-                36,
-                onPress -> ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY)
-        );
-        quickStackButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.quick_stack_to_nearby")));
+        Pair<TexturedButtonWidget, TexturedButtonWidget> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
+        quickStackButton = buttons.getLeft();
         this.addDrawableChild(quickStackButton);
 
-        buttonX += 24;
-        sortInventoryButton = new TexturedButtonWidget(
-                buttonX,
-                buttonY,
-                20,
-                18,
-                0,
-                0,
-                18,
-                sortButtonTexture,
-                20,
-                36,
-                onPress -> ClientNetworkHandler.sendPlayerSortPacket()
-        );
-        sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
+        sortInventoryButton = buttons.getRight();
         this.addDrawableChild(sortInventoryButton);
     }
 

@@ -3,6 +3,7 @@ package me.timvinci.inventory;
 import me.timvinci.config.ConfigManager;
 import me.timvinci.item.GhostItemEntity;
 import me.timvinci.util.ComparatorTypes;
+import me.timvinci.api.ItemFavoritingUtils;
 import me.timvinci.util.SortType;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.*;
@@ -10,8 +11,11 @@ import net.minecraft.block.enums.ChestType;
 import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Pair;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -23,9 +27,8 @@ import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.minecraft.entity.Entity;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.util.*;
+import java.util.function.Predicate;
 
 import compasses.expandedstorage.api.ExpandedStorageAccessors;
 
@@ -78,8 +81,8 @@ public class InventoryUtils {
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
             ItemStack existingStack = to.getStack(slotWithItem);
-            if (!Objects.equals(existingStack.getNbt(), stackToTransfer.getNbt())) {
-                continue;  // Skip if NBT data is different.
+            if (!areComponentsEqual(existingStack, stackToTransfer)) {
+                continue; // Skip if NBT data is different, except for when the only difference is the favorite status.
             }
 
             int spaceLeft = existingStack.getMaxCount() - existingStack.getCount();
@@ -113,14 +116,17 @@ public class InventoryUtils {
      * @param endIndex The index at which item iteration ends.
      * @return A sorted list of items.
      */
-    public static List<ItemStack> combineAndSortInventory(Inventory inventory, SortType type, int startIndex, int endIndex) {
+    public static List<ItemStack> combineAndSortInventory(Inventory inventory, SortType type, int startIndex, int endIndex, boolean ignoreFavorites) {
         List<ItemStack> combinedStacks = new ArrayList<>();
         // Use a map in which the key is an item and the value is the last stack of that item.
         Map<Item, ItemStack> lastStackMap = new HashMap<>();
+        Predicate<ItemStack> shouldSkip = ignoreFavorites ?
+                stack -> stack.isEmpty() || ItemFavoritingUtils.isFavorite(stack) :
+                ItemStack::isEmpty;
 
         for (int i = startIndex; i < endIndex; i++) {
             ItemStack stack = inventory.getStack(i);
-            if (stack.isEmpty()) {
+            if (shouldSkip.test(stack)) {
                 continue;
             }
 
@@ -213,7 +219,7 @@ public class InventoryUtils {
                 if (blockEntity instanceof ChestBlockEntity) {
                     ChestType chestType = state.get(ChestBlock.CHEST_TYPE);
                     if (chestType == ChestType.SINGLE) {
-                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        nearbyStorages.add(new Pair<>(inventory, losPoint));
                         return;
                     }
 
@@ -221,13 +227,13 @@ public class InventoryUtils {
                     Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
                     Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
 
-                    nearbyStorages.add(Pair.of(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
+                    nearbyStorages.add(new Pair<>(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else if (expandedStorageLoaded) {
                     Optional<Direction> attachedChestDirection = ExpandedStorageAccessors.getAttachedChestDirection(state);
                     if (attachedChestDirection.isEmpty()) {
-                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        nearbyStorages.add(new Pair<>(inventory, losPoint));
                         return;
                     }
 
@@ -235,11 +241,11 @@ public class InventoryUtils {
                     Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
                     Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
 
-                    nearbyStorages.add(Pair.of(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
+                    nearbyStorages.add(new Pair<>(new DoubleInventory(inventory, neighboringChestInventory), doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else {
-                    nearbyStorages.add(Pair.of(inventory, losPoint));
+                    nearbyStorages.add(new Pair<>(inventory, losPoint));
                 }
             }
         });
@@ -259,7 +265,7 @@ public class InventoryUtils {
                     losPoint = entity.getBoundingBox().getCenter();
                 }
 
-                nearbyStorages.add(Pair.of((Inventory) entity, losPoint));
+                nearbyStorages.add(new Pair<>((Inventory) entity, losPoint));
             }
         );
 
@@ -377,4 +383,70 @@ public class InventoryUtils {
             }
         }
     }
+
+    /**
+     * This method acts similarly to the original ItemStack.canCombine, but it will also return true
+     * for any two item stacks whose only NBT difference is one being favorite while the other isn't.
+     */
+    public static boolean canCombine(ItemStack firstStack, ItemStack secondStack) {
+        return ItemStack.areItemsEqual(firstStack, secondStack) && areComponentsEqual(firstStack, secondStack);
+    }
+
+    /**
+     * As stated in the description of the canCombine method above, this method will also return true
+     * for any two item stacks whose only NBT difference is one being favorite while the other isn't.
+     */
+    private static boolean areComponentsEqual(ItemStack firstStack, ItemStack secondStack) {
+        if (Objects.equals(firstStack.getNbt(), secondStack.getNbt())) {
+            return true;
+        }
+
+        boolean firstStackIsFavorite = ItemFavoritingUtils.isFavorite(firstStack);
+        boolean secondStackIsFavorite = ItemFavoritingUtils.isFavorite(secondStack);
+        if (firstStack.hasNbt() && secondStack.hasNbt()) {
+            if (firstStackIsFavorite ^ secondStackIsFavorite) {
+                if (firstStackIsFavorite) { // Case 1 - first stack is favorite, and the second isn't.
+                    NbtCompound firstCompound = firstStack.getNbt().copy();
+                    ItemFavoritingUtils.unFavorite(firstCompound);
+                    return areNbtCompoundsEqual(firstCompound, secondStack.getNbt());
+                }
+                else { // Case 2 - second stack is favorite, and the first isn't.
+                    NbtCompound secondCompound = secondStack.getNbt().copy();
+                    ItemFavoritingUtils.unFavorite(secondCompound);
+                    return areNbtCompoundsEqual(firstStack.getNbt(), secondCompound);
+                }
+            }
+            else {
+                return false;
+            }
+        }
+
+        if (firstStackIsFavorite) { // Case 3 - first stack is favorite, and the second stack is NBT'less.
+            return firstStack.getNbt().getSize() == 1;
+        }
+        if (secondStackIsFavorite) { // Case 4 - second stack is favorite, and the first stack is NBT'less.
+            return secondStack.getNbt().getSize() == 1;
+        }
+
+        return false;
+    }
+
+    private static boolean areNbtCompoundsEqual(NbtCompound firstCompound, NbtCompound secondCompound) {
+        if (firstCompound.getSize() != secondCompound.getSize()) {
+            return false;
+        }
+
+        for (String key : firstCompound.getKeys()) {
+            if (!secondCompound.contains(key)) {
+                return false;
+            }
+            NbtElement firstElement = firstCompound.get(key);
+            NbtElement secondElement = secondCompound.get(key);
+            if (!Objects.equals(firstElement, secondElement)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

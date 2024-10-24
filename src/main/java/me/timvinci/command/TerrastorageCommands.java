@@ -56,6 +56,11 @@ public class TerrastorageCommands {
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationInterval, "Item Animation Interval", " ticks"))
                     )
                 )
+                .then(CommandManager.literal("keep-favorites-on-drop")
+                        .executes(context -> executeGetValue(context, config::getKeepFavoritesOnDrop, "keep favorites on drop", ""))
+                        .then(CommandManager.argument("value", BoolArgumentType.bool())
+                                .executes(context -> executeSetValue(context, BoolArgumentType.getBool(context, "value"), config::setKeepFavoritesOnDrop, "Keep Favorites On Drop", "")))
+                )
             )
         );
     }

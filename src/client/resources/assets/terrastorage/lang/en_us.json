@@ -24,7 +24,7 @@
   "terrastorage.option.hotbar_protection": "Hotbar Protection",
   "terrastorage.option.hotbar_protection.true": "Enabled",
   "terrastorage.option.hotbar_protection.false": "Disabled",
-  "terrastorage.option.tooltip.hotbar_protection": "Whether to protect hotbar items from the storage options.",
+  "terrastorage.option.tooltip.hotbar_protection": "Whether to protect hotbar items from storage options.",
   "terrastorage.option.buttons_style": "Buttons Style",
   "terrastorage.option.buttons_style.default": "Default",
   "terrastorage.option.buttons_style.text_only": "Text Only",
@@ -43,5 +43,8 @@
   "terrastorage.message.client_saving_error": "Something went wrong, please check and validate your client configuration file, the info related to this error was outputted to this session's log file.",
   "terrastorage.message.server_saving_error": "Something went wrong, please check and validate your server configuration file, the info related to this error was outputted to this session's log/console.",
   "terrastorage.message.unsupported_packet": "Couldn't send packet, please ensure Terrastorage is installed on the server side.",
-  "terrastorage.message.payload_cooldown": "This action is on cooldown, please wait a bit before trying again."
+  "terrastorage.message.payload_cooldown": "This action is on cooldown, please wait a bit before trying again.",
+  "terrastorage.keybinding.favorite_item_modifier": "Favorite Item (+ Left Click)",
+  "terrastorage.keybinding.categories.main": "Terrastorage",
+  "terrastorage.item.tooltip.favorite": "Marked as favorite"
 }

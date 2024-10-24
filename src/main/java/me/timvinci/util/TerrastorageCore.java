@@ -1,5 +1,6 @@
 package me.timvinci.util;
 
+import me.timvinci.api.ItemFavoritingUtils;
 import me.timvinci.inventory.CompactInventoryState;
 import me.timvinci.inventory.CompleteInventoryState;
 import me.timvinci.inventory.InventoryUtils;
@@ -16,8 +17,8 @@ import net.minecraft.item.*;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.Vec3d;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.List;
@@ -65,7 +66,7 @@ public class TerrastorageCore {
 
         for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.main.size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox))  {
                 continue;
             }
 
@@ -76,7 +77,7 @@ public class TerrastorageCore {
             for (int i = 0; i < PlayerInventory.getHotbarSize(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
 
-                if (playerStack.isEmpty() || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
                     continue;
                 }
 
@@ -104,7 +105,7 @@ public class TerrastorageCore {
         int startIndex = hotbarProtection ? PlayerInventory.getHotbarSize() : 0;
         for (int i = startIndex; i < playerInventory.main.size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || !storageInventoryState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !storageInventoryState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
                 continue;
             }
 
@@ -149,7 +150,7 @@ public class TerrastorageCore {
      * @param type The sorting type of the player.
      */
     public static void sortStorageItems(Inventory storageInventory, SortType type) {
-        List<ItemStack> sortedStacks = InventoryUtils.combineAndSortInventory(storageInventory, type, 0, storageInventory.size());
+        List<ItemStack> sortedStacks = InventoryUtils.combineAndSortInventory(storageInventory, type, 0, storageInventory.size(), false);
 
         int slotIndex = 0;
         for (ItemStack stack : sortedStacks) {
@@ -231,17 +232,23 @@ public class TerrastorageCore {
      * @param hotbarProtection The hotbar protection value of the player.
      */
     public static void sortPlayerItems(PlayerInventory playerInventory, SortType type, boolean hotbarProtection) {
-        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type, hotbarProtection ? PlayerInventory.getHotbarSize() : 0, playerInventory.main.size());
+        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type, hotbarProtection ? PlayerInventory.getHotbarSize() : 0, playerInventory.main.size(), true);
         ArrayDeque<ItemStack> sortedStacks = new ArrayDeque<>(sortedList);
 
         int slotIndex = PlayerInventory.getHotbarSize();
         while (!sortedStacks.isEmpty() && slotIndex < 36) {
-            playerInventory.main.set(slotIndex++, sortedStacks.pollFirst());
+            if (playerInventory.main.get(slotIndex).isEmpty()) {
+                playerInventory.main.set(slotIndex, sortedStacks.pollFirst());
+            }
+            slotIndex++;
         }
         if (!hotbarProtection && !sortedStacks.isEmpty()) {
             slotIndex = 0;
             do {
-                playerInventory.main.set(slotIndex++, sortedStacks.pollFirst());
+                if (playerInventory.main.get(slotIndex).isEmpty()) {
+                    playerInventory.main.set(slotIndex, sortedStacks.pollFirst());
+                }
+                slotIndex++;
             }
             while (!sortedStacks.isEmpty());
         }
@@ -268,13 +275,13 @@ public class TerrastorageCore {
         boolean playerInventoryModified = false;
 
         for (Pair<Inventory, Vec3d> storagePair : nearbyStorages) {
-            Inventory storage = storagePair.getKey();
-            Vec3d storagePos = storagePair.getValue();
+            Inventory storage = storagePair.getLeft();
+            Vec3d storagePos = storagePair.getRight();
             CompactInventoryState storageState = new CompactInventoryState(storage);
 
             for (int i = startIndex; i < playerInventory.main.size(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
-                if (playerStack.isEmpty() || !storageState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !storageState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
                     continue;
                 }
 

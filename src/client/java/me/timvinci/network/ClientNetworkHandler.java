@@ -89,6 +89,25 @@ public class ClientNetworkHandler {
         }
     }
 
+    public static boolean sendItemFavoritedPacket(int slotId, boolean value) {
+        if (!ClientPlayNetworking.canSend(PacketRegistry.itemFavoriteIdentifier)) {
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_packet"));
+            return false;
+        }
+
+        if (canPerformAction()) {
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeInt(slotId);
+            buf.writeBoolean(value);
+
+            ClientPlayNetworking.send(PacketRegistry.itemFavoriteIdentifier, buf);
+            return true;
+        }
+
+        MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
+        return false;
+    }
+
     /**
      * Checks whether payload sending is on cooldown.
      * @return True if it isn't, false otherwise.

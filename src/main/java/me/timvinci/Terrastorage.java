@@ -26,9 +26,7 @@ public class Terrastorage implements ModInitializer {
 	private boolean populatedItemGroups = false;
 
 	/**
-	 * Initializes the config manager, registers the commands, registers the payloads, registers an event listener
-	 * for when the server starts and populates the item groups once it does, and registers an event listener for when
-	 * a player joins the server to send them the server config.
+	 * Executes various tasks while Terrastorage is initializing.
 	 */
 	@Override
 	public void onInitialize() {

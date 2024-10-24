@@ -5,8 +5,12 @@
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
 		"BlockEntityRendererFactoriesMixin",
+		"ClientPlayerEntityMixin",
+		"CreativeInventoryScreenMixin",
 		"HandledScreenMixin",
-		"InventoryScreenMixin"
+		"InGameHudMixin",
+		"InventoryScreenMixin",
+		"ItemStackMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
