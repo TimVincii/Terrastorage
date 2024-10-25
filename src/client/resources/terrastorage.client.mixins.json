@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "me.timvinci.mixin.client",
+	"package": "me.timvinci.terrastorage.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
