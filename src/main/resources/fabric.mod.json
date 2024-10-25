@@ -17,13 +17,13 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"me.timvinci.Terrastorage"
+			"me.timvinci.terrastorage.Terrastorage"
 		],
 		"client": [
-			"me.timvinci.TerrastorageClient"
+			"me.timvinci.terrastorage.TerrastorageClient"
 		],
 		"modmenu": [
-			"me.timvinci.integration.ModMenuIntegration"
+			"me.timvinci.terrastorage.integration.ModMenuIntegration"
 		]
 	},
 	"mixins": [

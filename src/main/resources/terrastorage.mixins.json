@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "me.timvinci.mixin",
+	"package": "me.timvinci.terrastorage.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
 		"ChestBlockMixin",
