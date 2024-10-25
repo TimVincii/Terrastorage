@@ -25,6 +25,8 @@ With that out of the way, let's dive into the feature showcase:
 
 ⏺️ Items are first stacked with existing ones in the opposite inventory before being moved to an empty slot.
 
+⏺️ Favorite items will not be affected by **Deposit All**.
+
 ---
 
 ![Showcase Quick Stack And Restock](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_quick_stack_and_restock.gif)
@@ -33,6 +35,25 @@ With that out of the way, let's dive into the feature showcase:
 * **Restock** - Transfers items from the storage into existing stacks in the player's inventory.
 
 ⏺️ Items are combined up to their max stack size, so empty slots in the receiving inventory remain unaffected.
+
+⏺️ Favorite items will not be affected by **Quick Stack**.
+
+---
+
+![Showcase Quick Stack And Restock](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_item_favoriting.gif)
+**Item Favoriting**:
+
+* **Item Favoriting** - You can favorite items in your inventory by holding the modifier key for Item Favoriting (Left Alt by default) and left-clicking them.
+
+✳️ The modifier key is customizable via the controls menu.
+
+⏺️ Favorite items are protected from being:
+* Thrown out of the inventory.
+* Shift-pressed to a different inventory.
+* Swapped with a hotbar item during a hotbar keybind press.
+* Deleted in the creative inventory screen.
+* Moved by **Deposit All** or **Sort Inventory**.
+* Modified by **Quick Stack** or **Quick Stack To Nearby Storages**.
 
 ---
 
@@ -48,7 +69,7 @@ With that out of the way, let's dive into the feature showcase:
 ---
 
 ![Showcase Sort Inventory And Qstns](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_sort_inventory_and_qstns.gif)
-**Sort Inventory and Quick Stack To Nearby Chests**:
+**Sort Inventory and Quick Stack To Nearby Storages**:
 * **Sort Inventory** - Sorts the items in the player's inventory.
 * **Quick Stack To Nearby Storages** - Finds all nearby storages and performs the Quick Stack operation on each.
 
@@ -57,6 +78,8 @@ With that out of the way, let's dive into the feature showcase:
 ✳️ By default, the Quick Stack To Nearby Storages feature only considers storages within the player's line of sight, this is configurable.
 
 ✳️ The Quick Stack To Nearby Storages feature includes an animation where items fly from the player to the storage. Both the animation length and the time between flying items are configurable.
+
+⏺️ Favorite items will not be moved by **Sort Inventory** or modified by **Quick Stack To Nearby Storages**.
 
 # Customization
 ![Options Screen](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/options_screen.png)
@@ -106,14 +129,14 @@ sort_type = "ITEM_GROUP"
 
 ---
 
-### Server Side 
+### Server Side
 The following server settings can be modified via in-game commands. To change a setting, use the command `/terrastorage [option] [new value]`. To view the current value, use `/terrastorage [option]`.
 
 The available options are:
 * **action-cooldown**
 
   *Sets the cooldown for all storage actions, in game ticks.*
-  
+
   Default: 10
 * **line-of-sight-check**
 
@@ -135,6 +158,12 @@ The available options are:
   *Specifies the time interval between animated flying items in ticks.*
 
   Default: 5
+
+* **keep-favorites-on-drop**
+
+  *Determines whether items will keep their favorite status once they are dropped as an item entity.*
+
+  Default: true
 
 These settings can be directly modified through the configuration file, located at `.\config\terrastorage.toml`. Below are its default contents:
 ```toml
@@ -161,6 +190,10 @@ item_animation_length = 20
 #Range: 0 to 20, inclusive
 #Default: 5
 item_animation_interval = 5
+#==========
+#Whether items will keep their favorite status once they are dropped as an item entity.
+#Default: true
+keep_favorites_on_drop = true
 ```
 
 # Compatibility

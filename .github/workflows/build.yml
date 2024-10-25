@@ -6,7 +6,10 @@
 name: build
 on:
   push:
-    tags: []  # Exclude all tag pushes
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
   pull_request:
 
 jobs:
