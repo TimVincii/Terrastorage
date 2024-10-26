@@ -86,10 +86,9 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     @Inject(method = "init",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/screen/ingame/CreativeInventoryScreen;setSelectedTab(Lnet/minecraft/item/ItemGroup;)V"),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION
+                    target = "Lnet/minecraft/client/gui/screen/ingame/CreativeInventoryScreen;setSelectedTab(Lnet/minecraft/item/ItemGroup;)V")
     )
-    private void onInit(CallbackInfo ci, ItemGroup itemGroup) {
+    private void onInit(CallbackInfo ci) {
         int buttonX = this.x + 138;
         int buttonY = this.y + 19;
         Pair<TexturedButtonWidget, TexturedButtonWidget> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
@@ -98,11 +97,6 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
 
         sortInventoryButton = buttons.getRight();
         this.addDrawableChild(sortInventoryButton);
-
-        if (!Registries.ITEM_GROUP.getEntry(itemGroup).matchesKey(ItemGroups.INVENTORY)) {
-            quickStackButton.visible = false;
-            sortInventoryButton.visible = false;
-        }
     }
 
     /**

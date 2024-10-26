@@ -1,9 +1,8 @@
-package me.timvinci.terrastorage.util;
+package me.timvinci.terrastorage.render;
 
 import me.timvinci.terrastorage.TerrastorageClient;
 import me.timvinci.terrastorage.mixin.client.BlockEntityRendererFactoriesMixin;
-import me.timvinci.terrastorage.render.BlockNametagRenderer;
-import net.fabricmc.fabric.mixin.lookup.BlockEntityTypeAccessor;
+import me.timvinci.terrastorage.mixin.client.BlockEntityTypeAccessor;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -56,7 +55,7 @@ public class BlockEntityRendererManager {
      * @return The block state of the first block, or null if the blocks set is empty.
      */
     private static BlockState getBlockState(BlockEntityType<?> blockEntityType) {
-        Set<Block> blocks = ((BlockEntityTypeAccessor) blockEntityType).getBlocks();
+        Set<Block> blocks = ((BlockEntityTypeAccessor) blockEntityType).blocks();
         return blocks.stream().findFirst().map(Block::getDefaultState).orElse(null);
     }
 

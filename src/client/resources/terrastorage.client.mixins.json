@@ -5,6 +5,7 @@
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
 		"BlockEntityRendererFactoriesMixin",
+		"BlockEntityTypeAccessor",
 		"ClientPlayerEntityMixin",
 		"CreativeInventoryScreenMixin",
 		"HandledScreenMixin",
