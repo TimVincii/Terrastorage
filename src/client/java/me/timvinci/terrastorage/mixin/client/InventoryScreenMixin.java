@@ -1,8 +1,9 @@
 package me.timvinci.terrastorage.mixin.client;
 
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
-import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screen.ingame.RecipeBookScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.entity.player.PlayerInventory;
@@ -20,14 +21,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * A mixin of the InventoryScreen class, adds the inventory storage buttons to the survival inventory screen.
  */
 @Mixin(InventoryScreen.class)
-public abstract class InventoryScreenMixin extends AbstractInventoryScreen<PlayerScreenHandler> {
+public abstract class InventoryScreenMixin extends RecipeBookScreen<PlayerScreenHandler> {
     @Unique
     private TexturedButtonWidget quickStackButton;
     @Unique
     private TexturedButtonWidget sortInventoryButton;
 
-    public InventoryScreenMixin(PlayerScreenHandler screenHandler, PlayerInventory playerInventory, Text text) {
-        super(screenHandler, playerInventory, text);
+    public InventoryScreenMixin(PlayerScreenHandler handler, RecipeBookWidget<?> recipeBook, PlayerInventory inventory, Text title) {
+        super(handler, recipeBook, inventory, title);
     }
 
     /**
@@ -51,31 +52,13 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
     }
 
     /**
-     * Modifies the press action of the recipe book to include the re-positioning of the sort inventory and quick
-     * stack to nearby chests buttons.
-     * @param original The original press action.
-     * @return The modified press action.
+     * Repositions the inventory buttons once the recipe book is toggled.
      */
-    @ModifyArg(method = "init", at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/widget/TexturedButtonWidget;<init>(IIIILnet/minecraft/client/gui/screen/ButtonTextures;Lnet/minecraft/client/gui/widget/ButtonWidget$PressAction;)V"
-        )
-    )
-    private ButtonWidget.PressAction modifyRecipeBookButtonPress(ButtonWidget.PressAction original) {
-        if (client.player.isSpectator()) {
-            return original;
-        }
-
-        return button -> {
-            // Call the original press action.
-            original.onPress(button);
-            // Reposition the buttons.
-            int buttonX = this.x + 128;
-            quickStackButton.setPosition(buttonX, quickStackButton.getY());
-            buttonX += 24;
-            sortInventoryButton.setPosition(buttonX, sortInventoryButton.getY());
-        };
+    @Inject(method = "onRecipeBookToggled", at = @At("TAIL"))
+    private void onRecipeBookToggledTail(CallbackInfo ci) {
+        int buttonX = this.x + 128;
+        quickStackButton.setPosition(buttonX, quickStackButton.getY());
+        buttonX += 24;
+        sortInventoryButton.setPosition(buttonX, sortInventoryButton.getY());
     }
-
-
 }

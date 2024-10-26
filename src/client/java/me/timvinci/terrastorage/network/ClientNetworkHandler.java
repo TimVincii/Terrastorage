@@ -19,7 +19,7 @@ public class ClientNetworkHandler {
 
     public static void sendActionPayload(StorageAction action) {
         if (!ClientPlayNetworking.canSend(StorageActionPayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"), false);
             return;
         }
 
@@ -27,26 +27,26 @@ public class ClientNetworkHandler {
             ClientPlayNetworking.send(new StorageActionPayload(action, ClientConfigManager.getInstance().getConfig().getHotbarProtection()));
         }
         else {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"), false);
         }
     }
 
     public static void sendStorageSortPayload() {
         if (!ClientPlayNetworking.canSend(StorageActionPayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"), false);
             return;
         }
 
         if (canPerformAction()) {
             ClientPlayNetworking.send(new StorageSortPayload(ClientConfigManager.getInstance().getConfig().getSortType()));
         } else {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"), false);
         }
     }
 
     public static void sendRenamePayload(String newName) {
         if (!ClientPlayNetworking.canSend(RenamePayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"), false);
             return;
         }
 
@@ -54,14 +54,14 @@ public class ClientNetworkHandler {
             ClientPlayNetworking.send(new RenamePayload(newName));
         }
         else {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"), false);
         }
 
     }
 
     public static void sendPlayerSortPayload() {
         if (!ClientPlayNetworking.canSend(PlayerSortPayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"), false);
             return;
         }
 
@@ -72,13 +72,13 @@ public class ClientNetworkHandler {
             ));
         }
         else {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"), false);
         }
     }
 
     public static boolean sendItemFavoritedPayload(int slotId, boolean value) {
         if (!ClientPlayNetworking.canSend(ItemFavoritePayload.ID)) {
-            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"));
+            MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.unsupported_payload"), false);
             return false;
         }
 
@@ -87,7 +87,7 @@ public class ClientNetworkHandler {
             return true;
         }
 
-        MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"));
+        MinecraftClient.getInstance().player.sendMessage(Text.translatable("terrastorage.message.payload_cooldown"), false);
         return false;
     }
 

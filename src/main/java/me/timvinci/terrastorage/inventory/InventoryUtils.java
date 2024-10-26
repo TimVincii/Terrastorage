@@ -12,8 +12,8 @@ import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.enums.ChestType;
-import net.minecraft.component.ComponentMapImpl;
 import net.minecraft.component.ComponentType;
+import net.minecraft.component.MergedComponentMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.vehicle.VehicleEntity;
 import net.minecraft.inventory.DoubleInventory;
@@ -410,8 +410,8 @@ public class InventoryUtils {
         boolean secondStackIsFavorite = ItemFavoritingUtils.isFavorite(secondStack);
 
         if (firstStackIsFavorite ^ secondStackIsFavorite) {
-            ComponentMapImpl firstComponentMap = new ComponentMapImpl(firstStack.getComponents());
-            ComponentMapImpl secondComponentMap = new ComponentMapImpl(secondStack.getComponents());
+            MergedComponentMap firstComponentMap = new MergedComponentMap(firstStack.getComponents());
+            MergedComponentMap secondComponentMap = new MergedComponentMap(secondStack.getComponents());
             if (firstStackIsFavorite) { // Case 1 - First stack is favorite and the second stack isn't.
                 ItemFavoritingUtils.unFavorite(firstComponentMap);
             }
@@ -426,7 +426,7 @@ public class InventoryUtils {
         }
     }
 
-    private static boolean areComponentMapsEqual(ComponentMapImpl firstMap, ComponentMapImpl secondMap) {
+    private static boolean areComponentMapsEqual(MergedComponentMap firstMap, MergedComponentMap secondMap) {
         if (firstMap.size() != secondMap.size()) {
             return false;
         }

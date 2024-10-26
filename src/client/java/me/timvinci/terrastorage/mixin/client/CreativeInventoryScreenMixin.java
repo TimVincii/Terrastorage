@@ -3,8 +3,8 @@ package me.timvinci.terrastorage.mixin.client;
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.ScreenInteractionUtils;
-import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerInventory;
@@ -33,7 +33,7 @@ import java.util.Objects;
  * and item favoriting related logic.
  */
 @Mixin(CreativeInventoryScreen.class)
-public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScreen<CreativeInventoryScreen.CreativeScreenHandler> {
+public abstract class CreativeInventoryScreenMixin extends HandledScreen<CreativeInventoryScreen.CreativeScreenHandler> {
     @Unique
     private TexturedButtonWidget quickStackButton;
     @Unique
@@ -43,8 +43,8 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     @Shadow @Nullable
     private Slot deleteItemSlot;
 
-    public CreativeInventoryScreenMixin(CreativeInventoryScreen.CreativeScreenHandler screenHandler, PlayerInventory playerInventory, Text text) {
-        super(screenHandler, playerInventory, text);
+    public CreativeInventoryScreenMixin(CreativeInventoryScreen.CreativeScreenHandler handler, PlayerInventory inventory, Text title) {
+        super(handler, inventory, title);
     }
 
     /**
@@ -52,7 +52,7 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
      * process the slot click.
      */
     @Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
-    private void onMouseClickedHead(@Nullable Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
+    private void onMouseClick(@Nullable Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
         ItemStack cursorStack = this.handler.getCursorStack();
         if (Objects.equals(slot, deleteItemSlot) && !cursorStack.isEmpty() && ItemFavoritingUtils.isFavorite(cursorStack)) {
             ci.cancel();
@@ -63,12 +63,30 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     }
 
     /**
+     * Stops the client from deleting favorite items when the delete item slot is shift pressed.
+     */
+    @Redirect(method = "onMouseClick",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/screen/slot/Slot;setStackNoCallbacks(Lnet/minecraft/item/ItemStack;)V"
+            )
+    )
+    private void redirectSetStackNoCallbacks(Slot slot, ItemStack emptyStack) {
+        if (slot.hasStack() && ItemFavoritingUtils.isFavorite(slot.getStack())) {
+            return;
+        }
+
+        slot.setStackNoCallbacks(emptyStack);
+    }
+
+    /**
      * Stops favorite items from being deleted when the delete item slot is shift pressed.
      */
     @Redirect(method = "onMouseClick",
-            at = @At(value = "INVOKE",
+            at = @At(
+                    value = "INVOKE",
                     target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;clickCreativeStack(Lnet/minecraft/item/ItemStack;I)V"))
-    private void onMouseClickedInvoke(ClientPlayerInteractionManager interactionManager, ItemStack emptyStack, int i) {
+    private void redirectClickCreativeStack(ClientPlayerInteractionManager interactionManager, ItemStack emptyStack, int i) {
         ItemStack stack = handler.getSlot(i).getStack();
 
         // If the stack is favorited, skip this call entirely

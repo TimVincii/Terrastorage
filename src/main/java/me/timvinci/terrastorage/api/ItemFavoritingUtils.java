@@ -1,8 +1,8 @@
 package me.timvinci.terrastorage.api;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.component.ComponentMapImpl;
 import net.minecraft.component.ComponentType;
+import net.minecraft.component.MergedComponentMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -35,7 +35,7 @@ public class ItemFavoritingUtils {
         }
     }
 
-    public static void unFavorite(ComponentMapImpl componentMap) {
+    public static void unFavorite(MergedComponentMap componentMap) {
         componentMap.remove(FAVORITE);
     }
 }

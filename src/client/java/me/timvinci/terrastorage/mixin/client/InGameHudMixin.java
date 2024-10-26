@@ -4,6 +4,7 @@ import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.Reference;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -28,13 +29,13 @@ public class InGameHudMixin {
     @Inject(method = "renderHotbarItem",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/DrawContext;drawItemInSlot(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;II)V",
+                    target = "Lnet/minecraft/client/gui/DrawContext;drawStackOverlay(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;II)V",
                     shift = At.Shift.BEFORE))
     private void onRenderHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, CallbackInfo ci) {
         if (!ItemFavoritingUtils.isFavorite(stack)) {
             return;
         }
 
-        context.drawTexture(favoriteBorder, x, y, 0, 0, 16, 16, 16, 16);
+        context.drawTexture(RenderLayer::getGuiTextured, favoriteBorder, x, y, 0, 0, 16, 16, 16, 16);
     }
 }
