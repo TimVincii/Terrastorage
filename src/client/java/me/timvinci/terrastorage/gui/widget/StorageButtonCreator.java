@@ -5,6 +5,7 @@ import me.timvinci.terrastorage.network.ClientNetworkHandler;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.StorageAction;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ButtonTextures;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
@@ -16,8 +17,14 @@ import net.minecraft.util.Pair;
  * Creates the buttons used by Terrastorage.
  */
 public class StorageButtonCreator {
-    public static final Identifier sortButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/sort_inventory.png");
-    public static final Identifier quickStackButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/quick_stack.png");
+    private static final ButtonTextures quickStackButtonTexture = new ButtonTextures(
+            Identifier.of(Reference.MOD_ID, "quick_stack"),
+            Identifier.of(Reference.MOD_ID, "quick_stack_highlighted")
+    );
+    private static final ButtonTextures sortButtonTexture = new ButtonTextures(
+            Identifier.of(Reference.MOD_ID, "sort_inventory"),
+            Identifier.of(Reference.MOD_ID, "sort_inventory_highlighted")
+    );
 
     /**
      * Creates a custom button to be used by the HandledScreenMixin.
@@ -63,13 +70,10 @@ public class StorageButtonCreator {
                 y,
                 20,
                 18,
-                0,
-                0,
-                18,
                 quickStackButtonTexture,
-                20,
-                36,
-                onPress -> ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY)
+                onPress -> {
+                    ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY);
+                }
         );
         quickStackButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.quick_stack_to_nearby")));
 
@@ -78,13 +82,10 @@ public class StorageButtonCreator {
                 y,
                 20,
                 18,
-                0,
-                0,
-                18,
                 sortButtonTexture,
-                20,
-                36,
-                onPress -> ClientNetworkHandler.sendPlayerSortPacket()
+                onPress -> {
+                    ClientNetworkHandler.sendPlayerSortPacket();
+                }
         );
         sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
 

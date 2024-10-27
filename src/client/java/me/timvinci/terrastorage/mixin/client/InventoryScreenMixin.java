@@ -58,8 +58,8 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
      */
     @ModifyArg(method = "init", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/widget/TexturedButtonWidget;<init>(IIIIIIILnet/minecraft/util/Identifier;Lnet/minecraft/client/gui/widget/ButtonWidget$PressAction;)V"
-    )
+            target = "Lnet/minecraft/client/gui/widget/TexturedButtonWidget;<init>(IIIILnet/minecraft/client/gui/screen/ButtonTextures;Lnet/minecraft/client/gui/widget/ButtonWidget$PressAction;)V"
+        )
     )
     private ButtonWidget.PressAction modifyRecipeBookButtonPress(ButtonWidget.PressAction original) {
         if (client.player.isSpectator()) {

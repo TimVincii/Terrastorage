@@ -10,7 +10,8 @@
 		"HandledScreenMixin",
 		"InGameHudMixin",
 		"InventoryScreenMixin",
-		"ItemStackMixin"
+		"ItemStackMixin",
+		"PressableWidgetAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

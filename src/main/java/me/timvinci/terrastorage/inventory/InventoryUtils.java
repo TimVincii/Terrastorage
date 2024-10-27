@@ -8,6 +8,7 @@ import me.timvinci.terrastorage.util.SortType;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.*;
 import net.minecraft.block.enums.ChestType;
+import net.minecraft.entity.vehicle.VehicleEntity;
 import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
@@ -251,7 +252,7 @@ public class InventoryUtils {
         });
 
         Box searchBox = new Box(playerPos).expand(range);
-        world.getEntitiesByType(TypeFilter.instanceOf(Entity.class), searchBox, entity ->
+        world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
         entity instanceof Inventory inventory && inventory.size() >= 27)
             .forEach(entity -> {
                 Vec3d losPoint;

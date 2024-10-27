@@ -69,15 +69,6 @@ public class RenameScreen extends Screen {
         this.addDrawableChild(renameButtonWidget);
     }
 
-    /**
-     * Adds background rendering.
-     */
-    @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
-        super.render(context, mouseX, mouseY, delta);
-    }
-
     @Override
     public void close() {
         // Set the screen to the parent screen when this screen is closed.

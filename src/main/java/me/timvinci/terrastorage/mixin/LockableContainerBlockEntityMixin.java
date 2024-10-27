@@ -32,7 +32,7 @@ public class LockableContainerBlockEntityMixin extends BlockEntity {
     public NbtCompound toInitialChunkDataNbt() {
         NbtCompound nbt = new NbtCompound();
         if (customName != null) {
-            nbt.putString("CustomName", Text.Serializer.toJson(customName));
+            nbt.putString("CustomName", Text.Serialization.toJsonString(customName));
         }
 
         return nbt;

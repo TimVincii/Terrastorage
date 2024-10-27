@@ -26,7 +26,7 @@ public class TerrastorageOptionsScreen extends GameOptionsScreen {
      */
     @Override
     protected void init() {
-        options = new OptionListWidget(this.client, this.width, this.height, 32, this.height - 32, 25);
+        options = new OptionListWidget(this.client, this.width, this.height - 64, 32, 25);
         options.addAll(ClientConfigManager.getInstance().asOption());
         this.addSelectableChild(options);
         this.addDrawableChild(
@@ -39,10 +39,17 @@ public class TerrastorageOptionsScreen extends GameOptionsScreen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float tickDelta) {
-        this.renderBackground(context);
+        super.render(context, mouseX, mouseY, tickDelta);
         options.render(context, mouseX, mouseY, tickDelta);
         context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 20, 16777215);
-        super.render(context, mouseX, mouseY, tickDelta);
+    }
+
+    /**
+     * Adds background rendering.
+     */
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        this.renderBackgroundTexture(context);
     }
 
     /**
