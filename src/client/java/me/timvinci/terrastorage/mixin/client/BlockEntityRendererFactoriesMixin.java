@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.Map;
 
+/**
+ * A mixin accessor for the BlockEntityRendererFactories class.
+ */
 @Mixin(BlockEntityRendererFactories.class)
 public interface BlockEntityRendererFactoriesMixin {
 

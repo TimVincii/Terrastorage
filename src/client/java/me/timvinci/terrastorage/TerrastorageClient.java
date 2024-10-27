@@ -4,7 +4,7 @@ import me.timvinci.terrastorage.command.TerrastorageClientCommands;
 import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.keybinding.TerrastorageKeybindings;
 import me.timvinci.terrastorage.network.ClientPacketRegistry;
-import me.timvinci.terrastorage.util.BlockEntityRendererManager;
+import me.timvinci.terrastorage.render.BlockEntityRendererManager;
 import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.Reference;
 
