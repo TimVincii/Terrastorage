@@ -14,7 +14,7 @@ import java.util.Map;
  * Stores a hashmap in which the key is an Item, and the value is an array of the positions of non-full stacks of that
  * item in the inventory.
  */
-public class CompactInventoryState implements InventoryState{
+public class CompactInventoryState implements InventoryState {
     private final Map<Item, ArrayList<Integer>> itemSlots = new HashMap<>();
     private boolean modified = false;
 
