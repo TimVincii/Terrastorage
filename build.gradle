@@ -34,7 +34,10 @@ loom {
 			sourceSet sourceSets.client
 		}
 	}
+}
 
+configurations {
+	nightConfigExtract
 }
 
 dependencies {
@@ -46,16 +49,22 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// NightConfig.
-	modImplementation "com.electronwill.night-config:core:${project.night_config_version}"
-	modImplementation "com.electronwill.night-config:toml:${project.night_config_version}"
-	include "com.electronwill.night-config:core:${project.night_config_version}"
-	include "com.electronwill.night-config:toml:${project.night_config_version}"
+	nightConfigExtract implementation("com.electronwill.night-config:core:${project.night_config_version}")
+	nightConfigExtract implementation("com.electronwill.night-config:toml:${project.night_config_version}")
 
 	// ModMenu integration.
 	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
 
 	// Expanded Storage compatibility.
 	modCompileOnlyApi "maven.modrinth:expanded-storage:${project.expanded_storage_version}"
+}
+
+tasks.register("extractNightConfig", Copy) {
+	from {
+		configurations.nightConfigExtract.collect { zipTree(it) }
+	}
+	into layout.buildDirectory.dir("nightconfig")
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 processResources {
@@ -81,7 +90,13 @@ java {
 }
 
 jar {
+	dependsOn("extractNightConfig")
+
+	from(layout.buildDirectory.dir("nightconfig")) {
+		into ""
+	}
+
 	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
+		rename { "${it}_${project.base.archivesName.get()}" }
 	}
 }
