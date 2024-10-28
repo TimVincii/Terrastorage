@@ -2,6 +2,7 @@ package me.timvinci.terrastorage.inventory;
 
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.item.GhostItemEntity;
+import me.timvinci.terrastorage.item.StackIdentifier;
 import me.timvinci.terrastorage.util.ComparatorTypes;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.SortType;
@@ -119,8 +120,10 @@ public class InventoryUtils {
      */
     public static List<ItemStack> combineAndSortInventory(Inventory inventory, SortType type, int startIndex, int endIndex, boolean ignoreFavorites) {
         List<ItemStack> combinedStacks = new ArrayList<>();
+        // Rough estimate for an efficient initial capacity for the lastStackMap.
+        int initialCapacity = Math.max(16, (endIndex - startIndex) / 3);
         // Use a map in which the key is an item and the value is the last stack of that item.
-        Map<Item, ItemStack> lastStackMap = new HashMap<>();
+        Map<StackIdentifier, ItemStack> lastStackMap = new HashMap<>(initialCapacity);
         Predicate<ItemStack> shouldSkip = ignoreFavorites ?
                 stack -> stack.isEmpty() || ItemFavoritingUtils.isFavorite(stack) :
                 ItemStack::isEmpty;
@@ -131,21 +134,28 @@ public class InventoryUtils {
                 continue;
             }
 
-            Item stackItem = stack.getItem();
-            ItemStack lastStack = lastStackMap.get(stackItem);
+            if (stack.getMaxCount() <= 1 || stack.getCount() == stack.getMaxCount()) {
+                combinedStacks.add(stack.copy());
+                inventory.setStack(i, ItemStack.EMPTY);
+                continue;
+            }
 
-            if (lastStack == null || lastStack.getCount() == stackItem.getMaxCount()) {
+            StackIdentifier identifier = new StackIdentifier(stack);
+            ItemStack lastStack = lastStackMap.get(identifier);
+
+            if (lastStack == null || lastStack.getCount() == stack.getMaxCount()) {
                 ItemStack newStack = stack.copy();
                 combinedStacks.add(newStack);
-                lastStackMap.put(stackItem, newStack);
+                lastStackMap.put(identifier, newStack);
             }
             else {
-                int spaceLeft = stackItem.getMaxCount() - lastStack.getCount();
+                int spaceLeft = lastStack.getMaxCount() - lastStack.getCount();
                 if (spaceLeft < stack.getCount()) {
                     lastStack.increment(spaceLeft);
-                    ItemStack newStack = new ItemStack(stackItem, stack.getCount() - spaceLeft);
+                    ItemStack newStack = stack.copy();
+                    newStack.setCount(stack.getCount() - spaceLeft);
                     combinedStacks.add(newStack);
-                    lastStackMap.put(stackItem, newStack);
+                    lastStackMap.put(identifier, newStack);
                 }
                 else {
                     lastStack.increment(stack.getCount());

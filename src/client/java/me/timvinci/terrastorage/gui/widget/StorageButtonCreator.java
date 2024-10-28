@@ -71,9 +71,7 @@ public class StorageButtonCreator {
                 20,
                 18,
                 quickStackButtonTexture,
-                onPress -> {
-                    ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY);
-                }
+                onPress -> ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY)
         );
         quickStackButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.quick_stack_to_nearby")));
 
@@ -83,9 +81,7 @@ public class StorageButtonCreator {
                 20,
                 18,
                 sortButtonTexture,
-                onPress -> {
-                    ClientNetworkHandler.sendPlayerSortPacket();
-                }
+                onPress -> ClientNetworkHandler.sendPlayerSortPacket()
         );
         sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
 
