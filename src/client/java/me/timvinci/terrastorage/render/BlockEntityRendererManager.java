@@ -44,7 +44,7 @@ public class BlockEntityRendererManager {
                 }
             }
             catch (Exception e) {
-                TerrastorageClient.CLIENT_LOGGER.error("Failed to instantiate a block entity instance for the '{}' block, skipping block nametag renderer registration check.", state.getBlock().getName().getString(), e);
+                TerrastorageClient.CLIENT_LOGGER.warn("Failed to instantiate a block entity instance for the '{}' block, skipping block nametag renderer registration check, you can safely ignore this.", state.getBlock().getName().getString());
             }
         });
     }
