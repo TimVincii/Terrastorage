@@ -40,7 +40,7 @@ public class Terrastorage implements ModInitializer {
 		TerrastorageCommands.registerCommands();
 		PacketRegistry.registerPacketReceivers();
 
-		ServerLifecycleEvents.SERVER_STARTING.register((listener) -> {
+		ServerLifecycleEvents.SERVER_STARTED.register((listener) -> {
 			if (populatedItemGroups) {
 				return;
 			}
