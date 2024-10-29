@@ -42,7 +42,7 @@ public class Terrastorage implements ModInitializer {
 		PayloadRegistry.registerPayloads();
 		ItemFavoritingUtils.initializeComponentType();
 
-		ServerLifecycleEvents.SERVER_STARTING.register((listener) -> {
+		ServerLifecycleEvents.SERVER_STARTED.register((listener) -> {
 			if (populatedItemGroups) {
 				return;
 			}
