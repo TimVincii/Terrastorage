@@ -82,18 +82,22 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
      * Stops favorite items from being deleted when the delete item slot is shift pressed.
      */
     @Redirect(method = "onMouseClick",
-            at = @At(
-                    value = "INVOKE",
+            at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;clickCreativeStack(Lnet/minecraft/item/ItemStack;I)V"))
-    private void redirectClickCreativeStack(ClientPlayerInteractionManager interactionManager, ItemStack emptyStack, int i) {
-        ItemStack stack = handler.getSlot(i).getStack();
-
-        // If the stack is favorited, skip this call entirely
-        if (stack.isEmpty() || ItemFavoritingUtils.isFavorite(stack)) {
+    private void redirectClickCreativeStack(ClientPlayerInteractionManager interactionManager, ItemStack stack, int i, @Nullable Slot slot, int slotId, int button, SlotActionType actionType) {
+        if (actionType != SlotActionType.QUICK_MOVE) {
+            this.client.interactionManager.clickCreativeStack(stack, i);
             return;
         }
 
-        this.client.interactionManager.clickCreativeStack(emptyStack, i);
+        ItemStack playerStack = this.client.player.currentScreenHandler.slots.get(i).getStack();
+
+        // If the stack is favorited, skip this call entirely
+        if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
+            return;
+        }
+
+        this.client.interactionManager.clickCreativeStack(stack, i);
     }
 
     /**
