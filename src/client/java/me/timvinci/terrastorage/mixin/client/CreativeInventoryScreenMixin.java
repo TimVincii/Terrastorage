@@ -49,7 +49,7 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
      * process a slot click.
      */
     @Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
-    private void onMouseClickedHead(@Nullable Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
+    private void onMouseClick(@Nullable Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
         ItemStack cursorStack = this.handler.getCursorStack();
         if (Objects.equals(slot, deleteItemSlot) && !cursorStack.isEmpty() && ItemFavoritingUtils.isFavorite(cursorStack)) {
             ci.cancel();
@@ -65,15 +65,20 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     @Redirect(method = "onMouseClick",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;clickCreativeStack(Lnet/minecraft/item/ItemStack;I)V"))
-    private void onMouseClickedInvoke(ClientPlayerInteractionManager interactionManager, ItemStack emptyStack, int i) {
-        ItemStack stack = this.client.player.currentScreenHandler.slots.get(i).getStack();
-
-        // If the stack is favorited, skip this call entirely
-        if (ItemFavoritingUtils.isFavorite(stack)) {
+    private void redirectClickCreativeStack(ClientPlayerInteractionManager interactionManager, ItemStack stack, int i, @Nullable Slot slot, int slotId, int button, SlotActionType actionType) {
+        if (actionType != SlotActionType.QUICK_MOVE) {
+            this.client.interactionManager.clickCreativeStack(stack, i);
             return;
         }
 
-        this.client.interactionManager.clickCreativeStack(emptyStack, i);
+        ItemStack playerStack = this.client.player.currentScreenHandler.slots.get(i).getStack();
+
+        // If the stack is favorited, skip this call entirely
+        if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
+            return;
+        }
+
+        this.client.interactionManager.clickCreativeStack(stack, i);
     }
 
     /**
