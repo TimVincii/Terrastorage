@@ -85,3 +85,13 @@ jar {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
 }
+
+tasks.named("remapJar") {
+	destinationDirectory = layout.buildDirectory.dir("libs/${project.minecraft_version_range}")
+	archiveFileName = "${project.archives_base_name}-${project.mod_version}+${project.minecraft_version_range}.jar"
+}
+
+tasks.named("remapSourcesJar") {
+	destinationDirectory = layout.buildDirectory.dir("libs/${project.minecraft_version_range}")
+	archiveFileName = "${project.archives_base_name}-${project.mod_version}+${project.minecraft_version_range}-sources.jar"
+}
