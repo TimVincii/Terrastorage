@@ -1,14 +1,15 @@
 package me.timvinci.terrastorage.util;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
-import me.timvinci.terrastorage.inventory.CompactInventoryState;
-import me.timvinci.terrastorage.inventory.CompleteInventoryState;
-import me.timvinci.terrastorage.inventory.InventoryUtils;
+import me.timvinci.terrastorage.inventory.*;
+import me.timvinci.terrastorage.item.StackIdentifier;
+import me.timvinci.terrastorage.item.StackProcessor;
 import me.timvinci.terrastorage.mixin.DoubleInventoryAccessor;
 import me.timvinci.terrastorage.mixin.EntityAccessor;
 import me.timvinci.terrastorage.mixin.LockableContainerBlockEntityAccessor;
 import me.timvinci.terrastorage.network.NetworkHandler;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.vehicle.VehicleInventory;
@@ -22,6 +23,7 @@ import net.minecraft.util.Pair;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Utility class that stores the implementation of the core options provided by Terrastorage.
@@ -92,24 +94,22 @@ public class TerrastorageCore {
     }
 
     /**
-     * Attempts to deposit all the items of the player that can stack with existing items of the storage, from the
-     * player to the storage.
+     * Performs a quick stack operation on a storage inventory.
      * @param playerInventory The player's inventory.
      * @param storageInventory The storage's inventory.
      * @param hotbarProtection The hotbar protection value of the player.
+     * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
-    public static void quickStack(PlayerInventory playerInventory, Inventory storageInventory, boolean hotbarProtection) {
-        // Create a compact inventory state from the storage's inventory.
-        CompactInventoryState storageInventoryState = new CompactInventoryState(storageInventory);
+    public static void quickStack(PlayerInventory playerInventory, Inventory storageInventory, boolean hotbarProtection, boolean smartDepositMode) {
+        InventoryState storageInventoryState = smartDepositMode ?
+                new ExpandedInventoryState(storageInventory) :
+                new CompactInventoryState(storageInventory);
+
+        StackProcessor processor = InventoryUtils.createStackProcessor(storageInventoryState, storageInventory, smartDepositMode);
 
         int startIndex = hotbarProtection ? PlayerInventory.getHotbarSize() : 0;
         for (int i = startIndex; i < playerInventory.main.size(); i++) {
-            ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !storageInventoryState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
-                continue;
-            }
-
-            InventoryUtils.transferToExistingStack(storageInventory, storageInventoryState, playerStack);
+            processor.tryProcess(playerInventory.getStack(i));
         }
 
         if (storageInventoryState.wasModified()) {
@@ -117,6 +117,7 @@ public class TerrastorageCore {
             storageInventory.markDirty();
         }
     }
+
 
     /**
      * Attempts to loot all the items of the storage that can stack with existing items of the player, from the storage
@@ -131,7 +132,7 @@ public class TerrastorageCore {
 
         for (int i = 0; i < storageInventory.size(); i++) {
             ItemStack storageStack = storageInventory.getStack(i);
-            if (storageStack.isEmpty() || !playerInventoryState.getNonFullItemSlots().containsKey(storageStack.getItem())) {
+            if (storageStack.isEmpty() || !playerInventoryState.getNonFullItemSlots().containsKey(new StackIdentifier(storageStack))) {
                 continue;
             }
 
@@ -160,6 +161,13 @@ public class TerrastorageCore {
         storageInventory.markDirty();
     }
 
+    /**
+     * Handles the renaming of an entity or block entity that the player is interacting with.
+     * Updates the name of the entity or block entity and sends the new name to all players tracking it.
+     * Also reopens the screen for the player who initiated the rename action.
+     * @param player The player initiating the rename action.
+     * @param newName The new name to apply to the entity or block entity. If empty, the name will be reset to default.
+     */
     public static void renameStorage(ServerPlayerEntity player, String newName) {
         Text newCustomName = newName.isEmpty() ? null : Text.literal(newName);
         NamedScreenHandlerFactory factory;
@@ -177,9 +185,12 @@ public class TerrastorageCore {
             if (accessor.first() instanceof LockableContainerBlockEntity firstPart &&
                     accessor.second() instanceof LockableContainerBlockEntity secondPart) {
 
-                if (newName.equals("Large " + ((LockableContainerBlockEntityAccessor) firstPart).invokeGetContainerName().getString())) {
+                String containerName = ((LockableContainerBlockEntityAccessor)firstPart).invokeGetContainerName().getString();
+                String doubleContainerName = Text.translatable("container.chestDouble").getString().replace(Text.translatable("container.chest").getString(), containerName);
+                if (newName.equals(doubleContainerName)) {
                     newCustomName = null;
                 }
+
 
                 ((LockableContainerBlockEntityAccessor) firstPart).setCustomName(newCustomName);
                 ((LockableContainerBlockEntityAccessor) secondPart).setCustomName(newCustomName);
@@ -250,17 +261,18 @@ public class TerrastorageCore {
     }
 
     /**
-     * Attempts to deposit all the items of the player that can stack with existing items in nearby storages, from the
-     * player to the storages.
+     * Performs a quick stack operation on all storage nearby the player.
      * @param player The player who initiated the operation.
      * @param hotbarProtection The player's hotbar protection value.
+     * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
-    public static void quickStackToNearbyStorages(ServerPlayerEntity player, boolean hotbarProtection) {
+    public static void quickStackToNearbyStorages(ServerPlayerEntity player, boolean hotbarProtection, boolean smartDepositMode) {
         List<Pair<Inventory, Vec3d>> nearbyStorages = InventoryUtils.getNearbyStorages(player);
         if (nearbyStorages.isEmpty()) {
             return;
         }
 
+        Function<Inventory, InventoryState> stateFactory = InventoryUtils.getInventoryStateFactory(smartDepositMode);
         Map<Vec3d, ArrayList<Item>> animationMap = new HashMap<>();
 
         PlayerInventory playerInventory = player.getInventory();
@@ -270,17 +282,16 @@ public class TerrastorageCore {
         for (Pair<Inventory, Vec3d> storagePair : nearbyStorages) {
             Inventory storage = storagePair.getLeft();
             Vec3d storagePos = storagePair.getRight();
-            CompactInventoryState storageState = new CompactInventoryState(storage);
+
+            InventoryState storageState = stateFactory.apply(storage);
+            StackProcessor processor = InventoryUtils.createStackProcessor(storageState, storage, smartDepositMode);
 
             for (int i = startIndex; i < playerInventory.main.size(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
-                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !storageState.getNonFullItemSlots().containsKey(playerStack.getItem())) {
-                    continue;
-                }
-
                 Item playerItem = playerStack.getItem();
-                InventoryUtils.transferToExistingStack(storage, storageState, playerStack);
-                animationMap.computeIfAbsent(storagePos, k -> new ArrayList<>()).add(playerItem);
+                if (processor.tryProcess(playerStack)) {
+                    animationMap.computeIfAbsent(storagePos, k -> new ArrayList<>()).add(playerItem);
+                }
             }
 
             if (storageState.wasModified()) {

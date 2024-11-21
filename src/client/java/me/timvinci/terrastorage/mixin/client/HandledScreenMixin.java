@@ -34,8 +34,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Arrays;
-
 /**
  * A mixin of the HandledScreen class, adds the storage option buttons to storage screens, and provides item favoriting
  * support.
@@ -75,50 +73,53 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             isEnderChest = true;
         }
 
-        StorageAction[] buttonActions = getButtonsActions(isEnderChest);
+        StorageAction[] buttonActions = StorageAction.getButtonsActions(isEnderChest);
 
-        // Set the button sizes and their spacing.
-        int buttonWidth = 70;
-        int buttonHeight = 15;
-        int buttonSpacing = 2;
+        ButtonsStyle buttonsStyle = ClientConfigManager.getInstance().getConfig().getButtonsStyle();
+        // Set the buttons offset.
+        int buttonsXOffset = ClientConfigManager.getInstance().getConfig().getButtonsXOffset();
+        int buttonsYOffset = ClientConfigManager.getInstance().getConfig().getButtonsYOffset();
+
+        // Set the button dimensions and vertical spacing.
+        int buttonsWidth = ClientConfigManager.getInstance().getConfig().getButtonsWidth();
+        int buttonsHeight = ClientConfigManager.getInstance().getConfig().getButtonsHeight();
+        int buttonsSpacing = ClientConfigManager.getInstance().getConfig().getButtonsSpacing();
 
         // Place the buttons on the side of the container gui.
         int buttonX = ClientConfigManager.getInstance().getConfig().getButtonsPlacement() == ButtonsPlacement.RIGHT?
-                x + backgroundWidth + 5 :
-                x - (buttonWidth + 5);
+                this.x + this.backgroundWidth + 5 + buttonsXOffset :
+                this.x - ((buttonsStyle == ButtonsStyle.DEFAULT ? buttonsWidth : 70) + 5) + buttonsXOffset;
         // Get the height of the container, excluding the player's inventory portion whose height is 94.
-        int containerHeight = backgroundHeight - 94;
-        int buttonSectionHeight = buttonActions.length * buttonHeight + (buttonActions.length-1) * buttonSpacing;
+        int containerHeight = this.backgroundHeight - 94;
+        int buttonSectionHeight = buttonActions.length * buttonsHeight + (buttonActions.length-1) * buttonsSpacing;
         // Centering the buttons vertically alongside the container gui.
-        int buttonY = y - (buttonSectionHeight - containerHeight) / 2;
+        int buttonY = this.y - (buttonSectionHeight - containerHeight) / 2 + buttonsYOffset;
 
-        if (ClientConfigManager.getInstance().getConfig().getButtonsStyle() == ButtonsStyle.TEXT_ONLY) {
-            // Create the buttons with the width of their text.
+        if (ClientConfigManager.getInstance().getConfig().getButtonsTooltip()) {
             for (StorageAction storageAction : buttonActions) {
                 Text buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);
-                buttonWidth = textRenderer.getWidth(buttonText) + 6;
                 Tooltip buttonTooltip = LocalizedTextProvider.buttonTooltipCache.get(storageAction);
-                StorageButtonWidget button = StorageButtonCreator.createStorageButton(storageAction, buttonText, buttonTooltip, buttonX, buttonY, buttonWidth, buttonHeight);
-                this.addDrawableChild(button);
+                StorageButtonWidget storageButton = StorageButtonCreator.createStorageButton(storageAction, buttonX, buttonY, buttonsWidth, buttonsHeight, buttonText, buttonsStyle);
+                storageButton.setTooltip(buttonTooltip);
 
-                buttonY += buttonHeight + buttonSpacing;
+                this.addDrawableChild(storageButton);
+                buttonY += buttonsHeight + buttonsSpacing;
             }
-        } else {
-            // Create the buttons with a set width.
+        }
+        else {
             for (StorageAction storageAction : buttonActions) {
-                Text buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);;
-                Tooltip buttonTooltip = LocalizedTextProvider.buttonTooltipCache.get(storageAction);
-                StorageButtonWidget button = StorageButtonCreator.createStorageButton(storageAction, buttonText, buttonTooltip, buttonX, buttonY, buttonWidth, buttonHeight);
-                this.addDrawableChild(button);
+                Text buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);
+                StorageButtonWidget storageButton = StorageButtonCreator.createStorageButton(storageAction, buttonX, buttonY, buttonsWidth, buttonsHeight, buttonText, buttonsStyle);
 
-                buttonY += buttonHeight + buttonSpacing;
+                this.addDrawableChild(storageButton);
+                buttonY += buttonsHeight + buttonsSpacing;
             }
         }
 
         // Add the options buttons if it is enabled.
         if (ClientConfigManager.getInstance().getConfig().getDisplayOptionsButton()) {
-            int optionsButtonX = (client.currentScreen.width - 120) / 2;
-            int optionsButtonY = y - 20;
+            int optionsButtonX = (this.width - 120) / 2;
+            int optionsButtonY = this.y - 20;
             ButtonWidget optionsButtonWidget = ButtonWidget.builder(
                             Text.translatable("terrastorage.button.options"),
                             onPress -> {
@@ -133,12 +134,6 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
 
             this.addDrawableChild(optionsButtonWidget);
         }
-    }
-
-    @Unique
-    private StorageAction[] getButtonsActions(boolean isEnderChest) {
-        StorageAction[] allActions = StorageAction.values();
-        return Arrays.copyOf(allActions, allActions.length - (isEnderChest ? 2 : 1));
     }
 
     /**

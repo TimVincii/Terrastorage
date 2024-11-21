@@ -17,22 +17,17 @@ public class PayloadRegistry {
     public static void registerPayloads() {
         PayloadTypeRegistry.playC2S().register(StorageActionPayload.ID, StorageActionPayload.actionCodec);
         ServerPlayNetworking.registerGlobalReceiver(StorageActionPayload.ID, (payload, context) -> {
-            StorageActionPayload.receive(context.player(), payload.action(), payload.hotbarProtection());
+            StorageActionPayload.receive(context.player(), payload.syncId(), payload.action(), payload.hotbarProtection(), payload.smartDepositMode());
         });
 
-        PayloadTypeRegistry.playC2S().register(StorageSortPayload.ID, StorageSortPayload.storageSortCodec);
-        ServerPlayNetworking.registerGlobalReceiver(StorageSortPayload.ID, (payload, context) -> {
-            StorageSortPayload.receive(context.player(), payload.type());
+        PayloadTypeRegistry.playC2S().register(SortPayload.ID, SortPayload.storageSortCodec);
+        ServerPlayNetworking.registerGlobalReceiver(SortPayload.ID, (payload, context) -> {
+            SortPayload.receive(context.player(), payload.syncId(), payload.type(), payload.hotbarProtection());
         });
 
         PayloadTypeRegistry.playC2S().register(RenamePayload.ID, RenamePayload.renameCodec);
         ServerPlayNetworking.registerGlobalReceiver(RenamePayload.ID, (payload, context) -> {
-            RenamePayload.receive(context.player(), payload.newName());
-        });
-
-        PayloadTypeRegistry.playC2S().register(PlayerSortPayload.ID, PlayerSortPayload.playerSortCodec);
-        ServerPlayNetworking.registerGlobalReceiver(PlayerSortPayload.ID, (payload, context) -> {
-           PlayerSortPayload.receive(context.player(), payload.type(), payload.hotbarProtection());
+            RenamePayload.receive(context.player(), payload.syncId(), payload.newName());
         });
 
         PayloadTypeRegistry.playC2S().register(ItemFavoritePayload.ID, ItemFavoritePayload.toggleItemFavoritedCodec);
