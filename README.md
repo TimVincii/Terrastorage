@@ -31,16 +31,21 @@ With that out of the way, let's dive into the feature showcase:
 
 ![Showcase Quick Stack And Restock](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_quick_stack_and_restock.gif)
 **Quick Stack and Restock**:
-* **Quick Stack** - Transfers items from the player's inventory into existing stacks in the storage.
-* **Restock** - Transfers items from the storage into existing stacks in the player's inventory.
+* **Quick Stack** - Transfers items from the player's inventory to the storage using one of two modes:
 
-⏺️ Items are combined up to their max stack size, so empty slots in the receiving inventory remain unaffected.
+  * **Smart Deposit** - Similar to Fill Up, but also moves all matching items into empty slots, creating new stacks as needed.
+
+  * **Fill Up** - Adds items to existing stacks until they reach their maximum capacity, keeping empty slots in the receiving inventory unaffected.
+
+* **Restock** - Transfers items from the storage into existing stacks in the player's inventory.
 
 ⏺️ Favorite items will not be affected by **Quick Stack**.
 
+✳️ The Quick Stack mode can be configured through the **Storage Quick Stack Mode** option in the Options Screen.
+
 ---
 
-![Showcase Quick Stack And Restock](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_item_favoriting.gif)
+![Showcase Item Favoriting](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/showcase_item_favoriting.gif)
 **Item Favoriting**:
 
 * **Item Favoriting** - You can favorite items in your inventory by holding the modifier key for Item Favoriting (Left Alt by default) and left-clicking them.
@@ -88,14 +93,6 @@ With that out of the way, let's dive into the feature showcase:
 The client side features an options screen that can be accessed with [mod menu](https://github.com/TerraformersMC/ModMenu) or with the `/tsclient options` command, it allows for the configuration of the following settings:
 * **Options Button** - Controls whether an "Options" button, which takes the player to the options screen, is added to the storage screens.
 * **Hotbar Protection** - Determines whether the hotbar is excluded from storage actions.
-* **Buttons Style** - Controls the style of the buttons added to storage inventory screens. It can be set to:
-
-  * Default - The standard Minecraft button style.
-  * Text Only - Displays only the button text without a background, similar to Terraria’s storage buttons.
-* **Buttons Placement** - Controls which side of the screen the storage option buttons are added to, and can be set to:
-
-  * Right - Buttons are placed on the right side of storage screens.
-  * Left - Buttons are placed on the left side of storage screens.
 * **Sort By** - Determines the property by which items are sorted when using "Sort Items" or "Sort Inventory". It can be set to:
 
   * Item Group - Items are sorted by their group.
@@ -103,40 +100,36 @@ The client side features an options screen that can be accessed with [mod menu](
   * Item Rarity - Items are sorted by their rarity (from higher to lower).
   * Item Name - Items are sorted alphabetically by name.
   * Item Id - Items are sorted by their ID (from lower to higher).
+* **Storage Quick Stack Mode** - Configures the quick stack mode used for single storage operations. (See Quick Stack and Restock for details.)
+* **Nearby Storage Quick Stack Mode** - Configures the quick stack mode used for nearby storages. (See Quick Stack and Restock for details.)
 
-In addition to the options screen, these settings can be directly modified through the client configuration file. This file, designed for easy manual editing, is located at `.\config\terrastorage_client.toml`. Below are its default contents:
-```toml
-#Whether to display the options button in the storage screens
-#Default: true
-display_options_button = true
-#==========
-#Whether to protect hotbar items from the storage options
-#Default: true
-hotbar_protection = true
-#==========
-#The style of the storage option buttons
-#Default: DEFAULT
-buttons_style = "DEFAULT"
-#==========
-#The placement of the storage option buttons
-#Default: RIGHT
-buttons_placement = "RIGHT"
-#==========
-#The property by which items will be sorted
-#Default: ITEM_GROUP
-sort_type = "ITEM_GROUP"
-```
+![Buttons Customization Screen](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/buttons_customization_screen.png)
+
+In addition to the options screen, a dedicated buttons customization screen allows for customizing the appearance of the storage option buttons displayed in storage inventory screens. It includes:
+* **Buttons Tooltip** - Toggles the visibility of the tooltips for the buttons.
+* **Buttons Style** - Sets the visual style of the buttons:
+
+  * Default - The standard Minecraft button style.
+  * Text Only - Displays only the button text without a background, similar to Terraria’s storage buttons.
+* **Buttons Placement** - Determines the side of the screen where buttons are displayed:
+  * Right - Buttons are placed on the right side of storage screens.
+  * Left - Buttons are placed on the left side of storage screens.
+* **X and Y Offset** - Adjusts the position of the buttons along the horizontal and vertical axes.
+* **Width and Height** - Controls the size of the buttons.
+* **Spacing** - Sets the vertical space between each button.
+
+⏺️ All these options are customizable through the client configuration file, located at `.\config\terrastorage_client.toml`. This file is designed for easy manual editing and includes the default values of each property, as well as the range of integer properties.
 
 ---
 
-### Server Side 
+### Server Side
 The following server settings can be modified via in-game commands. To change a setting, use the command `/terrastorage [option] [new value]`. To view the current value, use `/terrastorage [option]`.
 
 The available options are:
 * **action-cooldown**
 
   *Sets the cooldown for all storage actions, in game ticks.*
-  
+
   Default: 10
 * **line-of-sight-check**
 
@@ -165,7 +158,7 @@ The available options are:
 
   Default: true
 
-These settings can be directly modified through the configuration file, located at `.\config\terrastorage.toml`. Below are its default contents:
+⏺️ These settings can be directly modified through the configuration file, located at `.\config\terrastorage.toml`. Just like the client configuration file, it is designed for easy manual editing. Below are its default contents:
 ```toml
 #The cooldown of all storage actions, in game ticks
 #Range: 2 to 100, inclusive

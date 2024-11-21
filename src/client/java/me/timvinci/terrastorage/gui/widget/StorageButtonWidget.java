@@ -1,7 +1,5 @@
 package me.timvinci.terrastorage.gui.widget;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.mixin.client.PressableWidgetAccessor;
 import me.timvinci.terrastorage.util.ButtonsStyle;
 import net.minecraft.client.MinecraftClient;
@@ -17,10 +15,15 @@ import net.minecraft.util.math.MathHelper;
  * A customized button widget.
  */
 public class StorageButtonWidget extends ButtonWidget {
+    private ButtonsStyle buttonStyle;
 
-    public StorageButtonWidget(int x, int y, int width, int height, Text message, Tooltip toolTip, PressAction onPress) {
+    public StorageButtonWidget(int x, int y, int width, int height, Text message, ButtonsStyle buttonStyle, PressAction onPress) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
-        this.setTooltip(toolTip);
+        this.setButtonStyle(buttonStyle);
+    }
+
+    public void setButtonStyle(ButtonsStyle buttonsStyle) {
+        this.buttonStyle = buttonsStyle;
     }
 
     /**
@@ -31,7 +34,7 @@ public class StorageButtonWidget extends ButtonWidget {
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         // Draw the button background if the option buttons style is set to default.
-        if (ClientConfigManager.getInstance().getConfig().getButtonsStyle() == ButtonsStyle.DEFAULT) {
+        if (buttonStyle == ButtonsStyle.DEFAULT) {
             context.drawGuiTexture(RenderLayer::getGuiTextured, PressableWidgetAccessor.getTextures().get(this.active, this.isSelected()), this.getX(), this.getY(), this.getWidth(), this.getHeight(), ColorHelper.getWhite(this.alpha));
         }
         // Change the text color to yellow if the button is hovered.

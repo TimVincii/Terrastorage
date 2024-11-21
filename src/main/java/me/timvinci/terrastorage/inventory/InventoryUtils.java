@@ -4,6 +4,7 @@ import compasses.expandedstorage.api.ExpandedStorageAccessors;
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.item.GhostItemEntity;
 import me.timvinci.terrastorage.item.StackIdentifier;
+import me.timvinci.terrastorage.item.StackProcessor;
 import me.timvinci.terrastorage.util.ComparatorTypes;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.SortType;
@@ -36,6 +37,7 @@ import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -51,11 +53,11 @@ public class InventoryUtils {
      * @param receiverState An InventoryState object of the receiver inventory.
      * @param stack The stack to transfer.
      */
-    public static void transferStack(Inventory to, CompleteInventoryState receiverState, ItemStack stack) {
-        Item stackItem = stack.getItem();
+    public static void transferStack(Inventory to, InventoryState receiverState, ItemStack stack) {
+        StackIdentifier stackIdentifier = new StackIdentifier(stack);
 
         // Attempt to transfer the stack to an existing item stack of the same item.
-        if (receiverState.getNonFullItemSlots().containsKey(stackItem) && transferToExistingStack(to, receiverState, stack)) {
+        if (receiverState.getNonFullItemSlots().containsKey(stackIdentifier) && transferToExistingStack(to, receiverState, stack)) {
             return;
         }
 
@@ -66,7 +68,7 @@ public class InventoryUtils {
             // Check if the stack that was transferred isn't full.
             if (stack.getCount() != stack.getMaxCount()) {
                 // Add this slot to the item slots of the receiver state.
-                receiverState.getNonFullItemSlots().computeIfAbsent(stackItem, k -> new ArrayList<>()).add(emptySlot);
+                receiverState.getNonFullItemSlots().computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(emptySlot);
             }
         }
     }
@@ -80,16 +82,13 @@ public class InventoryUtils {
      * @return True if the entire stack was transferred, false otherwise.
      */
     public static boolean transferToExistingStack(Inventory to, InventoryState receiverState, ItemStack stackToTransfer) {
-        Item stackItem = stackToTransfer.getItem();
-        ArrayList<Integer> slotsWithItem = receiverState.getNonFullItemSlots().get(stackItem);
+        StackIdentifier stackIdentifier = new StackIdentifier(stackToTransfer);
+        ArrayList<Integer> slotsWithItem = receiverState.getNonFullItemSlots().get(stackIdentifier);
         Iterator<Integer> slotsIterator = slotsWithItem.iterator();
 
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
             ItemStack existingStack = to.getStack(slotWithItem);
-            if (!areComponentsEqual(existingStack, stackToTransfer)) {
-                continue; // Skip if NBT data is different, except for when the only difference is the favorite status.
-            }
 
             int spaceLeft = existingStack.getMaxCount() - existingStack.getCount();
             int transferAmount;
@@ -109,7 +108,7 @@ public class InventoryUtils {
         }
 
         if (slotsWithItem.isEmpty()) {
-            receiverState.getNonFullItemSlots().remove(stackItem);
+            receiverState.getNonFullItemSlots().remove(stackIdentifier);
         }
         return stackToTransfer.isEmpty();
     }
@@ -437,7 +436,7 @@ public class InventoryUtils {
         }
     }
 
-    private static boolean areComponentMapsEqual(MergedComponentMap firstMap, MergedComponentMap secondMap) {
+    public static boolean areComponentMapsEqual(MergedComponentMap firstMap, MergedComponentMap secondMap) {
         if (firstMap.size() != secondMap.size()) {
             return false;
         }
@@ -452,5 +451,41 @@ public class InventoryUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Creates a stack processor based on the quick stacking mode.
+     * @param storageInventoryState The storage inventory state
+     * @param storageInventory The storage inventory
+     * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
+     * @return A consumer that processes an ItemStack according to the provided mode
+     */
+    public static StackProcessor createStackProcessor(InventoryState storageInventoryState, Inventory storageInventory, boolean smartDepositMode) {
+        return smartDepositMode ?
+            new StackProcessor(
+                    stack -> {
+                        StackIdentifier stackIdentifier = new StackIdentifier(stack);
+                        return storageInventoryState.getNonFullItemSlots().containsKey(stackIdentifier) ||
+                                ((ExpandedInventoryState)storageInventoryState).getStoredItems().contains(stackIdentifier) && !storageInventoryState.getEmptySlots().isEmpty();
+                    },
+                    (stack) -> InventoryUtils.transferStack(storageInventory, storageInventoryState, stack)
+            ) :
+            new StackProcessor(
+                    stack -> !stack.isEmpty() &&
+                            storageInventoryState.getNonFullItemSlots().containsKey(new StackIdentifier(stack)),
+                    (stack) -> InventoryUtils.transferToExistingStack(storageInventory, storageInventoryState, stack)
+            );
+    }
+
+
+    /**
+     * Creates an InventoryState factory to be used by the TerrastorageCore;quickStackToNearbyStorages method.
+     * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'
+     * @return The factory
+     */
+    public static Function<Inventory, InventoryState> getInventoryStateFactory(boolean smartDepositMode) {
+        return smartDepositMode ?
+                ExpandedInventoryState::new :
+                CompactInventoryState::new;
     }
 }

@@ -72,6 +72,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
     )
     private void redirectSetStackNoCallbacks(Slot slot, ItemStack emptyStack) {
         if (slot.hasStack() && ItemFavoritingUtils.isFavorite(slot.getStack())) {
+            System.out.println("Redirected set stack on callbacks");
             return;
         }
 
@@ -93,7 +94,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
         ItemStack playerStack = this.client.player.currentScreenHandler.slots.get(i).getStack();
 
         // If the stack is favorited, skip this call entirely
-        if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
+        if (!playerStack.isEmpty() && ItemFavoritingUtils.isFavorite(playerStack)) {
             return;
         }
 

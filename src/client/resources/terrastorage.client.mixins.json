@@ -7,11 +7,13 @@
 		"BlockEntityRendererFactoriesMixin",
 		"ClientPlayerEntityMixin",
 		"CreativeInventoryScreenMixin",
+		"GenericContainerScreenAccessor",
 		"HandledScreenMixin",
 		"InGameHudMixin",
 		"InventoryScreenMixin",
 		"ItemStackMixin",
-		"PressableWidgetAccessor"
+		"PressableWidgetAccessor",
+		"SliderWidgetAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

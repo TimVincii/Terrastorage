@@ -1,11 +1,15 @@
 package me.timvinci.terrastorage.config;
 
 import me.timvinci.terrastorage.TerrastorageClient;
+import me.timvinci.terrastorage.gui.ButtonsCustomizationScreen;
 import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.Reference;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.text.Text;
+import net.minecraft.util.Pair;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -33,7 +37,7 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
     }
 
     @Override
-    protected TerrastorageClientConfig getDefaultConfig() {
+    public TerrastorageClientConfig getDefaultConfig() {
         return new TerrastorageClientConfig();
     }
 
@@ -42,19 +46,22 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
      * @return A list of ClickableWidgets, containing the buttons.
      */
     @SuppressWarnings("unchecked")
-    public List<ClickableWidget> asOptions() {
+    public List<Pair<ClickableWidget, Boolean>> asOptions() {
         List<ClickableWidget> options = new ArrayList<>();
+        List<Boolean> singleOptionOrder = new ArrayList<>();
         Tooltip[] optionButtonsTooltip = LocalizedTextProvider.getOptionButtonsTooltip();
         int i = 0;
 
         for (Field field : config.getClass().getDeclaredFields()) {
-            if (!field.isAnnotationPresent(ConfigProperty.class)) {
+            if (!field.isAnnotationPresent(ConfigProperty.class) || field.isAnnotationPresent(SubProperty.class)) {
                 continue;
             }
+
 
             if (field.trySetAccessible()) {
                 ConfigProperty property = field.getAnnotation(ConfigProperty.class);
                 String propertyKey = property.key();
+                boolean singleOption = field.isAnnotationPresent(SingleOption.class);
 
                 Object fieldValue = getFieldValue(field, config, propertyKey);
                 if (fieldValue != null) {
@@ -93,7 +100,8 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
 
                     if (optionButton != null) {
                         optionButton.setTooltip(optionButtonsTooltip[i]);
-                        options.add(i++, optionButton);
+                        options.add(i, optionButton);
+                        singleOptionOrder.add(i++, singleOption);
                     }
                 }
             }
@@ -102,6 +110,11 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
             }
         }
 
-        return options;
+        List<Pair<ClickableWidget, Boolean>> result = new ArrayList<>();
+        for (int j = 0; j < options.size(); j++) {
+            result.add(new Pair<>(options.get(j), singleOptionOrder.get(j)));
+        }
+
+        return result;
     }
 }

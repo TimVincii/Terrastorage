@@ -1,5 +1,8 @@
 package me.timvinci.terrastorage.inventory;
 
+import me.timvinci.terrastorage.api.ItemFavoritingUtils;
+import me.timvinci.terrastorage.item.StackIdentifier;
+import net.minecraft.component.MergedComponentMap;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
@@ -14,7 +17,7 @@ import java.util.*;
  * And a Queue of integers representing the empty slot indexes in the inventory.
  */
 public class CompleteInventoryState implements InventoryState {
-    private final Map<Item, ArrayList<Integer>> nonFullItemSlots = new HashMap<>();
+    private final Map<StackIdentifier, ArrayList<Integer>> nonFullItemSlots = new HashMap<>();
     private final Queue<Integer> emptySlots = new ArrayDeque<>();
     private boolean modified = false;
 
@@ -30,7 +33,7 @@ public class CompleteInventoryState implements InventoryState {
                 emptySlots.add(i);
             }
             else if (inventoryStack.getCount() != inventoryStack.getMaxCount()) {
-                nonFullItemSlots.computeIfAbsent(inventoryStack.getItem(), k -> new ArrayList<>()).add(i);
+                nonFullItemSlots.computeIfAbsent(new StackIdentifier(inventoryStack), k -> new ArrayList<>()).add(i);
             }
         }
     }
@@ -48,7 +51,18 @@ public class CompleteInventoryState implements InventoryState {
                 emptySlots.add(i);
             }
             else if (playerStack.getCount() != playerStack.getMaxCount()) {
-                nonFullItemSlots.computeIfAbsent(playerStack.getItem(), k -> new ArrayList<>()).add(i);
+                StackIdentifier stackIdentifier;
+                if (!ItemFavoritingUtils.isFavorite(playerStack)) {
+                    stackIdentifier = new StackIdentifier(playerStack);
+                }
+                else {
+                    // Remove the item favorite component data from the stack identifier.
+                    MergedComponentMap components = new MergedComponentMap(playerStack.getComponents());
+                    ItemFavoritingUtils.unFavorite(components);
+                    stackIdentifier = new StackIdentifier(playerStack.getItem(), components);
+                }
+
+                nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
             }
         }
 
@@ -60,17 +74,29 @@ public class CompleteInventoryState implements InventoryState {
                     emptySlots.add(i);
                 }
                 else if (playerStack.getCount() != playerStack.getMaxCount()) {
-                    nonFullItemSlots.computeIfAbsent(playerStack.getItem(), k -> new ArrayList<>()).add(i);
+                    StackIdentifier stackIdentifier;
+                    if (!ItemFavoritingUtils.isFavorite(playerStack)) {
+                        stackIdentifier = new StackIdentifier(playerStack);
+                    }
+                    else {
+                        // Remove the item favorite component data from the stack identifier.
+                        MergedComponentMap components = new MergedComponentMap(playerStack.getComponents());
+                        ItemFavoritingUtils.unFavorite(components);
+                        stackIdentifier = new StackIdentifier(playerStack.getItem(), components);
+                    }
+
+                    nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
                 }
             }
         }
     }
 
     @Override
-    public Map<Item, ArrayList<Integer>> getNonFullItemSlots() {
+    public Map<StackIdentifier, ArrayList<Integer>> getNonFullItemSlots() {
         return nonFullItemSlots;
     }
 
+    @Override
     public Queue<Integer> getEmptySlots() {
         return emptySlots;
     }
