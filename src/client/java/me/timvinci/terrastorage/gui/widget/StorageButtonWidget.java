@@ -1,11 +1,9 @@
 package me.timvinci.terrastorage.gui.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.util.ButtonsStyle;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
@@ -14,10 +12,19 @@ import net.minecraft.util.math.MathHelper;
  * A customized button widget.
  */
 public class StorageButtonWidget extends ButtonWidget {
+    private ButtonsStyle buttonStyle;
 
-    public StorageButtonWidget(int x, int y, int width, int height, Text message, Tooltip toolTip, PressAction onPress) {
+    public StorageButtonWidget(int x, int y, int width, int height, Text message, ButtonsStyle buttonStyle, PressAction onPress) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
-        this.setTooltip(toolTip);
+        this.setButtonStyle(buttonStyle);
+    }
+
+    public void setButtonStyle(ButtonsStyle buttonsStyle) {
+        this.buttonStyle = buttonsStyle;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
     }
 
     /**
@@ -32,7 +39,7 @@ public class StorageButtonWidget extends ButtonWidget {
         RenderSystem.enableDepthTest();
 
         // Draw the button background if the option buttons style is set to default.
-        if (ClientConfigManager.getInstance().getConfig().getButtonsStyle() == ButtonsStyle.DEFAULT) {
+        if (buttonStyle == ButtonsStyle.DEFAULT) {
             context.drawNineSlicedTexture(WIDGETS_TEXTURE, this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, getTextureY());
         }
         context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);

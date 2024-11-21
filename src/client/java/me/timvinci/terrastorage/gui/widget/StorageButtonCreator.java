@@ -2,6 +2,7 @@ package me.timvinci.terrastorage.gui.widget;
 
 import me.timvinci.terrastorage.gui.RenameScreen;
 import me.timvinci.terrastorage.network.ClientNetworkHandler;
+import me.timvinci.terrastorage.util.ButtonsStyle;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.StorageAction;
 import net.minecraft.client.MinecraftClient;
@@ -22,32 +23,53 @@ public class StorageButtonCreator {
     /**
      * Creates a custom button to be used by the HandledScreenMixin.
      * @param buttonText The text.
-     * @param buttonTooltip The tooltip.
      * @param x The x position.
      * @param y The y position.
      * @param width The width.
      * @param height The height.
      * @return A custom button with the aforementioned properties.
      */
-    public static StorageButtonWidget createStorageButton(StorageAction action, Text buttonText, Tooltip buttonTooltip, int x, int y, int width, int height) {
+    public static StorageButtonWidget createStorageButton(StorageAction action, int x, int y, int width, int height, Text buttonText, ButtonsStyle buttonStyle) {
         ButtonWidget.PressAction onPress = switch (action) {
-            case SORT_ITEMS -> button -> ClientNetworkHandler.sendStorageSortPacket();
+            case SORT_ITEMS -> button -> ClientNetworkHandler.sendSortPacket(false);
             case RENAME -> button -> {
                 MinecraftClient client = MinecraftClient.getInstance();
                 String name = client.currentScreen.getTitle().getString();
-                client.execute(() -> client.setScreen(new RenameScreen(client.currentScreen, name)));
+                client.execute(() -> {
+                    client.setScreen(new RenameScreen(client.currentScreen, name));
+                });
             };
             default -> button -> ClientNetworkHandler.sendActionPacket(action);
         };
 
+        if (buttonStyle == ButtonsStyle.TEXT_ONLY) {
+            width = MinecraftClient.getInstance().textRenderer.getWidth(buttonText) + 6;
+        }
+
         return new StorageButtonWidget(
-            x,
-            y,
-            width,
-            height,
-            buttonText,
-            buttonTooltip,
-            onPress
+                x,
+                y,
+                width,
+                height,
+                buttonText,
+                buttonStyle,
+                onPress
+        );
+    }
+
+    public static StorageButtonWidget createDummyStorageButton(int width, int height, Text buttonText, ButtonsStyle buttonStyle) {
+        if (buttonStyle == ButtonsStyle.TEXT_ONLY) {
+            width = MinecraftClient.getInstance().textRenderer.getWidth(buttonText) + 6;
+        }
+
+        return new StorageButtonWidget(
+                0,
+                0,
+                width,
+                height,
+                buttonText,
+                buttonStyle,
+                onPress -> {}
         );
     }
 
@@ -84,7 +106,7 @@ public class StorageButtonCreator {
                 sortButtonTexture,
                 20,
                 36,
-                onPress -> ClientNetworkHandler.sendPlayerSortPacket()
+                onPress -> ClientNetworkHandler.sendSortPacket(true)
         );
         sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
 

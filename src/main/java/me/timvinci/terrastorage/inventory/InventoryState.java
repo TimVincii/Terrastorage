@@ -1,15 +1,17 @@
 package me.timvinci.terrastorage.inventory;
 
-import net.minecraft.item.Item;
+import me.timvinci.terrastorage.item.StackIdentifier;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Queue;
 
 /**
- * Defines a structure for tracking non-full item stacks in an inventory.
+ * Defines a structure for tracking slot types in an inventory.
  */
 public interface InventoryState {
-    Map<Item, ArrayList<Integer>> getNonFullItemSlots();
+    Map<StackIdentifier, ArrayList<Integer>> getNonFullItemSlots();
+    Queue<Integer> getEmptySlots();
     void setModified();
     boolean wasModified();
 }
