@@ -60,7 +60,7 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     }
 
     /**
-     * Stops favorite items from being deleted when the delete items slot is shift pressed.
+     * Stops favorite items from being deleted when the delete item slot is shift pressed.
      */
     @Redirect(method = "onMouseClick",
             at = @At(value = "INVOKE",
