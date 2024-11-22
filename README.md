@@ -41,7 +41,7 @@ With that out of the way, let's dive into the feature showcase:
 
 ⏺️ Favorite items will not be affected by **Quick Stack**.
 
-✳️ The Quick Stack mode can be configured through the **Storage Quick Stack Mode** option in the Options Screen.
+✳️ The Quick Stack mode can be configured through the **Storage Quick Stack Mode** option in the **Options Screen**.
 
 ---
 
@@ -55,7 +55,7 @@ With that out of the way, let's dive into the feature showcase:
 ⏺️ Favorite items are protected from being:
 * Thrown out of the inventory.
 * Shift-pressed to a different inventory.
-* Swapped with a hotbar item during a hotbar keybind press.
+* Swapped from the hotbar to a different inventory during a hotbar keybind press.
 * Deleted in the creative inventory screen.
 * Moved by **Deposit All** or **Sort Inventory**.
 * Modified by **Quick Stack** or **Quick Stack To Nearby Storages**.
@@ -67,7 +67,7 @@ With that out of the way, let's dive into the feature showcase:
 * **Sort Items** - Sorts the items in the storage.
 * **Rename** - Renames the storage block.
 
-✳️ The sorting method for both Sort Items and Sort Inventory is controlled by a single configurable setting.
+✳️ The sorting method for both **Sort Items** and **Sort Inventory** is controlled by a single configurable setting.
 
 ⏺️ Renamed storage blocks display nametags either above them or on the side facing the player if there’s a block above.
 
@@ -78,11 +78,11 @@ With that out of the way, let's dive into the feature showcase:
 * **Sort Inventory** - Sorts the items in the player's inventory.
 * **Quick Stack To Nearby Storages** - Finds all nearby storages and performs the Quick Stack operation on each.
 
-✳️ The sorting method for both Sort Items and Sort Inventory is controlled by a single configurable setting.
+✳️ The sorting method for both **Sort Items** and **Sort Inventory** is controlled by a single configurable setting.
 
-✳️ By default, the Quick Stack To Nearby Storages feature only considers storages within the player's line of sight, this is configurable.
+✳️ By default, the **Quick Stack To Nearby Storages** feature only considers storages within the player's line of sight, this is configurable.
 
-✳️ The Quick Stack To Nearby Storages feature includes an animation where items fly from the player to the storage. Both the animation length and the time between flying items are configurable.
+✳️ The **Quick Stack To Nearby Storages** feature includes an animation where items fly from the player to the storage. Both the animation length and the time interval between flying items are configurable.
 
 ⏺️ Favorite items will not be moved by **Sort Inventory** or modified by **Quick Stack To Nearby Storages**.
 
@@ -93,7 +93,7 @@ With that out of the way, let's dive into the feature showcase:
 The client side features an options screen that can be accessed with [mod menu](https://github.com/TerraformersMC/ModMenu) or with the `/tsclient options` command, it allows for the configuration of the following settings:
 * **Options Button** - Controls whether an "Options" button, which takes the player to the options screen, is added to the storage screens.
 * **Hotbar Protection** - Determines whether the hotbar is excluded from storage actions.
-* **Sort By** - Determines the property by which items are sorted when using "Sort Items" or "Sort Inventory". It can be set to:
+* **Sort By** - Determines the property by which items are sorted when using **Sort Items** or **Sort Inventory**. It can be set to:
 
   * Item Group - Items are sorted by their group.
   * Item Count - Items are sorted by quantity (from highest to lowest).
@@ -105,7 +105,7 @@ The client side features an options screen that can be accessed with [mod menu](
 
 ![Buttons Customization Screen](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/buttons_customization_screen.png)
 
-In addition to the options screen, a dedicated buttons customization screen allows for customizing the appearance of the storage option buttons displayed in storage inventory screens. It includes:
+In addition to the **Options Screen**, a dedicated buttons customization screen allows for customizing the appearance of the storage option buttons displayed in storage inventory screens. It includes:
 * **Buttons Tooltip** - Toggles the visibility of the tooltips for the buttons.
 * **Buttons Style** - Sets the visual style of the buttons:
 
