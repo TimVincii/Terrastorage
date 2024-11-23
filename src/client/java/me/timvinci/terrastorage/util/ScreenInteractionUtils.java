@@ -2,6 +2,8 @@ package me.timvinci.terrastorage.util;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
@@ -29,7 +31,8 @@ public class ScreenInteractionUtils {
         }
 
         boolean cancel = switch (actionType) {
-            case QUICK_MOVE, THROW -> ItemFavoritingUtils.isFavorite(slot.getStack());
+            case QUICK_MOVE -> ItemFavoritingUtils.isFavorite(slot.getStack()) && !(client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen);
+            case THROW -> ItemFavoritingUtils.isFavorite(slot.getStack());
             case SWAP -> !(slot.inventory instanceof PlayerInventory) && ItemFavoritingUtils.isFavorite(client.player.getInventory().getStack(button));
             default -> false;
         };
