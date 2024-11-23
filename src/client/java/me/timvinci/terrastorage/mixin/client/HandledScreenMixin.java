@@ -14,12 +14,14 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -59,12 +61,24 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
      */
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        // Return if the player is in spectator mode.
-        if (MinecraftClient.getInstance().player.isSpectator())
+        // Return if the player is in spectator mode, or if the handled screen is that of the player's inventory.
+        if (MinecraftClient.getInstance().player.isSpectator() ||
+            handler instanceof CreativeInventoryScreen.CreativeScreenHandler ||
+            handler instanceof PlayerScreenHandler) {
             return;
+        }
 
-        // Return if the slot count (excluding the 36 player inventory slots) is smaller than 27.
-        if (handler.slots.size() - 36 < 27) {
+        // Check if the handled screen is that of a storage by searching for a slot whose inventory isn't the player's
+        // and is at least 27 in size.
+        boolean isStorage = false;
+        for (Slot slot : handler.slots) {
+            if (!(slot.inventory instanceof PlayerInventory) && slot.inventory.size() >= 27) {
+                isStorage = true;
+                break;
+            }
+        }
+
+        if (!isStorage) {
             return;
         }
 
