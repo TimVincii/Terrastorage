@@ -34,10 +34,11 @@ public class RenameScreen extends Screen {
         int renameButtonWidth = 150;
         int height = 20;
 
+        // Name field widget.
         int textFieldX = (this.width - (textFieldWidth + 5 + resetButtonWidth)) / 2;
         int textFieldY = (this.height - height) / 2;
         TextFieldWidget nameTextField = new TextFieldWidget(
-            textRenderer,
+            this.textRenderer,
             textFieldX,
             textFieldY,
             textFieldWidth,
@@ -45,8 +46,11 @@ public class RenameScreen extends Screen {
             Text.empty());
         nameTextField.setMaxLength(25);
         nameTextField.setText(currentName);
-        this.addDrawableChild(nameTextField);
 
+        this.addDrawableChild(nameTextField);
+        this.setFocused(nameTextField);
+
+        // Reset button widget.
         ButtonWidget resetButtonWidget = ButtonWidget.builder(
             Text.translatable("terrastorage.button.reset"),
             onPress -> {
@@ -58,6 +62,7 @@ public class RenameScreen extends Screen {
         resetButtonWidget.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.reset")));
         this.addDrawableChild(resetButtonWidget);
 
+        // Rename button widget.
         int renameButtonX = (this.width - renameButtonWidth) / 2;
         int renameButtonY = this.height - 40;
         ButtonWidget renameButtonWidget = ButtonWidget.builder(
