@@ -10,15 +10,25 @@ import org.lwjgl.glfw.GLFW;
  */
 public class TerrastorageKeybindings {
     public static KeyBinding favoriteItemModifier;
+    public static KeyBinding sortInventoryBind;
 
     public static void registerKeybindings() {
         favoriteItemModifier = new KeyBinding(
-    "terrastorage.keybinding.favorite_item_modifier",
+                "terrastorage.keybinding.favorite_item_modifier",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_LEFT_ALT,
-        "terrastorage.keybinding.categories.main"
+                "terrastorage.keybinding.categories.main"
         );
 
         KeyBindingHelper.registerKeyBinding(favoriteItemModifier);
-   }
+
+        sortInventoryBind = new KeyBinding(
+                "terrastorage.keybinding.sort_inventory_bind",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_R,
+                "terrastorage.keybinding.categories.main"
+        );
+
+        KeyBindingHelper.registerKeyBinding(sortInventoryBind);
+    }
 }
