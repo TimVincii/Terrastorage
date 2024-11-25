@@ -69,6 +69,8 @@ With that out of the way, let's dive into the feature showcase:
 
 ✳️ The sorting method for both **Sort Items** and **Sort Inventory** is controlled by a single configurable setting.
 
+⏺️ **Sort Items** can also be activated by hovering over a slot and pressing the sort inventory keybind (R by default, customizable in the controls menu).
+
 ⏺️ Renamed storage blocks display nametags either above them or on the side facing the player if there’s a block above.
 
 ---
@@ -79,6 +81,8 @@ With that out of the way, let's dive into the feature showcase:
 * **Quick Stack To Nearby Storages** - Finds all nearby storages and performs the Quick Stack operation on each.
 
 ✳️ The sorting method for both **Sort Items** and **Sort Inventory** is controlled by a single configurable setting.
+
+⏺️ **Sort Inventory** can also be activated by hovering over a slot and pressing the sort inventory keybind (R by default, customizable in the controls menu).
 
 ✳️ By default, the **Quick Stack To Nearby Storages** feature only considers storages within the player's line of sight, this is configurable.
 
