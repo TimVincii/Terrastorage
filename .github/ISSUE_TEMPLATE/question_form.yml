@@ -6,6 +6,8 @@ body:
   - type: textarea
     attributes:
       label: Your Question
-      description: Feel free to ask away!
+      description:
+        Feel free to ask away!
+        Before submitting, please make sure to read the [Feedback & Support](https://github.com/TimVincii/Terrastorage/#feedback--support) section to understand response times and other important information.
     validations:
       required: true

@@ -6,7 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to report a bug with Terrastorage!
+        Thanks for taking the time to report a bug with Terrastorage!  
+        Before submitting, please make sure to read the [Feedback & Support](https://github.com/TimVincii/Terrastorage/#feedback--support) section to understand response times and other important information.
   - type: textarea
     attributes:
       label: What happened?
