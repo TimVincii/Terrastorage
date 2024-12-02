@@ -205,6 +205,6 @@ Renaming modded storage blocks that do not extend `LockableContainerBlockEntity`
 # Feedback & Support
 If you've got a question, a suggestion, or run into any issues, don't hesitate to [submit an issue](https://github.com/TimVincii/Terrastorage/issues)!
 
-Please note: As of **December 2nd, 2024,**, I’ve started my studies, which will keep me busy for the next few years. This means I will have significantly less time to actively work on the Terrastorage or respond to feedback and issues.
+Please note: As of **December 2nd, 2024**, I’ve started my studies, which will keep me busy for the next few years. This means I will have significantly less time to actively work on the Terrastorage or respond to feedback and issues.
 
 I’ll still do my best to address important issues and consider suggestions when possible, but response times may be slower.
