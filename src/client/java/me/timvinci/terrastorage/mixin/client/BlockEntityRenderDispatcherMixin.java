@@ -5,12 +5,13 @@ import me.timvinci.terrastorage.render.NametagRenderer;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.model.EntityModelLoader;
+import net.minecraft.client.render.entity.model.LoadedEntityModels;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,7 +36,7 @@ public class BlockEntityRenderDispatcherMixin {
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(TextRenderer textRenderer, EntityModelLoader entityModelLoader, Supplier<BlockRenderManager> blockRenderManager, Supplier<ItemRenderer> itemRenderer, Supplier<EntityRenderDispatcher> entityRenderDispatcher, CallbackInfo ci) {
+    private void onInit(TextRenderer textRenderer, Supplier<LoadedEntityModels> entityModelsGetter, BlockRenderManager blockRenderManager, ItemModelManager itemModelManager, ItemRenderer itemRenderer, EntityRenderDispatcher entityRenderDispatcher, CallbackInfo ci) {
         BlockEntityRenderDispatcher dispatcher = (BlockEntityRenderDispatcher) (Object) this;
         nametagRenderer = new NametagRenderer(dispatcher, textRenderer);
     }
