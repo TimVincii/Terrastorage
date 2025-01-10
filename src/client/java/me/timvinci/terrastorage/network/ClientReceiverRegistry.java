@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.network;
 
+import me.timvinci.terrastorage.config.ServerConfigHolder;
 import me.timvinci.terrastorage.network.s2c.BlockRenamedPayload;
 import me.timvinci.terrastorage.network.s2c.ServerConfigPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -18,7 +19,7 @@ public class ClientReceiverRegistry {
         });
 
         ClientPlayNetworking.registerGlobalReceiver(ServerConfigPayload.ID, (payload, context) -> {
-            ClientNetworkHandler.actionCooldown = payload.actionCooldown();
+            ServerConfigHolder.apply(payload);
         });
     }
 }

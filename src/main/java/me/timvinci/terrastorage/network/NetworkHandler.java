@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.network;
 
+import me.timvinci.terrastorage.Terrastorage;
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.network.s2c.BlockRenamedPayload;
 import me.timvinci.terrastorage.network.s2c.ServerConfigPayload;
@@ -48,7 +49,10 @@ public class NetworkHandler {
 
     public static void sendServerConfigPayload(ServerPlayerEntity player) {
         if (ServerPlayNetworking.canSend(player, ServerConfigPayload.ID)) {
-            ServerPlayNetworking.send(player, new ServerConfigPayload(ConfigManager.getInstance().getConfig().getActionCooldown()));
+            ServerPlayNetworking.send(player, new ServerConfigPayload(
+                    ConfigManager.getInstance().getConfig().getActionCooldown(),
+                    Terrastorage.itemFavoritingEnabled
+            ));
         }
     }
 

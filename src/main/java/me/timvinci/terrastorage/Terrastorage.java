@@ -8,6 +8,7 @@ import me.timvinci.terrastorage.network.PayloadRegistry;
 import me.timvinci.terrastorage.item.ItemGroupCache;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.Reference;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -25,6 +26,8 @@ import org.slf4j.LoggerFactory;
 public class Terrastorage implements ModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger(Reference.MOD_ID);
 	private boolean populatedItemGroups = false;
+	public static boolean environmentIsServer;
+	public static boolean itemFavoritingEnabled = false;
 
 	/**
 	 * Executes various tasks while Terrastorage is initializing.
@@ -32,6 +35,7 @@ public class Terrastorage implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Initializing " + Reference.MOD_NAME + " [" + Reference.MOD_VERSION + "].");
+		environmentIsServer = FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER;
 
 		if (FabricLoader.getInstance().isModLoaded("expandedstorage")) {
 			InventoryUtils.expandedStorageLoaded = true;
@@ -40,7 +44,11 @@ public class Terrastorage implements ModInitializer {
 		ConfigManager.init();
 		TerrastorageCommands.registerCommands();
 		PayloadRegistry.registerPayloads();
-		ItemFavoritingUtils.initializeComponentType();
+
+		if (!environmentIsServer || ConfigManager.getInstance().getConfig().getEnableItemFavoriting()) {
+			ItemFavoritingUtils.initializeComponentType();
+			itemFavoritingEnabled = true;
+		}
 
 		ServerLifecycleEvents.SERVER_STARTED.register((listener) -> {
 			if (populatedItemGroups) {
