@@ -89,7 +89,7 @@ public class TerrastorageOptionsScreen extends GameOptionsScreen {
     @Override
     public void close() {
         if (!ClientConfigManager.getInstance().saveConfig() && MinecraftClient.getInstance().player != null) {
-            MinecraftClient.getInstance().player.sendMessage(TextStyler.styleError("terrastorage.message.client_saving_error"));
+            MinecraftClient.getInstance().player.sendMessage(TextStyler.error("terrastorage.message.client_saving_error"));
         }
         this.client.setScreen(this.parent);
     }
