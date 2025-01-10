@@ -2,6 +2,7 @@ package me.timvinci.terrastorage.mixin.client;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.config.ClientConfigManager;
+import me.timvinci.terrastorage.config.ServerConfigHolder;
 import me.timvinci.terrastorage.gui.TerrastorageOptionsScreen;
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
 import me.timvinci.terrastorage.keybinding.TerrastorageKeybindings;
@@ -170,11 +171,16 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
         boolean playerOwnedSlot = slot.inventory instanceof PlayerInventory;
 
         if (modifierIsPressed && playerOwnedSlot) {
-            ItemStack slotStack = slot.getStack();
-            int slotId = this.handler instanceof CreativeInventoryScreen.CreativeScreenHandler ? slot.getIndex() : slot.id;
-            boolean toggledValue = !ItemFavoritingUtils.isFavorite(slotStack);
-            if (ClientNetworkHandler.sendItemFavoritedPayload(slotId, toggledValue)) {
-                ItemFavoritingUtils.setFavorite(slotStack, toggledValue);
+            if (!ServerConfigHolder.enableItemFavoriting) {
+                client.player.sendMessage(Text.translatable("terrastorage.message.item_favoriting_disabled"), false);
+            }
+            else {
+                ItemStack slotStack = slot.getStack();
+                int slotId = this.handler instanceof CreativeInventoryScreen.CreativeScreenHandler ? slot.getIndex() : slot.id;
+                boolean toggledValue = !ItemFavoritingUtils.isFavorite(slotStack);
+                if (ClientNetworkHandler.sendItemFavoritedPayload(slotId, toggledValue)) {
+                    ItemFavoritingUtils.setFavorite(slotStack, toggledValue);
+                }
             }
 
             cir.setReturnValue(true);
