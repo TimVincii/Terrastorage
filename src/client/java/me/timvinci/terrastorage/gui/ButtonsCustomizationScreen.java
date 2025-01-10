@@ -15,11 +15,8 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.*;
 import net.minecraft.client.option.SimpleOption;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -307,7 +304,7 @@ public class ButtonsCustomizationScreen extends Screen {
             config.setButtonsSpacing(storageOptionsSpacing);
 
             if (!ClientConfigManager.getInstance().saveConfig() && MinecraftClient.getInstance().player != null) {
-                MinecraftClient.getInstance().player.sendMessage(TextStyler.styleError("terrastorage.message.client_saving_error"), false);
+                MinecraftClient.getInstance().player.sendMessage(TextStyler.error("terrastorage.message.client_saving_error"), false);
             }
             close();
         }).size(200, customizationWidgetsHeight).tooltip(Tooltip.of(Text.translatable("terrastorage.option.tooltip.save_and_exit"))).build());

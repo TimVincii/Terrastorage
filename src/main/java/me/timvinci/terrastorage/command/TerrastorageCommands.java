@@ -29,35 +29,35 @@ public class TerrastorageCommands {
             dispatcher.register(CommandManager.literal(Reference.MOD_ID)
                 .requires(source -> source.hasPermissionLevel(2))
                 .then(CommandManager.literal("action-cooldown")
-                    .executes(context -> executeGetValue(context, config::getActionCooldown, "action cooldown", " ticks"))
+                    .executes(context -> executeGetValue(context, config::getActionCooldown, "Action Cooldown", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(2, 100))
                         .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setActionCooldown, "Action Cooldown", " ticks")))
                 )
                 .then(CommandManager.literal("line-of-sight-check")
-                    .executes(context -> executeGetValue(context, config::getLineOfSightCheck, "line of sight check", ""))
+                    .executes(context -> executeGetValue(context, config::getLineOfSightCheck, "Line Of Sight Check", ""))
                     .then(CommandManager.argument("value", BoolArgumentType.bool())
                         .executes(context -> executeSetValue(context, BoolArgumentType.getBool(context, "value"), config::setLineOfSightCheck, "Line Of Sight Check", "")))
                 )
                 .then(CommandManager.literal("quick-stack-range")
-                    .executes(context -> executeGetValue(context, config::getQuickStackRange, "quick stack range", " blocks"))
+                    .executes(context -> executeGetValue(context, config::getQuickStackRange, "Quick Stack Range", " blocks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(3, 16))
                         .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setQuickStackRange, "Quick Stack Range", " blocks"))
                     )
                 )
                 .then(CommandManager.literal("item-animation-length")
-                    .executes(context -> executeGetValue(context, config::getItemAnimationLength, "item animation length", " ticks"))
+                    .executes(context -> executeGetValue(context, config::getItemAnimationLength, "Item Animation Length", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(10, 200))
                         .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationLength, "Item Animation Length", " ticks"))
                     )
                 )
                 .then(CommandManager.literal("item-animation-interval")
-                    .executes(context -> executeGetValue(context, config::getItemAnimationInterval, "item animation interval", " ticks"))
+                    .executes(context -> executeGetValue(context, config::getItemAnimationInterval, "Item Animation Interval", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 20))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationInterval, "Item Animation Interval", " ticks"))
                     )
                 )
                 .then(CommandManager.literal("keep-favorites-on-drop")
-                        .executes(context -> executeGetValue(context, config::getKeepFavoritesOnDrop, "keep favorites on drop", ""))
+                        .executes(context -> executeGetValue(context, config::getKeepFavoritesOnDrop, "Keep Favorites On Drop", ""))
                         .then(CommandManager.argument("value", BoolArgumentType.bool())
                                 .executes(context -> executeSetValue(context, BoolArgumentType.getBool(context, "value"), config::setKeepFavoritesOnDrop, "Keep Favorites On Drop", "")))
                 )
@@ -65,7 +65,7 @@ public class TerrastorageCommands {
         );
     }
 
-    /**
+        /**
      * Sends the value of a property to the command issuer.
      * @param context The command context.
      * @param getter The getter of the property.
@@ -76,7 +76,7 @@ public class TerrastorageCommands {
     private static <T> int executeGetValue(CommandContext<ServerCommandSource> context, Supplier<T> getter, String propertyName, String valueUnit) {
         T currentValue = getter.get();
         context.getSource().sendFeedback(
-                () -> TextStyler.styleKeyValue("Current " + propertyName, currentValue + valueUnit + "."),
+                () -> TextStyler.styleGetProperty(propertyName, currentValue, valueUnit),
                 false
         );
 
@@ -96,9 +96,7 @@ public class TerrastorageCommands {
         setter.accept(value);
         if (ConfigManager.getInstance().saveConfig()) {
             context.getSource().sendFeedback(
-                    () -> TextStyler.styleTitle(propertyName + " Updated")
-                            .append("\n")
-                            .append(TextStyler.styleKeyValue("New value", value + valueUnit + ".")),
+                    () -> TextStyler.stylePropertyUpdated(propertyName, value, valueUnit),
                     true
             );
 
@@ -106,9 +104,10 @@ public class TerrastorageCommands {
             if (propertyName.equals("Action Cooldown")) {
                 NetworkHandler.sendGlobalServerConfigPacket(context.getSource().getServer());
             }
+
         }
         else {
-            context.getSource().sendFeedback(() -> TextStyler.styleError("terrastorage.message.server_saving_error"),false);
+            context.getSource().sendFeedback(() -> TextStyler.error("terrastorage.message.server_saving_error"), false);
         }
 
         return 1;
