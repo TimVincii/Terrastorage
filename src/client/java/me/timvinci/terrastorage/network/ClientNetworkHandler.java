@@ -1,6 +1,7 @@
 package me.timvinci.terrastorage.network;
 
 import me.timvinci.terrastorage.config.ClientConfigManager;
+import me.timvinci.terrastorage.config.ServerConfigHolder;
 import me.timvinci.terrastorage.network.c2s.*;
 import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.QuickStackMode;
@@ -17,7 +18,6 @@ import java.util.Optional;
  * Carries out a cooldown check before sending payloads.
  */
 public class ClientNetworkHandler {
-    public static int actionCooldown = 10;
     private static long lastActionWorldTime = 0;
     private static World lastWorld = null;
 
@@ -132,7 +132,7 @@ public class ClientNetworkHandler {
             lastWorld = currentWorld;
         }
 
-        if (currentWorldTime - lastActionWorldTime >= actionCooldown) {
+        if (currentWorldTime - lastActionWorldTime >= ServerConfigHolder.actionCooldown) {
             lastActionWorldTime = currentWorldTime;
             return true;
         }

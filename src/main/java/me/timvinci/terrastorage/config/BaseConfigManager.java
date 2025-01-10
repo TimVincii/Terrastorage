@@ -3,6 +3,7 @@ package me.timvinci.terrastorage.config;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.core.io.WritingMode;
+import me.timvinci.terrastorage.Terrastorage;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 
@@ -70,7 +71,7 @@ public abstract class BaseConfigManager<T> {
     @SuppressWarnings("unchecked")
     protected void loadAnnotatedProperties(CommentedFileConfig fileConfig) {
         for (Field field : config.getClass().getDeclaredFields()) {
-            if (!field.isAnnotationPresent(ConfigProperty.class)) {
+            if (!field.isAnnotationPresent(ConfigProperty.class) || field.isAnnotationPresent(ServerExclusive.class) && !Terrastorage.environmentIsServer) {
                 continue;
             }
 
@@ -119,7 +120,7 @@ public abstract class BaseConfigManager<T> {
         boolean hasNoErrors = true;
         boolean firstField = true;
         for (Field field : config.getClass().getDeclaredFields()) {
-            if (!field.isAnnotationPresent(ConfigProperty.class)) {
+            if (!field.isAnnotationPresent(ConfigProperty.class) || field.isAnnotationPresent(ServerExclusive.class) && !Terrastorage.environmentIsServer) {
                 continue;
             }
 

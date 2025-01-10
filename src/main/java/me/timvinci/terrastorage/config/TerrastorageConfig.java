@@ -18,6 +18,9 @@ public class TerrastorageConfig {
     @ConfigProperty(key = "item_animation_interval", comment = "The interval between animated flying items, in game ticks")
     @PropertyRange(min = 0, max = 20)
     private int itemAnimationInterval = 5;
+    @ConfigProperty(key = "enable_item_favoriting", comment = "Whether the item favoriting feature is enabled. Disable this to ensure compatibility with vanilla clients.")
+    @ServerExclusive
+    private boolean enableItemFavoriting = true;
     @ConfigProperty(key = "keep_favorites_on_drop", comment = "Whether items will keep their favorite status once they are dropped as an item entity.")
     private boolean keepFavoritesOnDrop = true;
 
@@ -40,6 +43,10 @@ public class TerrastorageConfig {
     public int getItemAnimationInterval() { return itemAnimationInterval; }
 
     public void setItemAnimationInterval(int itemAnimationInterval) { this.itemAnimationInterval = itemAnimationInterval; }
+
+    public boolean getEnableItemFavoriting() { return enableItemFavoriting; }
+
+    public void setEnableItemFavoriting(boolean enableItemFavoriting) { this.enableItemFavoriting = enableItemFavoriting; }
 
     public boolean getKeepFavoritesOnDrop() { return keepFavoritesOnDrop; }
 

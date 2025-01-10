@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.network.c2s;
 
+import me.timvinci.terrastorage.Terrastorage;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.Reference;
 import net.minecraft.item.ItemStack;
@@ -36,7 +37,7 @@ public record ItemFavoritePayload(int slotId, boolean value) implements CustomPa
      * favorite status of the ItemStack.
      */
     public static void receive(ServerPlayerEntity player, int slotId, boolean value) {
-        if (player.currentScreenHandler == null) {
+        if (player.currentScreenHandler == null || !Terrastorage.itemFavoritingEnabled) {
             return;
         }
 
