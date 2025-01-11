@@ -14,6 +14,7 @@ import net.minecraft.block.ChestBlock;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.component.ComponentType;
 import net.minecraft.component.MergedComponentMap;
@@ -220,6 +221,10 @@ public class InventoryUtils {
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
+                if (blockEntity instanceof LockableContainerBlockEntity lockable && !lockable.checkUnlocked(player)) {
+                    return; // Skip locked containers.
+                }
+
                 Vec3d losPoint;
                 if (performLosCheck) {
                     losPoint = hasLineOfSight(player, world, pos);
