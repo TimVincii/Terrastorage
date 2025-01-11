@@ -155,7 +155,11 @@ The available options are:
   *Specifies the time interval between animated flying items in ticks.*
 
   Default: 5
+* **enable-item-favoriting** (*1.21+ servers only*)
 
+  *Determines whether **Item Favoriting** is enabled on dedicated servers. Set to false to ensure compatibility with vanilla clients. Not available for singleplayer.*
+
+  Default: true
 * **keep-favorites-on-drop**
 
   *Determines whether items will keep their favorite status once they are dropped as an item entity.*
@@ -187,6 +191,10 @@ item_animation_length = 20
 #Range: 0 to 20, inclusive
 #Default: 5
 item_animation_interval = 5
+#==========
+#Whether the item favoriting feature is enabled. Disable this to ensure compatibility with vanilla clients.
+#Default: true
+enable_item_favoriting = true
 #==========
 #Whether items will keep their favorite status once they are dropped as an item entity.
 #Default: true
