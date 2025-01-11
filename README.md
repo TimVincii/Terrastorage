@@ -155,7 +155,11 @@ The available options are:
   *Specifies the time interval between animated flying items in ticks.*
 
   Default: 5
+* **enable-item-favoriting** (*1.21+ servers only*)
 
+  *Determines whether **Item Favoriting** is enabled on dedicated servers. Set to false to ensure compatibility with vanilla clients. Not available for singleplayer.*
+
+  Default: true
 * **keep-favorites-on-drop**
 
   *Determines whether items will keep their favorite status once they are dropped as an item entity.*
@@ -188,6 +192,10 @@ item_animation_length = 20
 #Default: 5
 item_animation_interval = 5
 #==========
+#Whether the item favoriting feature is enabled. Disable this to ensure compatibility with vanilla clients.
+#Default: true
+enable_item_favoriting = true
+#==========
 #Whether items will keep their favorite status once they are dropped as an item entity.
 #Default: true
 keep_favorites_on_drop = true
@@ -205,6 +213,6 @@ Renaming modded storage blocks that do not extend `LockableContainerBlockEntity`
 # Feedback & Support
 If you've got a question, a suggestion, or run into any issues, don't hesitate to [submit an issue](https://github.com/TimVincii/Terrastorage/issues)!
 
-Please note: As of **December 2nd, 2024,**, I’ve started my studies, which will keep me busy for the next few years. This means I will have significantly less time to actively work on the Terrastorage or respond to feedback and issues.
+Please note: As of **December 2nd, 2024**, I’ve started my studies, which will keep me busy for the next few years. This means I will have significantly less time to actively work on the Terrastorage or respond to feedback and issues.
 
 I’ll still do my best to address important issues and consider suggestions when possible, but response times may be slower.
