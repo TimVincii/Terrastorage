@@ -214,6 +214,10 @@ public class InventoryUtils {
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
+                if (blockEntity instanceof LockableContainerBlockEntity lockable && !lockable.checkUnlocked(player)) {
+                    return; // Skip locked containers.
+                }
+
                 Vec3d losPoint;
                 if (performLosCheck) {
                     losPoint = hasLineOfSight(player, world, pos);
