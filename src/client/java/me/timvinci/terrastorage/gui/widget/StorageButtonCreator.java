@@ -16,18 +16,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 
+import java.util.Locale;
+
 /**
  * Creates the buttons used by Terrastorage.
  */
 public class StorageButtonCreator {
-    private static final ButtonTextures quickStackButtonTexture = new ButtonTextures(
-            Identifier.of(Reference.MOD_ID, "quick_stack"),
-            Identifier.of(Reference.MOD_ID, "quick_stack_highlighted")
-    );
-    private static final ButtonTextures sortButtonTexture = new ButtonTextures(
-            Identifier.of(Reference.MOD_ID, "sort_inventory"),
-            Identifier.of(Reference.MOD_ID, "sort_inventory_highlighted")
-    );
 
     /**
      * Creates a custom button to be used by the HandledScreenMixin.
@@ -89,12 +83,14 @@ public class StorageButtonCreator {
      * @return A pair of the inventory TexturedButtonWidgets.
      */
     public static Pair<TexturedButtonWidget, TexturedButtonWidget> createInventoryButtons(int x, int y) {
+        ButtonTextures quickStackTexture = getButtonTextures("quick_stack");
+        ButtonTextures sortInventoryTexture = getButtonTextures("sort_inventory");
         TexturedButtonWidget quickStackButton = new TexturedButtonWidget(
                 x,
                 y,
                 20,
                 18,
-                quickStackButtonTexture,
+                quickStackTexture,
                 onPress -> ClientNetworkHandler.sendActionPayload(StorageAction.QUICK_STACK_TO_NEARBY)
         );
         quickStackButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.quick_stack_to_nearby")));
@@ -104,11 +100,19 @@ public class StorageButtonCreator {
                 y,
                 20,
                 18,
-                sortButtonTexture,
+                sortInventoryTexture,
                 onPress -> ClientNetworkHandler.sendSortPayload(true)
         );
         sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
 
         return new Pair<>(quickStackButton, sortInventoryButton);
+    }
+
+    private static ButtonTextures getButtonTextures(String buttonName) {
+        String stylePrefix = ClientConfigManager.getInstance().getConfig().getButtonsTextures().name().toLowerCase(Locale.ENGLISH);
+        return new ButtonTextures(
+                Identifier.of(Reference.MOD_ID, stylePrefix + "_" + buttonName),
+                Identifier.of(Reference.MOD_ID, stylePrefix + "_" + buttonName + "_highlighted")
+        );
     }
 }

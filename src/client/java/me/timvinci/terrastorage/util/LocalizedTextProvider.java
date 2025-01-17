@@ -40,7 +40,8 @@ public class LocalizedTextProvider {
                 "terrastorage.option.tooltip.hotbar_protection",
                 "terrastorage.option.tooltip.sort_type",
                 "terrastorage.option.tooltip.storage_quick_stack_mode",
-                "terrastorage.option.tooltip.nearby_quick_stack_mode"
+                "terrastorage.option.tooltip.nearby_quick_stack_mode",
+                "terrastorage.option.tooltip.buttons_textures"
         };
 
         Tooltip[] configButtonsTooltips = new Tooltip[tooltipKeys.length];
