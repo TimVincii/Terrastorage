@@ -91,7 +91,7 @@ public abstract class BaseConfigManager<T> {
                 }
             }
             else {
-                logger.error("Failed to set field '{}' as accessible, please submit a github bug report about this.", field.getName());
+                logger.error("Failed to set field '{}' as accessible.", field.getName());
             }
         }
     }
@@ -146,7 +146,7 @@ public abstract class BaseConfigManager<T> {
                 }
             }
             else {
-                logger.error("Failed to set field '{}' as accessible, please submit a github bug report about this.", field.getName());
+                logger.error("Failed to set field '{}' as accessible.", field.getName());
                 if (hasNoErrors) {
                     hasNoErrors = false;
                 }
