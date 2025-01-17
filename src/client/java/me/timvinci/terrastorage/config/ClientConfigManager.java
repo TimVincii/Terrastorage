@@ -103,7 +103,7 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
                 }
             }
             else {
-                logger.error("Failed to set field '{}' as accessible, please submit a github bug report about this.", field.getName());
+                logger.error("Failed to set field '{}' as accessible.", field.getName());
             }
         }
 

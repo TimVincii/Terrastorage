@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.gui.widget;
 
+import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.gui.RenameScreen;
 import me.timvinci.terrastorage.network.ClientNetworkHandler;
 import me.timvinci.terrastorage.util.ButtonsStyle;
@@ -13,12 +14,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 
+import java.util.Locale;
+
 /**
  * Creates the buttons used by Terrastorage.
  */
 public class StorageButtonCreator {
-    public static final Identifier sortButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/sort_inventory.png");
-    public static final Identifier quickStackButtonTexture = new Identifier(Reference.MOD_ID, "textures/gui/sprites/quick_stack.png");
 
     /**
      * Creates a custom button to be used by the HandledScreenMixin.
@@ -80,6 +81,8 @@ public class StorageButtonCreator {
      * @return A pair of the inventory TexturedButtonWidgets.
      */
     public static Pair<TexturedButtonWidget, TexturedButtonWidget> createInventoryButtons(int x, int y) {
+        Identifier quickStackTexture = getButtonTextures("quick_stack");
+        Identifier sortInventoryTexture = getButtonTextures("sort_inventory");
         TexturedButtonWidget quickStackButton = new TexturedButtonWidget(
                 x,
                 y,
@@ -88,7 +91,7 @@ public class StorageButtonCreator {
                 0,
                 0,
                 18,
-                quickStackButtonTexture,
+                quickStackTexture,
                 20,
                 36,
                 onPress -> ClientNetworkHandler.sendActionPacket(StorageAction.QUICK_STACK_TO_NEARBY)
@@ -103,7 +106,7 @@ public class StorageButtonCreator {
                 0,
                 0,
                 18,
-                sortButtonTexture,
+                sortInventoryTexture,
                 20,
                 36,
                 onPress -> ClientNetworkHandler.sendSortPacket(true)
@@ -111,5 +114,10 @@ public class StorageButtonCreator {
         sortInventoryButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.sort_inventory")));
 
         return new Pair<>(quickStackButton, sortInventoryButton);
+    }
+
+    private static Identifier getButtonTextures(String buttonName) {
+        String stylePrefix = ClientConfigManager.getInstance().getConfig().getButtonsTextures().name().toLowerCase(Locale.ENGLISH);
+        return new Identifier(Reference.MOD_ID, "textures/gui/sprites/" + stylePrefix + "_" + buttonName + ".png");
     }
 }

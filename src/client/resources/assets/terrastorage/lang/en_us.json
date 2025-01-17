@@ -72,5 +72,9 @@
   "terrastorage.option.nearby_quick_stack_mode": "Nearby Storage Quick Stack Mode",
   "terrastorage.option.nearby_quick_stack_mode.fill_up": "Fill Up",
   "terrastorage.option.nearby_quick_stack_mode.smart_deposit": "Smart Deposit",
-  "terrastorage.option.tooltip.nearby_quick_stack_mode": "The quick stacking mode used when quick stacking to nearby storages.\n\nSmart Deposit: Like Fill Up, but also moves all matching items into empty slots, creating new stacks as needed\n\nFill Up: Adds items to existing stacks until they reach their maximum capacity"
+  "terrastorage.option.tooltip.nearby_quick_stack_mode": "The quick stacking mode used when quick stacking to nearby storages.\n\nSmart Deposit: Like Fill Up, but also moves all matching items into empty slots, creating new stacks as needed\n\nFill Up: Adds items to existing stacks until they reach their maximum capacity",
+  "terrastorage.option.buttons_textures": "Buttons Textures",
+  "terrastorage.option.buttons_textures.minecraft": "Minecraft",
+  "terrastorage.option.buttons_textures.terraria": "Terraria",
+  "terrastorage.option.tooltip.buttons_textures": "The textures used by the inventory storage option buttons."
 }
