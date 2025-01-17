@@ -1,9 +1,7 @@
 package me.timvinci.terrastorage.config;
 
-import me.timvinci.terrastorage.util.ButtonsStyle;
-import me.timvinci.terrastorage.util.ButtonsPlacement;
-import me.timvinci.terrastorage.util.QuickStackMode;
-import me.timvinci.terrastorage.util.SortType;
+
+import me.timvinci.terrastorage.util.*;
 
 /**
  * Defines and holds the client config properties.
@@ -61,6 +59,9 @@ public class TerrastorageClientConfig {
     @SingleOption
     private QuickStackMode nearbyQuickStackMode = QuickStackMode.SMART_DEPOSIT;
 
+    @ConfigProperty(key = "buttons_textures", comment = "The textures used by the inventory storage option buttons.")
+    private ButtonsTextures buttonsTextures = ButtonsTextures.MINECRAFT;
+
 
     public boolean getDisplayOptionsButton() { return displayOptionsButton; }
 
@@ -103,4 +104,6 @@ public class TerrastorageClientConfig {
     public QuickStackMode getStorageQuickStackMode() { return this.storageQuickStackMode; }
 
     public QuickStackMode getNearbyQuickStackMode() { return this.nearbyQuickStackMode; }
+
+    public ButtonsTextures getButtonsTextures() { return this.buttonsTextures; }
 }
