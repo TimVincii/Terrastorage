@@ -67,18 +67,23 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
                     target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;clickCreativeStack(Lnet/minecraft/item/ItemStack;I)V"))
     private void redirectClickCreativeStack(ClientPlayerInteractionManager interactionManager, ItemStack stack, int i, @Nullable Slot slot, int slotId, int button, SlotActionType actionType) {
         if (actionType != SlotActionType.QUICK_MOVE) {
-            this.client.interactionManager.clickCreativeStack(stack, i);
+            interactionManager.clickCreativeStack(stack, i);
             return;
         }
 
-        ItemStack playerStack = this.client.player.currentScreenHandler.slots.get(i).getStack();
+        if (i < 0 || i >= this.client.player.playerScreenHandler.getStacks().size()) {
+            this.client.player.sendMessage(Text.translatable("terrastorage.message.general_error"));
+            return;
+        }
+
+        ItemStack playerStack = this.client.player.playerScreenHandler.getStacks().get(i);
 
         // If the stack is favorited, skip this call entirely
         if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
             return;
         }
 
-        this.client.interactionManager.clickCreativeStack(stack, i);
+        interactionManager.clickCreativeStack(stack, i);
     }
 
     /**
