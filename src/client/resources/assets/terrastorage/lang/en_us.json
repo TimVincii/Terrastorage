@@ -40,6 +40,7 @@
   "terrastorage.message.item_favoriting_disabled": "Item favoriting is disabled on this server.",
   "terrastorage.message.enabled_item_favoriting": "Item favoriting has been enabled, this will take effect on the next server startup.",
   "terrastorage.message.disabled_item_favoriting": "Item favoriting has been disabled. This will remove the favorite status from all items. Changes will take effect on the next server startup.",
+  "terrastorage.message.general_error": "[Terrastorage] An unexpected issue occurred. Please report this if it persists.",
   "terrastorage.keybinding.categories.main": "Terrastorage",
   "terrastorage.keybinding.favorite_item_modifier": "Favorite Item (+ Left Click)",
   "terrastorage.keybinding.sort_inventory_bind": "Sort Inventory (Of Hovered Slot)",
