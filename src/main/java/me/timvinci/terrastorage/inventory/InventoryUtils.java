@@ -374,8 +374,7 @@ public class InventoryUtils {
      * @param playerEyes The position of the player's eyes.
      * @param animationMap An animation map consisting of target positions and lists of items.
      */
-    public static void triggerFlyOutAnimation(ServerWorld world, Vec3d playerEyes, Map<Vec3d, ArrayList<Item>> animationMap) {
-        int itemAnimationLength = ConfigManager.getInstance().getConfig().getItemAnimationLength();
+    public static void triggerFlyOutAnimation(ServerWorld world, Vec3d playerEyes, int itemAnimationLength, Map<Vec3d, ArrayList<Item>> animationMap) {
         int itemAnimationInterval = ConfigManager.getInstance().getConfig().getItemAnimationInterval();
 
         for (Map.Entry<Vec3d, ArrayList<Item>> entry : animationMap.entrySet()) {
