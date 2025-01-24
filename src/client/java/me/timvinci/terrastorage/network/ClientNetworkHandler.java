@@ -123,6 +123,11 @@ public class ClientNetworkHandler {
      * @return True if it isn't, false otherwise.
      */
     private static boolean canPerformAction() {
+        int actionCooldown = ServerConfigHolder.actionCooldown;
+        if (actionCooldown == 0) {
+            return true;
+        }
+
         MinecraftClient client = MinecraftClient.getInstance();
         World currentWorld = client.world;
 
@@ -133,7 +138,7 @@ public class ClientNetworkHandler {
             lastWorld = currentWorld;
         }
 
-        if (currentWorldTime - lastActionWorldTime >= ServerConfigHolder.actionCooldown) {
+        if (currentWorldTime - lastActionWorldTime >= actionCooldown) {
             lastActionWorldTime = currentWorldTime;
             return true;
         }
