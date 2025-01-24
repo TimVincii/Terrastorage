@@ -1,6 +1,7 @@
 package me.timvinci.terrastorage.util;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
+import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.inventory.*;
 import me.timvinci.terrastorage.item.StackIdentifier;
 import me.timvinci.terrastorage.item.StackProcessor;
@@ -302,6 +303,10 @@ public class TerrastorageCore {
             playerInventory.markDirty();
         }
 
-        InventoryUtils.triggerFlyOutAnimation(player.getServerWorld(), player.getEyePos(), animationMap);
+
+        int itemAnimationLength = ConfigManager.getInstance().getConfig().getItemAnimationLength();
+        if (itemAnimationLength != 0) {
+            InventoryUtils.triggerFlyOutAnimation(player.getServerWorld(), player.getEyePos(), itemAnimationLength, animationMap);
+        }
     }
 }

@@ -13,7 +13,7 @@ public class TerrastorageConfig {
     @PropertyRange(min = 3, max = 16)
     private int quickStackRange = 8;
     @ConfigProperty(key = "item_animation_length", comment = "The length of the flying item animation that occurs when Quick Stack To Nearby Storages is used, in game ticks")
-    @PropertyRange(min = 10, max = 200)
+    @PropertyRange(min = 0, max = 200)
     private int itemAnimationLength = 20;
     @ConfigProperty(key = "item_animation_interval", comment = "The interval between animated flying items, in game ticks")
     @PropertyRange(min = 0, max = 20)
