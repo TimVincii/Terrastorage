@@ -51,7 +51,7 @@ public class TerrastorageCommands {
                 )
                 .then(CommandManager.literal("item-animation-length")
                     .executes(context -> executeGetValue(context, config::getItemAnimationLength, "Item Animation Length", " ticks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(10, 200))
+                    .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 200))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationLength, "Item Animation Length", " ticks"))
                     )
                 )
