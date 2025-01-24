@@ -134,6 +134,10 @@ public class ClientNetworkHandler {
      * @return True if it isn't, false otherwise.
      */
     private static boolean canPerformAction() {
+        if (actionCooldown == 0) {
+            return true;
+        }
+
         MinecraftClient client = MinecraftClient.getInstance();
         World currentWorld = client.world;
 
