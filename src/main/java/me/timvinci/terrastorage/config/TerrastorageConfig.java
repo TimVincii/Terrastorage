@@ -5,7 +5,7 @@ package me.timvinci.terrastorage.config;
  */
 public class TerrastorageConfig {
     @ConfigProperty(key = "action_cooldown", comment = "The cooldown of all storage actions, in game ticks")
-    @PropertyRange(min = 2, max = 100)
+    @PropertyRange(min = 0, max = 100)
     private int actionCooldown = 10;
     @ConfigProperty(key = "line_of_sight_check", comment = "Whether the Quick Stack To Nearby Storages feature only considers storages within the player's line of sight.")
     private boolean lineOfSightCheck = true;

@@ -33,7 +33,7 @@ public class TerrastorageCommands {
                 .requires(source -> source.hasPermissionLevel(2))
                 .then(CommandManager.literal("action-cooldown")
                     .executes(context -> executeGetValue(context, config::getActionCooldown, "Action Cooldown", " ticks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(2, 100))
+                    .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 100))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setActionCooldown, "Action Cooldown", " ticks"))
                     )
                 )
