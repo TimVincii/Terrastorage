@@ -46,8 +46,8 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     }
 
     /**
-     * Stops favorite item from being removed by the delete item slot, and calls the ScreenInteractionUtils class to
-     * process a slot click.
+     * Stops favorite items from being removed by the 'delete item' slot, and calls the ScreenInteractionUtils class to
+     * process the slot click.
      */
     @Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
     private void onMouseClick(@Nullable Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
@@ -61,7 +61,7 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
     }
 
     /**
-     * Stops favorite items from being deleted when the delete item slot is shift pressed.
+     * Stops favorite items from being deleted when the 'delete item' slot is shift pressed.
      */
     @Redirect(method = "onMouseClick",
             at = @At(value = "INVOKE",
