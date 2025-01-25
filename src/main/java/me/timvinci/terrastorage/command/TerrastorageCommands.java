@@ -40,7 +40,7 @@ public class TerrastorageCommands {
                 )
                 .then(CommandManager.literal("quick-stack-range")
                     .executes(context -> executeGetValue(context, config::getQuickStackRange, "Quick Stack Range", " blocks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(3, 16))
+                    .then(CommandManager.argument("value", IntegerArgumentType.integer(3, 48))
                         .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setQuickStackRange, "Quick Stack Range", " blocks"))
                     )
                 )
@@ -104,7 +104,9 @@ public class TerrastorageCommands {
             if (propertyName.equals("Action Cooldown")) {
                 NetworkHandler.sendGlobalServerConfigPacket(context.getSource().getServer());
             }
-
+            else if (propertyName.equals("Quick Stack Range") && (Integer)value > 16) {
+                context.getSource().sendFeedback(() -> TextStyler.warning("terrastorage.message.high_quick_stack_range"), false);
+            }
         }
         else {
             context.getSource().sendFeedback(() -> TextStyler.error("terrastorage.message.server_saving_error"), false);
