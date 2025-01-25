@@ -48,7 +48,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
     }
 
     /**
-     * Stops favorite items from being removed by the delete item slot, and calls the ScreenInteractionUtils class to
+     * Stops favorite items from being removed by the 'delete item' slot, and calls the ScreenInteractionUtils class to
      * process the slot click.
      */
     @Inject(method = "onMouseClick", at = @At("HEAD"), cancellable = true)
@@ -63,7 +63,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
     }
 
     /**
-     * Stops the client from deleting favorite items when the delete item slot is shift pressed.
+     * Stops the client from deleting favorite items when the 'delete item' slot is shift pressed.
      */
     @Redirect(method = "onMouseClick",
             at = @At(
@@ -73,7 +73,6 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
     )
     private void redirectSetStackNoCallbacks(Slot slot, ItemStack emptyStack) {
         if (slot.hasStack() && ItemFavoritingUtils.isFavorite(slot.getStack())) {
-            System.out.println("Redirected set stack on callbacks");
             return;
         }
 
@@ -81,7 +80,7 @@ public abstract class CreativeInventoryScreenMixin extends HandledScreen<Creativ
     }
 
     /**
-     * Stops favorite items from being deleted when the delete item slot is shift pressed.
+     * Stops favorite items from being deleted when the 'delete item' slot is shift pressed.
      */
     @Redirect(method = "onMouseClick",
             at = @At(value = "INVOKE",
