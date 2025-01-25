@@ -38,6 +38,7 @@
   "terrastorage.message.packet_cooldown": "This action is on cooldown, please wait a bit before trying again.",
   "terrastorage.message.restricted_inventory": "This inventory appears to be restricted, storage options cannot be used on it.",
   "terrastorage.message.general_error": "[Terrastorage] An unexpected issue occurred. Please report this if it persists.",
+  "terrastorage.message.high_quick_stack_range": "Warning: Setting a Quick Stack range higher than 16 may cause significant server lag, especially in large storage setups.",
   "terrastorage.keybinding.categories.main": "Terrastorage",
   "terrastorage.keybinding.favorite_item_modifier": "Favorite Item (+ Left Click)",
   "terrastorage.keybinding.sort_inventory_bind": "Sort Inventory (Of Hovered Slot)",
