@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.mixin.client;
 
+import me.timvinci.terrastorage.TerrastorageClient;
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.ScreenInteractionUtils;
@@ -78,14 +79,20 @@ public abstract class CreativeInventoryScreenMixin extends AbstractInventoryScre
             return;
         }
 
-        ItemStack playerStack = this.client.player.playerScreenHandler.getStacks().get(i);
+        try {
+            ItemStack playerStack = this.client.player.playerScreenHandler.getStacks().get(i);
 
-        // If the stack is favorited, skip this call entirely
-        if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
-            return;
+            // If the stack is favorited or empty, skip this call entirely
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
+                return;
+            }
+
+            interactionManager.clickCreativeStack(stack, i);
         }
-
-        interactionManager.clickCreativeStack(stack, i);
+        catch (Exception e) {
+            this.client.player.sendMessage(Text.translatable("terrastorage.message.general_error"), false);
+            TerrastorageClient.CLIENT_LOGGER.error(e.getMessage(), e);
+        }
     }
 
     /**
