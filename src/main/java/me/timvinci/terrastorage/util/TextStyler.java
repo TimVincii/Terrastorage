@@ -13,6 +13,7 @@ public class TextStyler {
     private static final Formatting TEXT_COLOR = Formatting.WHITE;
     private static final Formatting VALUE_COLOR = Formatting.YELLOW;
     private static final Formatting ERROR_COLOR = Formatting.RED;
+    private static final Formatting WARNING_COLOR = Formatting.GOLD;
 
     public static MutableText styleTitle(String title) {
         return Text.literal(title).styled(style -> style.withBold(true).withColor(TITLE_COLOR));
@@ -40,5 +41,9 @@ public class TextStyler {
 
     public static MutableText error(String messageKey) {
         return Text.translatable(messageKey).formatted(ERROR_COLOR);
+    }
+
+    public static MutableText warning(String messageKey) {
+        return Text.translatable(messageKey).formatted(WARNING_COLOR);
     }
 }
