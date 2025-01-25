@@ -10,7 +10,7 @@ public class TerrastorageConfig {
     @ConfigProperty(key = "line_of_sight_check", comment = "Whether the Quick Stack To Nearby Storages feature only considers storages within the player's line of sight.")
     private boolean lineOfSightCheck = true;
     @ConfigProperty(key = "quick_stack_range", comment = "The range of the Quick Stack to Nearby Storages feature, in blocks")
-    @PropertyRange(min = 3, max = 16)
+    @PropertyRange(min = 3, max = 48)
     private int quickStackRange = 8;
     @ConfigProperty(key = "item_animation_length", comment = "The length of the flying item animation that occurs when Quick Stack To Nearby Storages is used, in game ticks")
     @PropertyRange(min = 0, max = 200)
