@@ -37,6 +37,10 @@ loom {
 
 }
 
+configurations {
+	nightConfigExtract
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -46,14 +50,22 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// NightConfig.
-	include implementation("com.electronwill.night-config:core:${project.night_config_version}")
-	include implementation("com.electronwill.night-config:toml:${project.night_config_version}")
+	nightConfigExtract implementation("com.electronwill.night-config:core:${project.night_config_version}")
+	nightConfigExtract implementation("com.electronwill.night-config:toml:${project.night_config_version}")
 
 	// ModMenu integration.
 	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
 
 	// Expanded Storage compatibility.
 	modCompileOnlyApi "maven.modrinth:expanded-storage:${project.expanded_storage_version}"
+}
+
+tasks.register("extractNightConfig", Copy) {
+	from {
+		configurations.nightConfigExtract.collect { zipTree(it) }
+	}
+	into layout.buildDirectory.dir("nightconfig")
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 processResources {
@@ -79,6 +91,12 @@ java {
 }
 
 jar {
+	dependsOn("extractNightConfig")
+
+	from(layout.buildDirectory.dir("nightconfig")) {
+		into ""
+	}
+
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
