@@ -71,25 +71,29 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             return;
         }
 
-        // Check if the handled screen is that of a storage by searching for a slot whose inventory isn't the player's
-        // and is at least 27 in size.
-        boolean isStorage = false;
+        // Check if the handled screen is a storage.
+        // Primary check scans for a non player slot with an inventory size of at least 27.
+        // Secondary check counts the amount of non player slots and is for screen handlers whose slots list doesn't
+        // provide a proper reference to the inventory.
+        boolean largeNonPlayerInventory = false;
+        int nonPlayerSlotCount = 0;
         for (Slot slot : handler.slots) {
-            if (!(slot.inventory instanceof PlayerInventory) && slot.inventory.size() >= 27) {
-                isStorage = true;
-                break;
+            if (!(slot.inventory instanceof PlayerInventory)) {
+                if (slot.inventory.size() >= 27) {
+                    largeNonPlayerInventory = true;
+                    break;
+                }
+
+                nonPlayerSlotCount++;
             }
         }
 
-        if (!isStorage) {
+        // If both checks fail, this is (most very likely) not a storage.
+        if (!largeNonPlayerInventory && nonPlayerSlotCount < 27) {
             return;
         }
 
-        boolean isEnderChest = false;
-        if (handler instanceof GenericContainerScreenHandler && this.getTitle().equals(Text.translatable("container.enderchest"))) {
-            isEnderChest = true;
-        }
-
+        boolean isEnderChest = handler instanceof GenericContainerScreenHandler && this.getTitle().equals(Text.translatable("container.enderchest"));
         StorageAction[] buttonActions = StorageAction.getButtonsActions(isEnderChest);
 
         ButtonsStyle buttonsStyle = ClientConfigManager.getInstance().getConfig().getButtonsStyle();
