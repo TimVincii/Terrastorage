@@ -10,7 +10,6 @@ import me.timvinci.terrastorage.mixin.EntityAccessor;
 import me.timvinci.terrastorage.mixin.LockableContainerBlockEntityAccessor;
 import me.timvinci.terrastorage.network.NetworkHandler;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.component.ComponentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.vehicle.VehicleInventory;
@@ -18,6 +17,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Pair;
@@ -60,16 +60,16 @@ public class TerrastorageCore {
      * Attempts to deposit all the items from the player to the storage.
      * @param playerInventory The player's inventory.
      * @param storageInventory The storage's inventory.
+     * @param firstSlot The first slot of the screen handler of the storage inventory.
      * @param hotbarProtection The hotbar protection value of the player.
-     * @param isStorageShulkerBox Whether the storage is a shulker box.
      */
-    public static void depositAll(PlayerInventory playerInventory, Inventory storageInventory, boolean hotbarProtection, boolean isStorageShulkerBox) {
+    public static void depositAll(PlayerInventory playerInventory, Inventory storageInventory, Slot firstSlot, boolean hotbarProtection) {
         // Create an inventory state from the storage's inventory.
         CompleteInventoryState storageInventoryState = new CompleteInventoryState(storageInventory);
 
         for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.main.size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.canInsert(playerStack)) {
                 continue;
             }
 
@@ -80,7 +80,7 @@ public class TerrastorageCore {
             for (int i = 0; i < PlayerInventory.getHotbarSize(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
 
-                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || (InventoryUtils.isShulkerBox(playerStack) && isStorageShulkerBox)) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.canInsert(playerStack)) {
                     continue;
                 }
 

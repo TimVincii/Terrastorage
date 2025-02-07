@@ -1,18 +1,20 @@
 package me.timvinci.terrastorage.network.c2s;
 
+import me.timvinci.terrastorage.inventory.SlotBackedInventory;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.StorageAction;
 import me.timvinci.terrastorage.util.TerrastorageCore;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.ShulkerBoxSlot;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -61,21 +63,30 @@ public record StorageActionPayload(
                 return;
             }
 
-            ScreenHandler playerScreenHandler = player.currentScreenHandler;
-            if (!playerScreenHandler.slots.getFirst().canTakeItems(player)) {
-                player.sendMessage(Text.translatable("terrastorage.message.restricted_inventory"));
-                return;
-            }
+            Inventory storageInventory;
+            Slot firstSlot = player.currentScreenHandler.slots.getFirst();
+            if (firstSlot.inventory.size() != 0) {
+                if (!firstSlot.canTakeItems(player)) {
+                    player.sendMessage(Text.translatable("terrastorage.message.restricted_inventory"));
+                    return;
+                }
 
-            // Get the storage's inventory from the player's screen handler.
-            Inventory storageInventory = playerScreenHandler.slots.getFirst().inventory;
+                // Get the storage's inventory from the player's screen handler.
+                storageInventory = firstSlot.inventory;
+            }
+            else { // Handle "broken" screen handlers
+                List<Slot> nonPlayerSlots = player.currentScreenHandler.slots.stream()
+                        .filter(slot -> !(slot.inventory instanceof PlayerInventory))
+                        .toList();
+
+                // Create a SlotBackedInventory, which will hold a reference to all slots and will make inventory
+                // adjustments using them.
+                storageInventory = new SlotBackedInventory(nonPlayerSlots);
+            }
 
             switch (action) {
                 case LOOT_ALL -> TerrastorageCore.lootAll(player.getInventory(), storageInventory, hotbarProtection);
-                case DEPOSIT_ALL -> {
-                    boolean storageIsShulkerBox = playerScreenHandler.slots.getFirst() instanceof ShulkerBoxSlot;
-                    TerrastorageCore.depositAll(player.getInventory(), storageInventory, hotbarProtection, storageIsShulkerBox);
-                }
+                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player.getInventory(), storageInventory, firstSlot, hotbarProtection);
                 case QUICK_STACK -> TerrastorageCore.quickStack(player.getInventory(), storageInventory, hotbarProtection, smartDepositMode.get());
                 case RESTOCK -> TerrastorageCore.restock(player.getInventory(), storageInventory, hotbarProtection);
                 default -> throw new IllegalArgumentException("Unknown storage action: " + action);

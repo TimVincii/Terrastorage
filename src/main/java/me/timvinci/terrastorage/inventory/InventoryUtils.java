@@ -184,16 +184,6 @@ public class InventoryUtils {
     }
 
     /**
-     * Checks if an item stack is a shulker box.
-     * @param itemStack The item stack to check.
-     * @return True if the item stack is a shulker box, false otherwise.
-     */
-    public static boolean isShulkerBox(ItemStack itemStack) {
-        return itemStack.getItem() instanceof BlockItem &&
-                ((BlockItem) itemStack.getItem()).getBlock() instanceof ShulkerBoxBlock;
-    }
-
-    /**
      * Gets the storages that are nearby the player, as well as their position.
      * @param player The player.
      * @return A list consisting of pairs of inventories and their position.
