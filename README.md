@@ -97,8 +97,13 @@ With that out of the way, let's dive into the feature showcase:
 The client side features an options screen that can be accessed with [mod menu](https://github.com/TerraformersMC/ModMenu) or with the `/tsclient options` command, it allows for the configuration of the following settings:
 * **Options Button** - Controls whether an "Options" button, which takes the player to the options screen, is added to the storage screens.
 * **Hotbar Protection** - Determines whether the hotbar is excluded from storage actions.
+* **Favorite Border Visibility** - Controls when the favorite item border is drawn on slots holding favorite items. Can be set to:
+  * Always – The border is always drawn.
+  * On Modifier Press – The border is only drawn while the modifier key (Left Alt by default) is held.
+  * Non-Hotbar – The border is drawn everywhere except the hotbar.
+  * On Modifier & Non-Hotbar – The border is only drawn while the modifier key is held and only outside the hotbar.
+  * Never – The border is never drawn.
 * **Sort By** - Determines the property by which items are sorted when using **Sort Items** or **Sort Inventory**. It can be set to:
-
   * Item Group - Items are sorted by their group.
   * Item Count - Items are sorted by quantity (from highest to lowest).
   * Item Rarity - Items are sorted by their rarity (from higher to lower).
@@ -106,21 +111,12 @@ The client side features an options screen that can be accessed with [mod menu](
   * Item Id - Items are sorted by their ID (from lower to higher).
 * **Storage Quick Stack Mode** - Configures the quick stack mode used for single storage operations. (See Quick Stack and Restock for details.)
 * **Nearby Storage Quick Stack Mode** - Configures the quick stack mode used for nearby storages. (See Quick Stack and Restock for details.)
+* **Buttons Textures** - Controls the textures used by the inventory storage buttons.
 
 ![Buttons Customization Screen](https://github.com/TimVincii/Terrastorage/raw/HEAD/.assets/buttons_customization_screen.png)
 
-In addition to the **Options Screen**, a dedicated buttons customization screen allows for customizing the appearance of the storage option buttons displayed in storage inventory screens. It includes:
-* **Buttons Tooltip** - Toggles the visibility of the tooltips for the buttons.
-* **Buttons Style** - Sets the visual style of the buttons:
+In addition to the **Options Screen**, a dedicated buttons customization screen allows for customizing the appearance of the storage option buttons displayed in storage inventory screens.
 
-  * Default - The standard Minecraft button style.
-  * Text Only - Displays only the button text without a background, similar to Terraria’s storage buttons.
-* **Buttons Placement** - Determines the side of the screen where buttons are displayed:
-  * Right - Buttons are placed on the right side of storage screens.
-  * Left - Buttons are placed on the left side of storage screens.
-* **X and Y Offset** - Adjusts the position of the buttons along the horizontal and vertical axes.
-* **Width and Height** - Controls the size of the buttons.
-* **Spacing** - Sets the vertical space between each button.
 
 ⏺️ All these options are customizable through the client configuration file, located at `.\config\terrastorage_client.toml`. This file is designed for easy manual editing and includes the default values of each property, as well as the range of integer properties.
 
