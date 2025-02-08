@@ -12,6 +12,9 @@ public class TerrastorageClientConfig {
     @ConfigProperty(key = "hotbar_protection", comment = "Whether to protect hotbar items from the storage options")
     private boolean hotbarProtection = true;
 
+    @ConfigProperty(key = "sort_type", comment = "The property by which items will be sorted")
+    private SortType sortType = SortType.ITEM_GROUP;
+
     @ConfigProperty(key = "buttons_tooltip", comment = "Whether the storage option buttons have description tooltips.")
     @SubProperty
     private boolean buttonsTooltip = true;
@@ -47,8 +50,9 @@ public class TerrastorageClientConfig {
     @PropertyRange(min = 0, max = 20)
     private int buttonsSpacing = 2;
 
-    @ConfigProperty(key = "sort_type", comment = "The property by which items will be sorted")
-    private SortType sortType = SortType.ITEM_GROUP;
+    @ConfigProperty(key = "border_visibility", comment = "When the favorite item border is displayed on slots holding favorite items.")
+    @SingleOption
+    private BorderVisibility borderVisibility = BorderVisibility.ALWAYS;
 
     @ConfigProperty(key = "storage_quick_stack_mode", comment = "The quick stacking mode used when quick stacking into a single storage")
     @SingleOption
@@ -65,6 +69,8 @@ public class TerrastorageClientConfig {
     public boolean getDisplayOptionsButton() { return displayOptionsButton; }
 
     public boolean getHotbarProtection() { return hotbarProtection; }
+
+    public SortType getSortType() { return sortType; }
 
     public boolean getButtonsTooltip() { return buttonsTooltip; }
 
@@ -98,11 +104,11 @@ public class TerrastorageClientConfig {
 
     public void setButtonsSpacing(int buttonsSpacing) { this.buttonsSpacing = buttonsSpacing; }
 
-    public SortType getSortType() { return sortType; }
-
     public QuickStackMode getStorageQuickStackMode() { return this.storageQuickStackMode; }
 
     public QuickStackMode getNearbyQuickStackMode() { return this.nearbyQuickStackMode; }
+
+    public BorderVisibility getBorderVisibility() { return this.borderVisibility; }
 
     public ButtonsTextures getButtonsTextures() { return this.buttonsTextures; }
 }
