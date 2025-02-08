@@ -6,6 +6,7 @@ import me.timvinci.terrastorage.util.Reference;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.text.Text;
 import net.minecraft.util.Pair;
 
 import java.lang.reflect.Field;
@@ -46,7 +47,6 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
     public List<Pair<ClickableWidget, Boolean>> asOptions() {
         List<ClickableWidget> options = new ArrayList<>();
         List<Boolean> singleOptionOrder = new ArrayList<>();
-        Tooltip[] optionButtonsTooltip = LocalizedTextProvider.getOptionButtonsTooltip();
         int i = 0;
 
         for (Field field : config.getClass().getDeclaredFields()) {
@@ -96,7 +96,7 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
                     }
 
                     if (optionButton != null) {
-                        optionButton.setTooltip(optionButtonsTooltip[i]);
+                        optionButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.option.tooltip." + propertyKey)));
                         options.add(i, optionButton);
                         singleOptionOrder.add(i++, singleOption);
                     }
