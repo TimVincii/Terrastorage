@@ -34,24 +34,6 @@ public class LocalizedTextProvider {
         buttonTooltipCache.put(StorageAction.QUICK_STACK, Tooltip.of(Text.translatable(translationKey)));
     }
 
-    public static Tooltip[] getOptionButtonsTooltip() {
-        String[] tooltipKeys = {
-                "terrastorage.option.tooltip.display_options_button",
-                "terrastorage.option.tooltip.hotbar_protection",
-                "terrastorage.option.tooltip.sort_type",
-                "terrastorage.option.tooltip.storage_quick_stack_mode",
-                "terrastorage.option.tooltip.nearby_quick_stack_mode",
-                "terrastorage.option.tooltip.buttons_textures"
-        };
-
-        Tooltip[] configButtonsTooltips = new Tooltip[tooltipKeys.length];
-        for (int i = 0; i < tooltipKeys.length; i++) {
-            configButtonsTooltips[i] = Tooltip.of(Text.translatable(tooltipKeys[i]));
-        }
-
-        return configButtonsTooltips;
-    }
-
     /**
      * Retrieves the text that is displayed on boolean options.
      * @param propertyKey The key of the option.
