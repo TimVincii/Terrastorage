@@ -244,6 +244,16 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             return;
         }
 
-        context.drawTexture(RenderLayer::getGuiTextured, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
+        BorderVisibility borderVisibility = ClientConfigManager.getInstance().getConfig().getBorderVisibility();
+        if (borderVisibility == BorderVisibility.NEVER) {
+            return;
+        }
+
+        boolean needsModifierPressed = borderVisibility == BorderVisibility.ON_PRESS || borderVisibility == BorderVisibility.ON_PRESS_NON_HOTBAR;
+
+        if (!needsModifierPressed || InputUtil.isKeyPressed(client.getWindow().getHandle(),
+                KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode())) {
+            context.drawTexture(RenderLayer::getGuiTextured, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
+        }
     }
 }
