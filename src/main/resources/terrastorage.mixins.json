@@ -3,12 +3,12 @@
 	"package": "me.timvinci.terrastorage.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"BlockEntityMixin",
 		"ChestBlockMixin",
 		"DoubleInventoryAccessor",
 		"EntityAccessor",
 		"ItemEntityMixin",
 		"LockableContainerBlockEntityAccessor",
-		"LockableContainerBlockEntityMixin",
 		"ScreenHandlerMixin"
 	],
 	"injectors": {
