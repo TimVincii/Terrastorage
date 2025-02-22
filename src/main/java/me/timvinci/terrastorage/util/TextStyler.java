@@ -15,6 +15,9 @@ public class TextStyler {
     private static final Formatting ERROR_COLOR = Formatting.RED;
     private static final Formatting WARNING_COLOR = Formatting.GOLD;
 
+    private static final Formatting ENABLED_COLOR = Formatting.GREEN;
+    private static final Formatting DISABLED_COLOR = Formatting.RED;
+
     public static MutableText styleTitle(String title) {
         return Text.literal(title).styled(style -> style.withBold(true).withColor(TITLE_COLOR));
     }
@@ -37,6 +40,11 @@ public class TextStyler {
                     .append(Text.literal(value + valueUnit)
                     .styled(style -> style.withColor(VALUE_COLOR))
         );
+    }
+
+    public static MutableText styleBooleanValue(boolean value) {
+        return Text.translatable("terrastorage.option." + (value ? "enabled" : "disabled"))
+                .styled(style -> style.withColor(value ? ENABLED_COLOR : DISABLED_COLOR));
     }
 
     public static MutableText error(String messageKey) {
