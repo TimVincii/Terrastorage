@@ -213,6 +213,8 @@ Renaming modded storage blocks that do not extend `LockableContainerBlockEntity`
 # Acknowledgments
 The Minecraft-style textures for the **Quick Stack To Nearby Storages** and **Sort Inventory** buttons were generously provided by Ventgirl_Joanne.
 
+The **Russian translation** was provided by [Demzy123](https://github.com/Demzy123).
+
 # Feedback & Support
 If you've got a question, a suggestion, or run into any issues, don't hesitate to [submit an issue](https://github.com/TimVincii/Terrastorage/issues)!
 
