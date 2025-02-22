@@ -11,6 +11,11 @@ import me.timvinci.terrastorage.util.Reference;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceType;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +24,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TerrastorageClient implements ClientModInitializer {
 	public static final Logger CLIENT_LOGGER = LoggerFactory.getLogger(Reference.MOD_ID + "_client");
+	private final Identifier RELOAD_LISTENER_ID = Identifier.of(Reference.MOD_ID, "text_cache_reload");
 
 	/**
 	 * Executes various tasks while Terrastorage is initializing on the client side.
@@ -28,9 +34,19 @@ public class TerrastorageClient implements ClientModInitializer {
 		ClientConfigManager.init();
 		TerrastorageClientCommands.registerCommands();
 		ClientReceiverRegistry.registerReceivers();
-		LocalizedTextProvider.initializeButtonCaches();
 		TerrastorageKeybindings.registerKeybindings();
 		
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());
+		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+			@Override
+			public Identifier getFabricId() {
+				return RELOAD_LISTENER_ID;
+			}
+
+			@Override
+			public void reload(ResourceManager manager) {
+				LocalizedTextProvider.initializeButtonCaches();
+			}
+		});
 	}
 }
