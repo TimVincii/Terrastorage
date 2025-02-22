@@ -43,7 +43,7 @@ public class LocalizedTextProvider {
     public static Text getBooleanOptionText(String propertyKey, boolean currentValue) {
         return Text.translatable("terrastorage.option." + propertyKey)
                 .append(": ")
-                .append(Text.translatable("terrastorage.option." + (currentValue ? "enabled" : "disabled")));
+                .append(TextStyler.styleBooleanValue(currentValue));
     }
 
     /**
