@@ -37,6 +37,7 @@
   "terrastorage.option.sort_type.item_id": "Item Id",
   "terrastorage.option.tooltip.sort_type": "The property by which items will be sorted.",
   "terrastorage.option.preview_row_count": "Preview Row Count",
+  "terrastorage.option.buttons_enabled": "Buttons Enabled",
   "terrastorage.option.buttons_tooltip": "Buttons Tooltip",
   "terrastorage.option.buttons_style": "Buttons Style",
   "terrastorage.option.buttons_style.default": "Default",

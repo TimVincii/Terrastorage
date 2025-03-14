@@ -52,6 +52,7 @@ public class ButtonsCustomizationScreen extends Screen {
     private final List<ButtonWidget> actionWidgets;
 
     private final List<StorageButtonWidget> storageOptionsButtons;
+    private boolean storageOptionsEnabled;
     private boolean storageOptionsTooltip;
     private ButtonsStyle storageOptionsStyle;
     private ButtonsPlacement storageOptionsPlacement;
@@ -71,6 +72,7 @@ public class ButtonsCustomizationScreen extends Screen {
         storageOptionsButtons = new ArrayList<>();
 
         TerrastorageClientConfig config = ClientConfigManager.getInstance().getConfig();
+        storageOptionsEnabled = config.getButtonsEnabled();
         storageOptionsTooltip = config.getButtonsTooltip();
         storageOptionsStyle = config.getButtonsStyle();
         storageOptionsPlacement = config.getButtonsPlacement();
@@ -103,29 +105,19 @@ public class ButtonsCustomizationScreen extends Screen {
             widgetsInitialized = true;
         }
 
-        // Positioning the storage option buttons.
-        int buttonX = storageOptionsPlacement == ButtonsPlacement.RIGHT?
-                this.x + this.backgroundWidth + 5 + storageOptionsXOffset :
-                this.x - ((storageOptionsStyle == ButtonsStyle.DEFAULT ? storageOptionsWidth : 70) + 5) + storageOptionsXOffset;
-        int buttonSectionHeight = buttonActionsLength * storageOptionsHeight + (buttonActionsLength -1) * storageOptionsSpacing;
-        int buttonY = this.y - (buttonSectionHeight - this.playerInventoryTitleY) / 2 + storageOptionsYOffset;
-
-        for (ButtonWidget storageOptionButton : storageOptionsButtons) {
-            storageOptionButton.setPosition(buttonX, buttonY);
-            this.addDrawableChild(storageOptionButton);
-
-            buttonY += storageOptionsHeight + storageOptionsSpacing;
+        if (storageOptionsEnabled) {
+            updateStorageOptionsEnabled();
         }
 
         // Positioning the customization widgets.
-        buttonX = storageOptionsPlacement == ButtonsPlacement.RIGHT ?
+        int buttonX = storageOptionsPlacement == ButtonsPlacement.RIGHT ?
                 (this.x - customizationWidgetsWidth) / 2 :
-                (this.x+ this.backgroundWidth) + ((this.width - (this.x + backgroundWidth) - customizationWidgetsWidth) / 2);
+                (this.x + this.backgroundWidth) + ((this.width - (this.x + backgroundWidth) - customizationWidgetsWidth) / 2);
 
-        buttonSectionHeight = customizationWidgets.size() * customizationWidgetsHeight + (customizationWidgets.size() - 1) * customizationWidgetsSpacing;
+        int buttonSectionHeight = customizationWidgets.size() * customizationWidgetsHeight + (customizationWidgets.size() - 1) * customizationWidgetsSpacing;
         // Account for the triple spacing on the row preview button.
         buttonSectionHeight += 2 * customizationWidgetsSpacing;
-        buttonY = (this.height - buttonSectionHeight) / 2;
+        int buttonY = (this.height - buttonSectionHeight) / 2;
 
 
         for (int i = 0; i < customizationWidgets.size(); i++) {
@@ -187,29 +179,36 @@ public class ButtonsCustomizationScreen extends Screen {
             this.y = (this.height - this.backgroundHeight) / 2;
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
-        // [1] Buttons tooltip button.
+        // [1] Buttons enabled button.
+        customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getBooleanOptionText("buttons_enabled", storageOptionsEnabled), onPress -> {
+            storageOptionsEnabled = !storageOptionsEnabled;
+            customizationWidgets.get(1).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_enabled", storageOptionsEnabled));
+            updateStorageOptionsEnabled();
+        }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
+
+        // [2] Buttons tooltip button.
         customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip), onPress -> {
             storageOptionsTooltip = !storageOptionsTooltip;
-            customizationWidgets.get(1).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip));
+            customizationWidgets.get(2).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip));
             updateStorageOptionsTooltip();
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
-        // [2] Buttons style button.
+        // [3] Buttons style button.
         customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle), onPress -> {
             storageOptionsStyle = ButtonsStyle.next(storageOptionsStyle);
-            customizationWidgets.get(2).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle));
+            customizationWidgets.get(3).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle));
             updateStorageOptionsStyle();
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
-        // [3] Buttons placement button.
+        // [4] Buttons placement button.
         customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement), onPress -> {
             storageOptionsPlacement = ButtonsPlacement.next(storageOptionsPlacement);
-            customizationWidgets.get(3).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement));
+            customizationWidgets.get(4).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement));
             updateStorageOptionsX();
             updateCustomizationWidgetsX();
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
-        // [4] Buttons x offset slider.
+        // [5] Buttons x offset slider.
         customizationWidgets.add(new SimpleOption<>(
                 "terrastorage.option.buttons_x_offset",
                 SimpleOption.emptyTooltip(),
@@ -223,7 +222,7 @@ public class ButtonsCustomizationScreen extends Screen {
                 }
         ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
 
-        // [5] Buttons y offset slider.
+        // [6] Buttons y offset slider.
         customizationWidgets.add(new SimpleOption<>(
                 "terrastorage.option.buttons_y_offset",
                 SimpleOption.emptyTooltip(),
@@ -237,7 +236,7 @@ public class ButtonsCustomizationScreen extends Screen {
                 }
         ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
 
-        // [6] Buttons width slider.
+        // [7] Buttons width slider.
         customizationWidgets.add(new SimpleOption<>(
                 "terrastorage.option.buttons_width",
                 SimpleOption.emptyTooltip(),
@@ -254,7 +253,7 @@ public class ButtonsCustomizationScreen extends Screen {
             setWidthCustomizationEnabled(false);
         }
 
-        // [7] Buttons height slider.
+        // [8] Buttons height slider.
         customizationWidgets.add(new SimpleOption<>(
                 "terrastorage.option.buttons_height",
                 SimpleOption.emptyTooltip(),
@@ -268,7 +267,7 @@ public class ButtonsCustomizationScreen extends Screen {
                 }
         ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
 
-        // [8] Buttons spacing slider.
+        // [9] Buttons spacing slider.
         customizationWidgets.add(new SimpleOption<>(
                 "terrastorage.option.buttons_spacing",
                 SimpleOption.emptyTooltip(),
@@ -295,6 +294,7 @@ public class ButtonsCustomizationScreen extends Screen {
         // [2] Save Changes button.
         actionWidgets.add(ButtonWidget.builder(Text.translatable("terrastorage.option.save_and_exit"), onPress -> {
             TerrastorageClientConfig config = ClientConfigManager.getInstance().getConfig();
+            config.setButtonsEnabled(storageOptionsEnabled);
             config.setButtonsTooltip(storageOptionsTooltip);
             config.setButtonsStyle(storageOptionsStyle);
             config.setButtonsPlacement(storageOptionsPlacement);
@@ -320,6 +320,29 @@ public class ButtonsCustomizationScreen extends Screen {
                 (this.x+ this.backgroundWidth) + ((this.width - (this.x + backgroundWidth) - customizationWidgetsWidth) / 2);
 
         customizationWidgets.forEach(button -> button.setX(customizationWidgetsX));
+    }
+
+    private void updateStorageOptionsEnabled() {
+        if (storageOptionsEnabled) {
+            // Positioning the storage option buttons.
+            int buttonX = storageOptionsPlacement == ButtonsPlacement.RIGHT ?
+                    this.x + this.backgroundWidth + 5 + storageOptionsXOffset :
+                    this.x - ((storageOptionsStyle == ButtonsStyle.DEFAULT ? storageOptionsWidth : 70) + 5) + storageOptionsXOffset;
+            int buttonSectionHeight = buttonActionsLength * storageOptionsHeight + (buttonActionsLength - 1) * storageOptionsSpacing;
+            int buttonY = this.y - (buttonSectionHeight - this.playerInventoryTitleY) / 2 + storageOptionsYOffset;
+
+            for (ButtonWidget storageOptionButton : storageOptionsButtons) {
+                storageOptionButton.setPosition(buttonX, buttonY);
+                this.addDrawableChild(storageOptionButton);
+
+                buttonY += storageOptionsHeight + storageOptionsSpacing;
+            }
+        }
+        else {
+            for (ButtonWidget storageOptionButton : storageOptionsButtons) {
+                this.remove(storageOptionButton);
+            }
+        }
     }
 
     private void updateStorageOptionsTooltip() {
@@ -400,8 +423,8 @@ public class ButtonsCustomizationScreen extends Screen {
      * @param enabled Whether it is enabled or not.
      */
     private void setWidthCustomizationEnabled(boolean enabled) {
-        customizationWidgets.get(6).active = enabled;
-        customizationWidgets.get(6).setTooltip(Tooltip.of(enabled ? Text.empty() : Text.translatable("terrastorage.option.tooltip.button_width_disabled")));
+        customizationWidgets.get(7).active = enabled;
+        customizationWidgets.get(7).setTooltip(Tooltip.of(enabled ? Text.empty() : Text.translatable("terrastorage.option.tooltip.button_width_disabled")));
     }
 
     /**
@@ -409,29 +432,35 @@ public class ButtonsCustomizationScreen extends Screen {
      * @param config The config instance.
      */
     private void applyFromConfig(TerrastorageClientConfig config) {
+        if (storageOptionsEnabled != config.getButtonsEnabled()) {
+            storageOptionsEnabled = config.getButtonsEnabled();
+            updateStorageOptionsEnabled();
+            customizationWidgets.get(1).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_enabled", storageOptionsEnabled));
+        }
+
         if (storageOptionsTooltip != config.getButtonsTooltip()) {
             storageOptionsTooltip = config.getButtonsTooltip();
             updateStorageOptionsTooltip();
-            customizationWidgets.get(1).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip));
+            customizationWidgets.get(2).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip));
         }
 
         if (storageOptionsStyle != config.getButtonsStyle()) {
             storageOptionsStyle = config.getButtonsStyle();
             updateStorageOptionsStyle();
-            customizationWidgets.get(2).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle));
+            customizationWidgets.get(3).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle));
         }
 
         if (storageOptionsPlacement != config.getButtonsPlacement()) {
             storageOptionsPlacement = config.getButtonsPlacement();
             updateStorageOptionsX();
             updateCustomizationWidgetsX();
-            customizationWidgets.get(3).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement));
+            customizationWidgets.get(4).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement));
         }
 
         if (storageOptionsXOffset != config.getButtonsXOffset()) {
             storageOptionsXOffset = config.getButtonsXOffset();
             updateStorageOptionsX();
-            if (customizationWidgets.get(4) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(5) instanceof OptionSliderWidget optionSliderWidget) {
                 double normalizedValue = (storageOptionsXOffset + 100) / 200.0;
                 ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
@@ -440,7 +469,7 @@ public class ButtonsCustomizationScreen extends Screen {
         if (storageOptionsYOffset != config.getButtonsYOffset()) {
             storageOptionsYOffset = config.getButtonsYOffset();
             updateStorageOptionsY();
-            if (customizationWidgets.get(5) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(6) instanceof OptionSliderWidget optionSliderWidget) {
                 double normalizedValue = (storageOptionsYOffset + 100) / 200.0;
                 ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
@@ -451,7 +480,7 @@ public class ButtonsCustomizationScreen extends Screen {
             if (storageOptionsStyle == ButtonsStyle.DEFAULT) {
                 updateStorageOptionsWidth();
             }
-            if (customizationWidgets.get(6) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(7) instanceof OptionSliderWidget optionSliderWidget) {
                 double normalizedValue = (storageOptionsWidth - 20) / 130.0;
                 ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
@@ -460,7 +489,7 @@ public class ButtonsCustomizationScreen extends Screen {
         if (storageOptionsHeight != config.getButtonsHeight()) {
             storageOptionsHeight = config.getButtonsHeight();
             updateStorageOptionsHeight();
-            if (customizationWidgets.get(7) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(8) instanceof OptionSliderWidget optionSliderWidget) {
                 double normalizedValue = (storageOptionsHeight - 5) / 45.0;
                 ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
@@ -469,7 +498,7 @@ public class ButtonsCustomizationScreen extends Screen {
         if (storageOptionsSpacing != config.getButtonsSpacing()) {
             storageOptionsSpacing = config.getButtonsSpacing();
             updateStorageOptionsHeight();
-            if (customizationWidgets.get(8) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(9) instanceof OptionSliderWidget optionSliderWidget) {
                 double normalizedValue = storageOptionsSpacing / 20.0;
                 ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
