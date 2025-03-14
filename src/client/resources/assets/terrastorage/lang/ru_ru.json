@@ -37,6 +37,7 @@
   "terrastorage.option.sort_type.item_id": "ID",
   "terrastorage.option.tooltip.sort_type": "Свойство, по которому будут сортироваться элементы.",
   "terrastorage.option.preview_row_count": "Просмотр Количества Строк",
+  "terrastorage.option.buttons_enabled": "Кнопки Включены",
   "terrastorage.option.buttons_tooltip": "Подсказка По Кнопкам",
   "terrastorage.option.buttons_style": "Стиль Кнопок",
   "terrastorage.option.buttons_style.default": "Обычный",

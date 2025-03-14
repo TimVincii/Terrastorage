@@ -15,6 +15,10 @@ public class TerrastorageClientConfig {
     @ConfigProperty(key = "sort_type", comment = "The property by which items will be sorted")
     private SortType sortType = SortType.ITEM_GROUP;
 
+    @ConfigProperty(key = "buttons_enabled", comment = "Whether the storage option buttons are enabled.")
+    @SubProperty
+    private boolean buttonsEnabled = true;
+
     @ConfigProperty(key = "buttons_tooltip", comment = "Whether the storage option buttons have description tooltips.")
     @SubProperty
     private boolean buttonsTooltip = true;
@@ -71,6 +75,10 @@ public class TerrastorageClientConfig {
     public boolean getHotbarProtection() { return hotbarProtection; }
 
     public SortType getSortType() { return sortType; }
+
+    public boolean getButtonsEnabled() { return buttonsEnabled; }
+
+    public void setButtonsEnabled(boolean buttonsEnabled) { this.buttonsEnabled = buttonsEnabled; }
 
     public boolean getButtonsTooltip() { return buttonsTooltip; }
 
