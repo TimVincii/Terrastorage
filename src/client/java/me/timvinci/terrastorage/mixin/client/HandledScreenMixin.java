@@ -92,6 +92,29 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
             return;
         }
 
+        // Add the options buttons if it is enabled.
+        if (ClientConfigManager.getInstance().getConfig().getDisplayOptionsButton()) {
+            int optionsButtonX = (this.width - 120) / 2;
+            int optionsButtonY = this.y - 20;
+            ButtonWidget optionsButtonWidget = ButtonWidget.builder(
+                            Text.translatable("terrastorage.button.options"),
+                            onPress -> {
+                                client.execute(() -> {
+                                    client.setScreen(new TerrastorageOptionsScreen(client.currentScreen));
+                                });
+                            })
+                    .size(120, 15)
+                    .position(optionsButtonX, optionsButtonY)
+                    .build();
+            optionsButtonWidget.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.options")));
+
+            this.addDrawableChild(optionsButtonWidget);
+        }
+
+        if (!ClientConfigManager.getInstance().getConfig().getButtonsEnabled()) {
+            return;
+        }
+
         boolean isEnderChest = handler instanceof GenericContainerScreenHandler && this.getTitle().equals(Text.translatable("container.enderchest"));
         StorageAction[] buttonActions = StorageAction.getButtonsActions(isEnderChest);
 
@@ -134,25 +157,6 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
                 this.addDrawableChild(storageButton);
                 buttonY += buttonsHeight + buttonsSpacing;
             }
-        }
-
-        // Add the options buttons if it is enabled.
-        if (ClientConfigManager.getInstance().getConfig().getDisplayOptionsButton()) {
-            int optionsButtonX = (this.width - 120) / 2;
-            int optionsButtonY = this.y - 20;
-            ButtonWidget optionsButtonWidget = ButtonWidget.builder(
-                            Text.translatable("terrastorage.button.options"),
-                            onPress -> {
-                                client.execute(() -> {
-                                    client.setScreen(new TerrastorageOptionsScreen(client.currentScreen));
-                                });
-                            })
-                    .size(120, 15)
-                    .position(optionsButtonX, optionsButtonY)
-                    .build();
-            optionsButtonWidget.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.options")));
-
-            this.addDrawableChild(optionsButtonWidget);
         }
     }
 
