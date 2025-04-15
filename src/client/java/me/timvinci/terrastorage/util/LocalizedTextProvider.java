@@ -56,7 +56,7 @@ public class LocalizedTextProvider {
     public static <T extends Enum<T>> Text getEnumOptionText(String propertyKey, T currentValue) {
         return Text.translatable("terrastorage.option." + propertyKey)
                 .append(": ")
-                .append(Text.translatable("terrastorage.option." + propertyKey + "." + currentValue.name().toLowerCase(Locale.ENGLISH)));
+                .append(TextStyler.styleEnumValue(propertyKey, currentValue));
     }
 
     public static void sendUnsupportedMessage() {
