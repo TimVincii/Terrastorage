@@ -4,8 +4,8 @@ package me.timvinci.terrastorage.util;
  * An enum class defining the quick stacking modes.
  */
 public enum QuickStackMode {
-    FILL_UP,
-    SMART_DEPOSIT;
+    SMART_DEPOSIT,
+    FILL_UP;
 
     /**
      * Gets the next enum constant after the one provided.
