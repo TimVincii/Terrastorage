@@ -4,8 +4,8 @@ package me.timvinci.terrastorage.util;
  * An enum class defining the textures for the inventory storage option buttons.
  */
 public enum ButtonsTextures {
-    TERRARIA,
-    MINECRAFT;
+    MINECRAFT,
+    TERRARIA;
 
     /**
      * Gets the next enum constant after the one provided.
