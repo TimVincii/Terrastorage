@@ -58,7 +58,11 @@ public class SlotBackedInventory implements Inventory {
     }
 
     @Override
-    public void markDirty() {}
+    public void markDirty() {
+        for (Slot slot : slots) {
+            slot.markDirty();
+        }
+    }
 
     @Override
     public boolean canPlayerUse(PlayerEntity player) {
