@@ -80,7 +80,7 @@ public class NametagRenderer {
 
         } else { // Set the render pos to a single block above the block entity.
             renderPos = renderPos.subtract(0, -1, 0);
-            light = WorldRenderer.getLightmapCoordinates(dispatcher.world, entity.getCachedState(), entityPos.up());
+            light = WorldRenderer.getLightmapCoordinates(dispatcher.world, entityPos.up());
         }
 
         this.renderNametag(entity, customName, matrices, vertexConsumers, renderPos, light);

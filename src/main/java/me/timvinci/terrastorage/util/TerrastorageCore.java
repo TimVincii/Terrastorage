@@ -67,7 +67,7 @@ public class TerrastorageCore {
         // Create an inventory state from the storage's inventory.
         CompleteInventoryState storageInventoryState = new CompleteInventoryState(storageInventory);
 
-        for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.main.size(); i++) {
+        for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.getMainStacks().size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
             if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.canInsert(playerStack)) {
                 continue;
@@ -109,7 +109,7 @@ public class TerrastorageCore {
         StackProcessor processor = InventoryUtils.createStackProcessor(storageInventoryState, storageInventory, smartDepositMode);
 
         int startIndex = hotbarProtection ? PlayerInventory.getHotbarSize() : 0;
-        for (int i = startIndex; i < playerInventory.main.size(); i++) {
+        for (int i = startIndex; i < playerInventory.getMainStacks().size(); i++) {
             processor.tryProcess(playerInventory.getStack(i));
         }
 
@@ -235,21 +235,23 @@ public class TerrastorageCore {
      * @param hotbarProtection The hotbar protection value of the player.
      */
     public static void sortPlayerItems(PlayerInventory playerInventory, SortType type, boolean hotbarProtection) {
-        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type, hotbarProtection ? PlayerInventory.getHotbarSize() : 0, playerInventory.main.size(), true);
+        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type,
+                hotbarProtection ? PlayerInventory.getHotbarSize() : 0,
+                playerInventory.getMainStacks().size(), true);
         ArrayDeque<ItemStack> sortedStacks = new ArrayDeque<>(sortedList);
 
         int slotIndex = PlayerInventory.getHotbarSize();
         while (!sortedStacks.isEmpty() && slotIndex < 36) {
-            if (playerInventory.main.get(slotIndex).isEmpty()) {
-                playerInventory.main.set(slotIndex, sortedStacks.pollFirst());
+            if (playerInventory.getMainStacks().get(slotIndex).isEmpty()) {
+                playerInventory.getMainStacks().set(slotIndex, sortedStacks.pollFirst());
             }
             slotIndex++;
         }
         if (!hotbarProtection && !sortedStacks.isEmpty()) {
             slotIndex = 0;
             do {
-                if (playerInventory.main.get(slotIndex).isEmpty()) {
-                    playerInventory.main.set(slotIndex, sortedStacks.pollFirst());
+                if (playerInventory.getMainStacks().get(slotIndex).isEmpty()) {
+                    playerInventory.getMainStacks().set(slotIndex, sortedStacks.pollFirst());
                 }
                 slotIndex++;
             }
@@ -285,7 +287,7 @@ public class TerrastorageCore {
             InventoryState storageState = stateFactory.apply(storage);
             StackProcessor processor = InventoryUtils.createStackProcessor(storageState, storage, smartDepositMode);
 
-            for (int i = startIndex; i < playerInventory.main.size(); i++) {
+            for (int i = startIndex; i < playerInventory.getMainStacks().size(); i++) {
                 ItemStack playerStack = playerInventory.getStack(i);
                 Item playerItem = playerStack.getItem();
                 if (processor.tryProcess(playerStack)) {

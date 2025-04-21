@@ -5,6 +5,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.Vec3d;
 
 /**
  * An empty custom block entity renderer.
@@ -16,5 +17,6 @@ public class BlockNametagRenderer implements BlockEntityRenderer<LootableContain
     public BlockNametagRenderer(BlockEntityRendererFactory.Context ctx) {}
 
     @Override
-    public void render(LootableContainerBlockEntity entity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {}
+    public void render(LootableContainerBlockEntity entity, float tickProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, Vec3d cameraPos) {
+    }
 }

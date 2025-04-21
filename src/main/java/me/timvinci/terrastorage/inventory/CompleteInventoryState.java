@@ -45,7 +45,7 @@ public class CompleteInventoryState implements InventoryState {
      * @param hotbarProtection The hotbar protection value of the player.
      */
     public CompleteInventoryState(PlayerInventory playerInventory, boolean hotbarProtection) {
-        for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.main.size(); i++) {
+        for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.getMainStacks().size(); i++) {
             ItemStack playerStack = playerInventory.getStack(i);
             if (playerStack.isEmpty()) {
                 emptySlots.add(i);

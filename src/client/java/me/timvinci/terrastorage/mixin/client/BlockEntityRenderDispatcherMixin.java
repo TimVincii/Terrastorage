@@ -38,7 +38,13 @@ public class BlockEntityRenderDispatcherMixin {
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(TextRenderer textRenderer, Supplier<LoadedEntityModels> entityModelsGetter, BlockRenderManager blockRenderManager, ItemModelManager itemModelManager, ItemRenderer itemRenderer, EntityRenderDispatcher entityRenderDispatcher, CallbackInfo ci) {
+    private void onInit(TextRenderer textRenderer,
+                        Supplier<LoadedEntityModels> entityModelsGetter,
+                        BlockRenderManager blockRenderManager,
+                        ItemModelManager itemModelManager,
+                        ItemRenderer itemRenderer,
+                        EntityRenderDispatcher entityRenderDispatcher,
+                        CallbackInfo ci) {
         BlockEntityRenderDispatcher dispatcher = (BlockEntityRenderDispatcher) (Object) this;
         nametagRenderer = new NametagRenderer(dispatcher, textRenderer);
     }
@@ -50,14 +56,13 @@ public class BlockEntityRenderDispatcherMixin {
     @Inject(method = "render(Lnet/minecraft/block/entity/BlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;)V",
         at = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/render/block/entity/BlockEntityRenderDispatcher;render(Lnet/minecraft/client/render/block/entity/BlockEntityRenderer;Lnet/minecraft/block/entity/BlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;)V",
+                target = "Lnet/minecraft/client/render/block/entity/BlockEntityRenderDispatcher;render(Lnet/minecraft/client/render/block/entity/BlockEntityRenderer;Lnet/minecraft/block/entity/BlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/util/math/Vec3d;)V",
                 shift = At.Shift.AFTER),
         locals = LocalCapture.CAPTURE_FAILEXCEPTION)
     private <E extends BlockEntity> void afterRender(
             E blockEntity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci,
             BlockEntityRenderer<E> blockEntityRenderer) {
         if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity && nametagRenderer.hasLabel(lootableContainerBlockEntity)) {
-
             if (blockEntityRenderer instanceof BlockNametagRenderer) {
                 nametagRenderer.renderBlockNametag(blockEntity, lootableContainerBlockEntity.getCustomName(), matrices, vertexConsumers);
             } else {
