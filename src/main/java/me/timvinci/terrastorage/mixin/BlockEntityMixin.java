@@ -1,11 +1,16 @@
 package me.timvinci.terrastorage.mixin;
 
+import com.google.gson.JsonElement;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.mojang.serialization.JsonOps;
+
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -24,7 +29,8 @@ public abstract class BlockEntityMixin {
         if ((BlockEntity) (Object) this instanceof LockableContainerBlockEntity lockableContainerBlockEntity) {
             Text customName = lockableContainerBlockEntity.getCustomName();
             if (customName != null) {
-                original.putString("CustomName", Text.Serialization.toJsonString(customName, registryLookup));
+                JsonElement json = TextCodecs.CODEC.encodeStart(JsonOps.INSTANCE, customName).getOrThrow();
+                original.putString("CustomName", json.toString());
             }
         }
 

@@ -11,13 +11,13 @@ import me.timvinci.terrastorage.util.*;
 import me.timvinci.terrastorage.gui.widget.StorageButtonWidget;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -257,7 +257,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
 
         if (!needsModifierPressed || InputUtil.isKeyPressed(client.getWindow().getHandle(),
                 KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode())) {
-            context.drawTexture(RenderLayer::getGuiTextured, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
         }
     }
 }

@@ -7,9 +7,9 @@ import me.timvinci.terrastorage.util.BorderVisibility;
 import me.timvinci.terrastorage.util.Reference;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerEntity;
@@ -59,6 +59,6 @@ public class InGameHudMixin {
             return;
         }
 
-        context.drawTexture(RenderLayer::getGuiTextured, favoriteBorder, x, y, 0, 0, 16, 16, 16, 16);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, favoriteBorder, x, y, 0, 0, 16, 16, 16, 16);
     }
 }

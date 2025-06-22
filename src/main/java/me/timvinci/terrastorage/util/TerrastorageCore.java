@@ -197,8 +197,8 @@ public class TerrastorageCore {
                 firstPart.markDirty();
                 secondPart.markDirty();
 
-                NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
-                NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                NetworkHandler.sendGlobalBlockRenamedPayload(player.getWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                NetworkHandler.sendGlobalBlockRenamedPayload(player.getWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
                 factory = firstPart.getCachedState().createScreenHandlerFactory(player.getWorld(), firstPart.getPos());
             }
             else {
@@ -216,7 +216,7 @@ public class TerrastorageCore {
             accessor.setCustomName(newCustomName);
             lockableContainerBlockEntity.markDirty();
 
-            NetworkHandler.sendGlobalBlockRenamedPayload(player.getServerWorld(), lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
+            NetworkHandler.sendGlobalBlockRenamedPayload(player.getWorld(), lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
             factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(player.getWorld(), lockableContainerBlockEntity.getPos());
         }
         else {
@@ -308,7 +308,7 @@ public class TerrastorageCore {
 
         int itemAnimationLength = ConfigManager.getInstance().getConfig().getItemAnimationLength();
         if (itemAnimationLength != 0) {
-            InventoryUtils.triggerFlyOutAnimation(player.getServerWorld(), player.getEyePos(), itemAnimationLength, animationMap);
+            InventoryUtils.triggerFlyOutAnimation(player.getWorld(), player.getEyePos(), itemAnimationLength, animationMap);
         }
     }
 }

@@ -9,15 +9,14 @@ import me.timvinci.terrastorage.mixin.client.GenericContainerScreenAccessor;
 import me.timvinci.terrastorage.mixin.client.SliderWidgetAccessor;
 import me.timvinci.terrastorage.util.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.*;
 import net.minecraft.client.option.SimpleOption;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -524,8 +523,8 @@ public class ButtonsCustomizationScreen extends Screen {
         int i = (this.width - backgroundWidth) / 2;
         int j = (this.height - backgroundHeight) / 2;
 
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, i, j, 0.0F, 0.0F, backgroundWidth, rows * 18 + 17, 256, 256, ColorHelper.getWhite(0.5f));
-        context.drawTexture(RenderLayer::getGuiTextured, TEXTURE, i, j + rows * 18 + 17, 0.0F, 126.0F, backgroundWidth, 96, 256, 256, ColorHelper.getWhite(0.5f));
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j, 0, 0, backgroundWidth, rows * 18 + 17, 256, 256);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j + rows * 18 + 17, 0, 126, backgroundWidth, 96, 256, 256);
 
         context.drawText(this.textRenderer, storagePreviewTitle, x + storagePreviewTitleX, y + storagePreviewTitleY, 4210752, false);
         context.drawText(this.textRenderer, playerInventoryTitle, x + playerInventoryTitleX, y + playerInventoryTitleY, 4210752, false);
