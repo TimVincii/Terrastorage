@@ -117,7 +117,7 @@ public class NametagRenderer {
             Matrix4f matrix4f = matrices.peek().getPositionMatrix();
             float xPos = (float)(-textRenderer.getWidth(customName) / 2);
 
-            textRenderer.drawWithOutline(customName.asOrderedText(), xPos, 0, -1, 0, matrix4f, vertexConsumers, light);
+            textRenderer.drawWithOutline(customName.asOrderedText(), xPos, 0, 0xFFFFFFFF, 0xFF000000, matrix4f, vertexConsumers, light);
 
             matrices.pop();
         }

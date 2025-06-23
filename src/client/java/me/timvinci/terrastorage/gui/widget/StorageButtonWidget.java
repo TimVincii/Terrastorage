@@ -3,10 +3,9 @@ package me.timvinci.terrastorage.gui.widget;
 import me.timvinci.terrastorage.mixin.client.PressableWidgetAccessor;
 import me.timvinci.terrastorage.util.ButtonsStyle;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
@@ -35,7 +34,7 @@ public class StorageButtonWidget extends ButtonWidget {
         MinecraftClient minecraftClient = MinecraftClient.getInstance();
         // Draw the button background if the option buttons style is set to default.
         if (buttonStyle == ButtonsStyle.DEFAULT) {
-            context.drawGuiTexture(RenderLayer::getGuiTextured, PressableWidgetAccessor.getTextures().get(this.active, this.isSelected()), this.getX(), this.getY(), this.getWidth(), this.getHeight(), ColorHelper.getWhite(this.alpha));
+            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, PressableWidgetAccessor.getTextures().get(this.active, this.isSelected()), this.getX(), this.getY(), this.getWidth(), this.getHeight(), ColorHelper.getWhite(this.alpha));
         }
         // Change the text color to yellow if the button is hovered.
         int i = this.hovered ? 16776960 : 16777215;
