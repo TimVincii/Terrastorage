@@ -37,9 +37,6 @@ public class Terrastorage implements ModInitializer {
 		LOGGER.info("Initializing " + Reference.MOD_NAME + " [" + Reference.MOD_VERSION + "].");
 		environmentIsServer = FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER;
 
-		if (FabricLoader.getInstance().isModLoaded("expandedstorage")) {
-			InventoryUtils.expandedStorageLoaded = true;
-		}
 
 		ConfigManager.init();
 		TerrastorageCommands.registerCommands();
