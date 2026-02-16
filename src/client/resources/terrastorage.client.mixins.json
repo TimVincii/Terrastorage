@@ -3,7 +3,6 @@
 	"package": "me.timvinci.terrastorage.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"BlockEntityRenderDispatcherMixin",
 		"BlockEntityRendererFactoriesMixin",
 		"ClientPlayerEntityMixin",
 		"CreativeInventoryScreenMixin",
@@ -13,7 +12,8 @@
 		"InventoryScreenMixin",
 		"ItemStackMixin",
 		"PressableWidgetAccessor",
-		"SliderWidgetAccessor"
+		"SliderWidgetAccessor",
+        "WorldRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

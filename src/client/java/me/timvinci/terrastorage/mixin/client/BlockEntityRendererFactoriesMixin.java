@@ -15,7 +15,7 @@ import java.util.Map;
 public interface BlockEntityRendererFactoriesMixin {
 
     @Accessor("FACTORIES")
-    static Map<BlockEntityType<?>, BlockEntityRendererFactory<?>> getFactories() {
+    static Map<BlockEntityType<?>, BlockEntityRendererFactory<?, ?>> getFactories() {
         throw new AssertionError();
     }
 }
