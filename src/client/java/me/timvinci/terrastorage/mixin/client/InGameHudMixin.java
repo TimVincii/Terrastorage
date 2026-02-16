@@ -54,7 +54,7 @@ public class InGameHudMixin {
 
         // If border visibility is set to ON_PRESS, only render if the key is pressed
         if (borderVisibility == BorderVisibility.ON_PRESS &&
-            !InputUtil.isKeyPressed(client.getWindow().getHandle(),
+            !InputUtil.isKeyPressed(client.getWindow(),
                         KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode())) {
             return;
         }

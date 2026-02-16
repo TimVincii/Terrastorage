@@ -12,12 +12,14 @@ import me.timvinci.terrastorage.gui.widget.StorageButtonWidget;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -167,15 +169,17 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
      */
     @Inject(method = "mouseClicked",
             at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/util/Util;getMeasuringTimeMs()J"),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION, cancellable = true)
-    private void mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
-        if (button != 0 || slot == null || !slot.hasStack() || !handler.getCursorStack().isEmpty()) {
+                    value = "INVOKE_ASSIGN",
+                    target = "Lnet/minecraft/client/gui/screen/ingame/HandledScreen;getSlotAt(DD)Lnet/minecraft/screen/slot/Slot;"
+            ),
+            locals = LocalCapture.CAPTURE_FAILEXCEPTION,
+            cancellable = true)
+    private void mouseClicked(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+        if (click.button() != 0 || slot == null || !slot.hasStack() || !handler.getCursorStack().isEmpty()) {
             return;
         }
 
-        boolean modifierIsPressed = InputUtil.isKeyPressed(client.getWindow().getHandle(), KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode());
+        boolean modifierIsPressed = InputUtil.isKeyPressed(client.getWindow(), KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode());
         boolean playerOwnedSlot = slot.inventory instanceof PlayerInventory;
 
         if (modifierIsPressed && playerOwnedSlot) {
@@ -201,12 +205,12 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
      * Injected at TAIL to allow any other logic related to the same keybind to happen before the sorting.
      */
     @Inject(method = "mouseClicked", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void mouseClickedTail(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+    private void mouseClickedTail(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
         if (slot == null || slot.inventory.size() < 27) {
             return;
         }
 
-        if (TerrastorageKeybindings.sortInventoryBind.matchesMouse(button)) {
+        if (TerrastorageKeybindings.sortInventoryBind.matchesMouse(click)) {
             ClientNetworkHandler.sendSortPayload(slot.inventory instanceof PlayerInventory);
         }
     }
@@ -224,12 +228,12 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
      * Injected at TAIL to allow any other logic related to the same keybind to happen before the sorting.
      */
     @Inject(method = "keyPressed", at = @At("TAIL"))
-    private void onKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+    private void onKeyPressed(KeyInput input, CallbackInfoReturnable<Boolean> cir) {
         if (focusedSlot == null || focusedSlot.inventory.size() < 27) {
             return;
         }
 
-        if (TerrastorageKeybindings.sortInventoryBind.matchesKey(keyCode, scanCode)) {
+        if (TerrastorageKeybindings.sortInventoryBind.matchesKey(input)) {
             ClientNetworkHandler.sendSortPayload(focusedSlot.inventory instanceof PlayerInventory);
         }
     }
@@ -255,7 +259,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
 
         boolean needsModifierPressed = borderVisibility == BorderVisibility.ON_PRESS || borderVisibility == BorderVisibility.ON_PRESS_NON_HOTBAR;
 
-        if (!needsModifierPressed || InputUtil.isKeyPressed(client.getWindow().getHandle(),
+        if (!needsModifierPressed || InputUtil.isKeyPressed(client.getWindow(),
                 KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode())) {
             context.drawTexture(RenderPipelines.GUI_TEXTURED, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
         }
