@@ -185,7 +185,7 @@ public class InventoryUtils {
      * @return A list consisting of pairs of inventories and their position.
      */
     public static List<Pair<Inventory, Vec3d>> getNearbyStorages(ServerPlayerEntity player) {
-        World world = player.getWorld();
+        World world = player.getEntityWorld();
         List<Pair<Inventory, Vec3d>> nearbyStorages = new ArrayList<>();
         Set<BlockPos> processedChests = new HashSet<>();
 

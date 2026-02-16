@@ -2,7 +2,6 @@ package me.timvinci.terrastorage;
 
 import me.timvinci.terrastorage.command.TerrastorageCommands;
 import me.timvinci.terrastorage.config.ConfigManager;
-import me.timvinci.terrastorage.inventory.InventoryUtils;
 import me.timvinci.terrastorage.network.NetworkHandler;
 import me.timvinci.terrastorage.network.PayloadRegistry;
 import me.timvinci.terrastorage.item.ItemGroupCache;

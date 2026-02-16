@@ -19,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.Vec3d;
@@ -197,9 +198,10 @@ public class TerrastorageCore {
                 firstPart.markDirty();
                 secondPart.markDirty();
 
-                NetworkHandler.sendGlobalBlockRenamedPayload(player.getWorld(), firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
-                NetworkHandler.sendGlobalBlockRenamedPayload(player.getWorld(), secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
-                factory = firstPart.getCachedState().createScreenHandlerFactory(player.getWorld(), firstPart.getPos());
+                ServerWorld world = player.getEntityWorld();
+                NetworkHandler.sendGlobalBlockRenamedPayload(world, firstPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                NetworkHandler.sendGlobalBlockRenamedPayload(world, secondPart.getPos(), newCustomName == null ? "" : newCustomName.getString());
+                factory = firstPart.getCachedState().createScreenHandlerFactory(world, firstPart.getPos());
             }
             else {
                 player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
@@ -216,8 +218,9 @@ public class TerrastorageCore {
             accessor.setCustomName(newCustomName);
             lockableContainerBlockEntity.markDirty();
 
-            NetworkHandler.sendGlobalBlockRenamedPayload(player.getWorld(), lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
-            factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(player.getWorld(), lockableContainerBlockEntity.getPos());
+            ServerWorld world = player.getEntityWorld();
+            NetworkHandler.sendGlobalBlockRenamedPayload(world, lockableContainerBlockEntity.getPos(), newCustomName == null ? "" : newCustomName.getString());
+            factory = lockableContainerBlockEntity.getCachedState().createScreenHandlerFactory(world, lockableContainerBlockEntity.getPos());
         }
         else {
             player.sendMessage(Text.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
@@ -308,7 +311,7 @@ public class TerrastorageCore {
 
         int itemAnimationLength = ConfigManager.getInstance().getConfig().getItemAnimationLength();
         if (itemAnimationLength != 0) {
-            InventoryUtils.triggerFlyOutAnimation(player.getWorld(), player.getEyePos(), itemAnimationLength, animationMap);
+            InventoryUtils.triggerFlyOutAnimation(player.getEntityWorld(), player.getEyePos(), itemAnimationLength, animationMap);
         }
     }
 }

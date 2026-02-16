@@ -40,7 +40,7 @@ public record BlockRenamedPayload(BlockPos pos, String newName) implements Custo
      * @param newName The new name of the block entity.
      */
     public static void receive(PlayerEntity player, BlockPos pos, String newName) {
-        LockableContainerBlockEntityAccessor accessor = (LockableContainerBlockEntityAccessor) player.getWorld().getBlockEntity(pos);
+        LockableContainerBlockEntityAccessor accessor = (LockableContainerBlockEntityAccessor) player.getEntityWorld().getBlockEntity(pos);
         accessor.setCustomName(newName.isEmpty() ? null : Text.literal(newName));
     }
 }
