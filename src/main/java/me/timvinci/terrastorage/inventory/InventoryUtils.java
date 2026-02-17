@@ -34,14 +34,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import compasses.expandedstorage.api.ExpandedStorageAccessors;
-import compasses.expandedstorage.api.EsChestType;
-
 /**
  * A utility class for inventory/item related operations.
  */
 public class InventoryUtils {
-    public static boolean expandedStorageLoaded = false;
 
     /**
      * Transfers a stack from an inventory to another inventory, first attempts to transfer that stack to an existing
@@ -243,23 +239,6 @@ public class InventoryUtils {
                     Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
 
                     DoubleInventory doubleInventory = chestType == ChestType.RIGHT ?
-                            new DoubleInventory(inventory, neighboringChestInventory) :
-                            new DoubleInventory(neighboringChestInventory,inventory);
-                    nearbyStorages.add(new Pair<>(doubleInventory, doubleChestLosPoint));
-                    processedChests.add(neighboringChestPos);
-                }
-                else if (expandedStorageLoaded) {
-                    Optional<EsChestType> chestType = ExpandedStorageAccessors.getChestType(state);
-                    if (chestType.isEmpty() || chestType.get() == EsChestType.SINGLE) {
-                        nearbyStorages.add(new Pair<>(inventory, losPoint));
-                        return;
-                    }
-
-                    BlockPos neighboringChestPos = pos.offset(ExpandedStorageAccessors.getAttachedChestDirection(state).get());
-                    Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
-                    Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
-
-                    DoubleInventory doubleInventory = chestType.get() == EsChestType.RIGHT ?
                             new DoubleInventory(inventory, neighboringChestInventory) :
                             new DoubleInventory(neighboringChestInventory,inventory);
                     nearbyStorages.add(new Pair<>(doubleInventory, doubleChestLosPoint));

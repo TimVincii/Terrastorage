@@ -51,9 +51,6 @@ dependencies {
 
 	// ModMenu integration.
 	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
-
-	// Expanded Storage compatibility.
-	modCompileOnlyApi "maven.modrinth:expanded-storage:${project.expanded_storage_version}"
 }
 
 processResources {
