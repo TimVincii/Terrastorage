@@ -11,13 +11,13 @@ import me.timvinci.terrastorage.util.Reference;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.resource.ResourceManager;
+import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Entrypoint class for the client side.
@@ -37,16 +37,20 @@ public class TerrastorageClient implements ClientModInitializer {
 		TerrastorageKeybindings.registerKeybindings();
 		
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());
-		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
-			@Override
-			public Identifier getFabricId() {
-				return RELOAD_LISTENER_ID;
-			}
+        ResourceLoader.get(ResourceType.CLIENT_RESOURCES).registerReloader(
+                Identifier.of(Reference.MOD_ID, "localized_text_provider"),
+                (store, prepareExecutor, synchronizer, applyExecutor) -> {
 
-			@Override
-			public void reload(ResourceManager manager) {
-				LocalizedTextProvider.initializeButtonCaches();
-			}
-		});
+                    // Prepare phase (nothing to prepare)
+                    CompletableFuture<Void> prepare = CompletableFuture.completedFuture(null);
+
+                    // Synchronize with reload pipeline
+                    return synchronizer.whenPrepared(prepare)
+                            .thenRunAsync(
+                                    LocalizedTextProvider::initializeButtonCaches,
+                                    applyExecutor
+                            );
+                }
+        );
 	}
 }
