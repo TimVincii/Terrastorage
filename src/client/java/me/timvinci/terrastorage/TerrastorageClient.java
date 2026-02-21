@@ -35,7 +35,7 @@ public class TerrastorageClient implements ClientModInitializer {
 		TerrastorageKeybindings.registerKeybindings();
 
         ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloader(
-                ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "localized_text_provider"),
+                RELOAD_LISTENER_ID,
                 (store, prepareExecutor, synchronizer, applyExecutor) -> {
 
                     // Prepare phase (nothing to prepare)
