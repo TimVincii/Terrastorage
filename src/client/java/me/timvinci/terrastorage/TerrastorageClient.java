@@ -38,7 +38,7 @@ public class TerrastorageClient implements ClientModInitializer {
 		
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());
         ResourceLoader.get(ResourceType.CLIENT_RESOURCES).registerReloader(
-                Identifier.of(Reference.MOD_ID, "localized_text_provider"),
+                RELOAD_LISTENER_ID,
                 (store, prepareExecutor, synchronizer, applyExecutor) -> {
 
                     // Prepare phase (nothing to prepare)
