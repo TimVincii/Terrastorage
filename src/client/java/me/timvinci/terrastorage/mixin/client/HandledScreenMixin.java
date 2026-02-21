@@ -247,7 +247,7 @@ public abstract class HandledScreenMixin<T extends ScreenHandler> extends Screen
                     target = "Lnet/minecraft/client/gui/DrawContext;drawStackOverlay(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;IILjava/lang/String;)V",
                     shift = At.Shift.BEFORE),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void drawSlot(DrawContext context, Slot slot, CallbackInfo ci, int i, int j, ItemStack itemStack) {
+    private void drawSlot(DrawContext context, Slot slot, int mouseX, int mouseY, CallbackInfo ci, int i, int j, ItemStack itemStack, boolean bl, boolean bl2, ItemStack itemStack2, String string) {
         if (!(slot.inventory instanceof PlayerInventory) || !ItemFavoritingUtils.isFavorite(itemStack)) {
             return;
         }
