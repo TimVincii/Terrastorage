@@ -11,6 +11,10 @@ import me.timvinci.terrastorage.network.NetworkHandler;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.TextStyler;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.minecraft.command.permission.LeveledPermissionPredicate;
+import net.minecraft.command.permission.Permission;
+import net.minecraft.command.permission.PermissionLevel;
+import net.minecraft.command.permission.Permissions;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -30,7 +34,7 @@ public class TerrastorageCommands {
         TerrastorageConfig config = ConfigManager.getInstance().getConfig();
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             LiteralArgumentBuilder<ServerCommandSource> command = CommandManager.literal(Reference.MOD_ID)
-                .requires(source -> source.hasPermissionLevel(2))
+                .requires(CommandManager.requirePermissionLevel(CommandManager.GAMEMASTERS_CHECK))
                 .then(CommandManager.literal("action-cooldown")
                     .executes(context -> executeGetValue(context, config::getActionCooldown, "Action Cooldown", " ticks"))
                     .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 100))
