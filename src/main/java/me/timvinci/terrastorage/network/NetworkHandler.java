@@ -7,9 +7,9 @@ import me.timvinci.terrastorage.network.s2c.ServerConfigPayload;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
 
 import java.util.Collection;
 
@@ -24,14 +24,14 @@ public class NetworkHandler {
      * @param pos The position of the renamed block entity.
      * @param newName The new name of the block entity.
      */
-    public static void sendGlobalBlockRenamedPayload(ServerWorld serverWorld, BlockPos pos, String newName) {
-        Collection<ServerPlayerEntity> serverPlayersInRange = PlayerLookup.tracking(serverWorld, pos);
-        for (ServerPlayerEntity serverPlayer : serverPlayersInRange) {
+    public static void sendGlobalBlockRenamedPayload(ServerLevel serverWorld, BlockPos pos, String newName) {
+        Collection<ServerPlayer> serverPlayersInRange = PlayerLookup.tracking(serverWorld, pos);
+        for (ServerPlayer serverPlayer : serverPlayersInRange) {
             sendBlockRenamedPayload(serverPlayer, pos, newName);
         }
     }
 
-    public static void sendBlockRenamedPayload(ServerPlayerEntity player, BlockPos pos, String newName) {
+    public static void sendBlockRenamedPayload(ServerPlayer player, BlockPos pos, String newName) {
         if (ServerPlayNetworking.canSend(player, BlockRenamedPayload.ID)) {
             ServerPlayNetworking.send(player, new BlockRenamedPayload(pos, newName));
         }
@@ -42,12 +42,12 @@ public class NetworkHandler {
      * @param server The server.
      */
     public static void sendGlobalServerConfigPayload(MinecraftServer server) {
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             sendServerConfigPayload(player);
         }
     }
 
-    public static void sendServerConfigPayload(ServerPlayerEntity player) {
+    public static void sendServerConfigPayload(ServerPlayer player) {
         if (ServerPlayNetworking.canSend(player, ServerConfigPayload.ID)) {
             ServerPlayNetworking.send(player, new ServerConfigPayload(
                     ConfigManager.getInstance().getConfig().getActionCooldown(),

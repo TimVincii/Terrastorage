@@ -1,15 +1,15 @@
 package me.timvinci.terrastorage.mixin.client;
 
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.RecipeBookScreen;
-import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Pair;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
+import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Tuple;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,13 +21,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * A mixin of the InventoryScreen class, adds the inventory storage buttons to the survival inventory screen.
  */
 @Mixin(InventoryScreen.class)
-public abstract class InventoryScreenMixin extends RecipeBookScreen<PlayerScreenHandler> {
+public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<InventoryMenu> {
     @Unique
-    private TexturedButtonWidget quickStackButton;
+    private ImageButton quickStackButton;
     @Unique
-    private TexturedButtonWidget sortInventoryButton;
+    private ImageButton sortInventoryButton;
 
-    public InventoryScreenMixin(PlayerScreenHandler handler, RecipeBookWidget<?> recipeBook, PlayerInventory inventory, Text title) {
+    public InventoryScreenMixin(InventoryMenu handler, RecipeBookComponent<?> recipeBook, Inventory inventory, Component title) {
         super(handler, recipeBook, inventory, title);
     }
 
@@ -37,26 +37,26 @@ public abstract class InventoryScreenMixin extends RecipeBookScreen<PlayerScreen
     @Inject(method = "init", at = @At("TAIL"))
     public void onInit(CallbackInfo ci) {
         // Return if the player is in spectator mode.
-        if (client.player.isSpectator()) {
+        if (minecraft.player.isSpectator()) {
             return;
         }
 
-        int buttonX = this.x + 128;
+        int buttonX = this.leftPos + 128;
         int buttonY = this.height / 2 - 22;
-        Pair<TexturedButtonWidget, TexturedButtonWidget> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
-        quickStackButton = buttons.getLeft();
-        this.addDrawableChild(quickStackButton);
+        Tuple<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
+        quickStackButton = buttons.getA();
+        this.addRenderableWidget(quickStackButton);
 
-        sortInventoryButton = buttons.getRight();
-        this.addDrawableChild(sortInventoryButton);
+        sortInventoryButton = buttons.getB();
+        this.addRenderableWidget(sortInventoryButton);
     }
 
     /**
      * Repositions the inventory buttons once the recipe book is toggled.
      */
-    @Inject(method = "onRecipeBookToggled", at = @At("TAIL"))
+    @Inject(method = "onRecipeBookButtonClick", at = @At("TAIL"))
     private void onRecipeBookToggledTail(CallbackInfo ci) {
-        int buttonX = this.x + 128;
+        int buttonX = this.leftPos + 128;
         quickStackButton.setPosition(buttonX, quickStackButton.getY());
         buttonX += 24;
         sortInventoryButton.setPosition(buttonX, sortInventoryButton.getY());

@@ -13,8 +13,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.resource.featuretoggle.FeatureFlags;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.flag.FeatureFlags;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +52,7 @@ public class Terrastorage implements ModInitializer {
 			}
 
 			// Forcing the population of item groups.
-			ItemGroups.updateDisplayContext(FeatureFlags.DEFAULT_ENABLED_FEATURES, false, listener.getRegistryManager());
+			CreativeModeTabs.tryRebuildTabContents(FeatureFlags.DEFAULT_FLAGS, false, listener.registryAccess());
 			ItemGroupCache.init();
 
 			populatedItemGroups = true;

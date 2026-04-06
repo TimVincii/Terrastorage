@@ -1,9 +1,9 @@
 package me.timvinci.terrastorage.util;
 
 import me.timvinci.terrastorage.item.ItemGroupCache;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.Comparator;
 
@@ -13,16 +13,16 @@ import java.util.Comparator;
 public class ComparatorTypes {
 
     public static final Comparator<ItemStack> BY_ID =
-            Comparator.comparingInt(stack -> Item.getRawId(stack.getItem()));
+            Comparator.comparingInt(stack -> Item.getId(stack.getItem()));
 
     public static  final Comparator<ItemStack> BY_NAME =
-            Comparator.comparing((ItemStack itemStack) -> itemStack.getName().getString())
+            Comparator.comparing((ItemStack itemStack) -> itemStack.getHoverName().getString())
                     .thenComparing(BY_ID);
 
     public static final Comparator<ItemStack> BY_GROUP =
             Comparator.<ItemStack, String>comparing(
                     itemStack -> {
-                        ItemGroup group = ItemGroupCache.getGroup(itemStack.getItem());
+                        CreativeModeTab group = ItemGroupCache.getGroup(itemStack.getItem());
                         return group != null ? group.getDisplayName().getString() : "";
                     }
             ).thenComparing(BY_NAME);

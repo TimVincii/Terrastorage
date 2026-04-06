@@ -1,10 +1,10 @@
 package me.timvinci.terrastorage.item;
 
 import me.timvinci.terrastorage.inventory.InventoryUtils;
-import net.minecraft.component.ComponentType;
-import net.minecraft.component.MergedComponentMap;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.PatchedDataComponentMap;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -14,10 +14,10 @@ import java.util.Objects;
  * @param item The item of the stack.
  * @param components The component data of the stack.
  */
-public record StackIdentifier(Item item, @Nullable MergedComponentMap components) {
+public record StackIdentifier(Item item, @Nullable PatchedDataComponentMap components) {
 
     public StackIdentifier(ItemStack stack) {
-        this(stack.getItem(), new MergedComponentMap(stack.getComponents()));
+        this(stack.getItem(), new PatchedDataComponentMap(stack.getComponents()));
     }
 
     /**
@@ -58,7 +58,7 @@ public record StackIdentifier(Item item, @Nullable MergedComponentMap components
 
         // Use custom logic to hash component contents directly
         if (components != null) {
-            for (ComponentType<?> type : components.getTypes()) {
+            for (DataComponentType<?> type : components.keySet()) {
                 Object componentValue = components.get(type);
                 result = 31 * result + (componentValue != null ? componentValue.hashCode() : 0);
             }

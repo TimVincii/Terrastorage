@@ -1,6 +1,6 @@
 package me.timvinci.terrastorage.item;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;

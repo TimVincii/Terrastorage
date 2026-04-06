@@ -6,15 +6,15 @@ import me.timvinci.terrastorage.keybinding.TerrastorageKeybindings;
 import me.timvinci.terrastorage.util.BorderVisibility;
 import me.timvinci.terrastorage.util.Reference;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.DeltaTracker;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -23,24 +23,24 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * A mixin of the InGameHud class, used for adding item favoriting support.
+ * A mixin of the Gui class, used for adding item favoriting support.
  */
-@Mixin(InGameHud.class)
-public class InGameHudMixin {
+@Mixin(Gui.class)
+public class GuiMixin {
     @Unique
-    private final Identifier favoriteBorder = Identifier.of(Reference.MOD_ID, "textures/gui/sprites/favorite_border.png");
+    private final Identifier favoriteBorder = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/sprites/favorite_border.png");
     @Shadow
-    private MinecraftClient client;
+    private Minecraft minecraft;
 
     /**
      * Draws the favorite border on hotbar slots that hold favorite item stacks.
      */
-    @Inject(method = "renderHotbarItem",
+    @Inject(method = "renderSlot",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/DrawContext;drawStackOverlay(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;II)V",
+                    target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
                     shift = At.Shift.BEFORE))
-    private void onRenderHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, CallbackInfo ci) {
+    private void onRenderHotbarItem(GuiGraphics context, int x, int y, DeltaTracker tickCounter, Player player, ItemStack stack, int seed, CallbackInfo ci) {
         if (!ItemFavoritingUtils.isFavorite(stack)) {
             return;
         }
@@ -54,11 +54,11 @@ public class InGameHudMixin {
 
         // If border visibility is set to ON_PRESS, only render if the key is pressed
         if (borderVisibility == BorderVisibility.ON_PRESS &&
-            !InputUtil.isKeyPressed(client.getWindow(),
-                        KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getCode())) {
+            !InputConstants.isKeyDown(minecraft.getWindow(),
+                        KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
             return;
         }
 
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, favoriteBorder, x, y, 0, 0, 16, 16, 16, 16);
+        context.blit(RenderPipelines.GUI_TEXTURED, favoriteBorder, x, y, 0, 0, 16, 16, 16, 16);
     }
 }

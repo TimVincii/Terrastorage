@@ -1,25 +1,25 @@
 package me.timvinci.terrastorage.render;
 
-import net.minecraft.block.entity.LootableContainerBlockEntity;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Renders nametags for block entities.
  */
 public class NametagRenderer {
-    private final TextRenderer textRenderer;
+    private final Font textRenderer;
 
-    public NametagRenderer(TextRenderer textRenderer) {
+    public NametagRenderer(Font textRenderer) {
         this.textRenderer = textRenderer;
     }
 
@@ -34,20 +34,20 @@ public class NametagRenderer {
      */
     public void renderNametag(
             BlockPos blockPos,
-            Text customName,
-            ClientWorld world,
-            MatrixStack matrices,
-            OrderedRenderCommandQueue queue,
+            Component customName,
+            ClientLevel world,
+            PoseStack matrices,
+            SubmitNodeCollector queue,
             CameraRenderState cameraRenderState) {
         if (!inRenderingRange(cameraRenderState.pos, blockPos))
             return;
 
-         Vec3d renderPos = Vec3d.ofCenter(blockPos);
+         Vec3 renderPos = Vec3.atCenterOf(blockPos);
 
 
          // Check if the block above the block entity isn't air
-        if (!world.isAir(blockPos.up())) {
-             Vec3d direction = cameraRenderState.pos.subtract(renderPos).normalize();
+        if (!world.isEmptyBlock(blockPos.above())) {
+             Vec3 direction = cameraRenderState.pos.subtract(renderPos).normalize();
 
              // Set the render pos towards the player.
              renderPos = renderPos.add(direction);
@@ -56,47 +56,47 @@ public class NametagRenderer {
             renderPos = renderPos.add(0, 1, 0);
 
 
-        int light = WorldRenderer.getLightmapCoordinates(world, BlockPos.ofFloored(renderPos));
+        int light = LevelRenderer.getLightColor(world, BlockPos.containing(renderPos));
 
-        matrices.push();
+        matrices.pushPose();
         matrices.translate(
                 renderPos.x - blockPos.getX(),
                 renderPos.y - blockPos.getY(),
                 renderPos.z - blockPos.getZ()
         );
 
-        matrices.multiply(cameraRenderState.orientation);
+        matrices.mulPose(cameraRenderState.orientation);
         matrices.scale(0.025F, -0.025F, 0.025F);
-        float x = (float)(-textRenderer.getWidth(customName) / 2);
+        float x = (float)(-textRenderer.width(customName) / 2);
 
         queue.submitText(
                 matrices,
                 x,
                 0,
-                customName.asOrderedText(),
+                customName.getVisualOrderText(),
                 true,
-                TextRenderer.TextLayerType.NORMAL,
+                Font.DisplayMode.NORMAL,
                 light,
                 0xFFFFFFFF,
                 0,
                 0xFF000000
         );
 
-        matrices.pop();
+        matrices.popPose();
     }
 
     /**
      * Checks if a nametag should be rendered for a block entity.
-     * @param entity The block entity as a LootableContainerBlockEntity.
+     * @param entity The block entity as a RandomizableContainerBlockEntity.
      * @return True if the entity has a custom name and is targeted by the player, false otherwise.
      */
-    public boolean hasLabel(LootableContainerBlockEntity entity, HitResult crosshairTarget) {
+    public boolean hasLabel(RandomizableContainerBlockEntity entity, HitResult crosshairTarget) {
         if (!entity.hasCustomName()) {
             return false;
         }
 
         if (crosshairTarget instanceof BlockHitResult blockHitResult) {
-            return blockHitResult.getBlockPos().equals(entity.getPos());
+            return blockHitResult.getBlockPos().equals(entity.getBlockPos());
         }
 
         return false;
@@ -108,7 +108,7 @@ public class NametagRenderer {
      * @param blockPos The block position.
      * @return True if the block position is in range, false otherise.
      */
-    private boolean inRenderingRange(Vec3d cameraPos, BlockPos blockPos) {
-        return cameraPos.squaredDistanceTo(Vec3d.ofCenter(blockPos)) <= 4096.0;
+    private boolean inRenderingRange(Vec3 cameraPos, BlockPos blockPos) {
+        return cameraPos.distanceToSqr(Vec3.atCenterOf(blockPos)) <= 4096.0;
     }
 }

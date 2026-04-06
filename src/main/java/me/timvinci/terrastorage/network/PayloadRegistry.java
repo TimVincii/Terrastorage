@@ -22,7 +22,7 @@ public class PayloadRegistry {
 
         PayloadTypeRegistry.playC2S().register(SortPayload.ID, SortPayload.storageSortCodec);
         ServerPlayNetworking.registerGlobalReceiver(SortPayload.ID, (payload, context) -> {
-            context.server().execute(() -> SortPayload.receive(context.player(), payload.syncId(), payload.type(), payload.hotbarProtection()));
+            context.server().execute(() -> SortPayload.receive(context.player(), payload.syncId(), payload.sortType(), payload.hotbarProtection()));
         });
 
         PayloadTypeRegistry.playC2S().register(RenamePayload.ID, RenamePayload.renameCodec);

@@ -4,15 +4,16 @@ import me.timvinci.terrastorage.inventory.SlotBackedInventory;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.StorageAction;
 import me.timvinci.terrastorage.util.TerrastorageCore;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.Container;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,24 +30,24 @@ public record StorageActionPayload(
         StorageAction action,
         boolean hotbarProtection,
         Optional<Boolean> smartDepositMode
-) implements CustomPayload {
-    public static final Id<StorageActionPayload> ID = new Id<>(Identifier.of(Reference.MOD_ID, "storage_action"));
-    public static final PacketCodec<PacketByteBuf, StorageActionPayload> actionCodec = PacketCodec.of(
+) implements CustomPacketPayload {
+    public static final Type<StorageActionPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "storage_action"));
+    public static final StreamCodec<FriendlyByteBuf, StorageActionPayload> actionCodec = StreamCodec.ofMember(
             (value, buf) -> {
-                buf.writeOptional(value.syncId, PacketByteBuf::writeInt);
-                buf.writeEnumConstant(value.action);
+                buf.writeOptional(value.syncId, FriendlyByteBuf::writeInt);
+                buf.writeEnum(value.action);
                 buf.writeBoolean(value.hotbarProtection);
-                buf.writeOptional(value.smartDepositMode, PacketByteBuf::writeBoolean);
+                buf.writeOptional(value.smartDepositMode, FriendlyByteBuf::writeBoolean);
             },
             buf -> new StorageActionPayload(
-                    buf.readOptional(PacketByteBuf::readInt),
-                    buf.readEnumConstant(StorageAction.class),
+                    buf.readOptional(FriendlyByteBuf::readInt),
+                    buf.readEnum(StorageAction.class),
                     buf.readBoolean(),
-                    buf.readOptional(PacketByteBuf::readBoolean)
+                    buf.readOptional(FriendlyByteBuf::readBoolean)
             )
     );
     @Override
-    public Id<? extends CustomPayload> getId() { return ID ; }
+    public Type<? extends CustomPacketPayload> type() { return ID ; }
 
     /**
      * Handles the identification of the inventory the player is interacting with, before calling TerrastorageCore to
@@ -57,26 +58,26 @@ public record StorageActionPayload(
      * @param hotbarProtection The hotbar protection value of the player.
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
-    public static void receive(ServerPlayerEntity player, Optional<Integer> syncId, StorageAction action, boolean hotbarProtection, Optional<Boolean> smartDepositMode) {
+    public static void receive(ServerPlayer player, Optional<Integer> syncId, StorageAction action, boolean hotbarProtection, Optional<Boolean> smartDepositMode) {
         if (action != StorageAction.QUICK_STACK_TO_NEARBY) {
-            if (player.currentScreenHandler == null || player.currentScreenHandler.syncId != syncId.get()) {
+            if (player.containerMenu == null || player.containerMenu.containerId != syncId.get()) {
                 return;
             }
 
-            Inventory storageInventory;
-            Slot firstSlot = player.currentScreenHandler.slots.getFirst();
-            if (firstSlot.inventory.size() != 0) {
-                if (!firstSlot.canTakeItems(player)) {
-                    player.sendMessage(Text.translatable("terrastorage.message.restricted_inventory"));
+            Container storageInventory;
+            Slot firstSlot = player.containerMenu.slots.getFirst();
+            if (firstSlot.container.getContainerSize() != 0) {
+                if (!firstSlot.mayPickup(player)) {
+                    player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
                     return;
                 }
 
                 // Get the storage's inventory from the player's screen handler.
-                storageInventory = firstSlot.inventory;
+                storageInventory = firstSlot.container;
             }
             else { // Handle "broken" screen handlers
-                List<Slot> nonPlayerSlots = player.currentScreenHandler.slots.stream()
-                        .filter(slot -> !(slot.inventory instanceof PlayerInventory))
+                List<Slot> nonPlayerSlots = player.containerMenu.slots.stream()
+                        .filter(slot -> !(slot.container instanceof Inventory))
                         .toList();
 
                 // Create a SlotBackedInventory, which will hold a reference to all slots and will make inventory

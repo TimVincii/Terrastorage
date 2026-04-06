@@ -1,10 +1,10 @@
 package me.timvinci.terrastorage.item;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.*;
 
@@ -12,17 +12,17 @@ import java.util.*;
  * Caches the item group of items.
  */
 public class ItemGroupCache {
-    private static final Map<Item, ItemGroup> cache = new HashMap<>();
-    private static final List<ItemGroup> filteredGroups = new ArrayList<>();
+    private static final Map<Item, CreativeModeTab> cache = new HashMap<>();
+    private static final List<CreativeModeTab> filteredGroups = new ArrayList<>();
 
     /**
      * Populates the filteredGroups list with all item groups except for the search item group and empty groups.
      */
     public static void init() {
-        ItemGroup searchGroup = Registries.ITEM_GROUP.get(ItemGroups.SEARCH);
+        CreativeModeTab searchGroup = BuiltInRegistries.CREATIVE_MODE_TAB.getValue(CreativeModeTabs.SEARCH);
 
-        for (ItemGroup group : ItemGroups.getGroups()) {
-            if (!group.getDisplayStacks().isEmpty() && group != searchGroup) {
+        for (CreativeModeTab group : CreativeModeTabs.allTabs()) {
+            if (!group.getDisplayItems().isEmpty() && group != searchGroup) {
                 filteredGroups.add(group);
             }
         }
@@ -33,7 +33,7 @@ public class ItemGroupCache {
      * @param item The item to check.
      * @return The group containing the item.
      */
-    public static ItemGroup getGroup(Item item) {
+    public static CreativeModeTab getGroup(Item item) {
         return cache.computeIfAbsent(item, ItemGroupCache::findGroup);
     }
 
@@ -42,9 +42,9 @@ public class ItemGroupCache {
      * @param item The item.
      * @return The item group containing the item, or null if a group wasn't found.
      */
-    private static ItemGroup findGroup(Item item) {
-        ItemStack stack = item.getDefaultStack();
-        for (ItemGroup group : filteredGroups) {
+    private static CreativeModeTab findGroup(Item item) {
+        ItemStack stack = item.getDefaultInstance();
+        for (CreativeModeTab group : filteredGroups) {
             if (group.contains(stack)) {
                 return group;
             }

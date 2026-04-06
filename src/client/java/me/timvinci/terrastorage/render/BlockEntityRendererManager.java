@@ -1,31 +1,31 @@
 package me.timvinci.terrastorage.render;
 
 import me.timvinci.terrastorage.TerrastorageClient;
-import me.timvinci.terrastorage.mixin.client.BlockEntityRendererFactoriesMixin;
+import me.timvinci.terrastorage.mixin.client.BlockEntityRenderersMixin;
 import net.fabricmc.fabric.mixin.lookup.BlockEntityTypeAccessor;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.LootableContainerBlockEntity;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.BlockPos;
 
 import java.util.Set;
 
 /**
- * Manages the registering of block nametag renderers to children of the LootableContainerBlockEntity class.
+ * Manages the registering of block nametag renderers to children of the RandomizableContainerBlockEntity class.
  */
 public class BlockEntityRendererManager {
 
     /**
-     * Registers a BloockNametagRenderer to every child of the LootableContainerBlockEntity class that doesn't have
+     * Registers a BloockNametagRenderer to every child of the RandomizableContainerBlockEntity class that doesn't have
      * its own BlockEntityRenderer and has an inventory with at least 27 slots.
      */
     @SuppressWarnings("unchecked")
     public static void registerLootableRenderers() {
-        Registries.BLOCK_ENTITY_TYPE.forEach(blockEntityType -> {
+        BuiltInRegistries.BLOCK_ENTITY_TYPE.forEach(blockEntityType -> {
             if (hasRenderer(blockEntityType)) {
                 return;
             }
@@ -36,10 +36,10 @@ public class BlockEntityRendererManager {
             }
 
             try {
-                BlockEntity blockEntity = blockEntityType.instantiate(BlockPos.ORIGIN, state);
-                if (blockEntity instanceof LootableContainerBlockEntity lootableContainerBlockEntity && lootableContainerBlockEntity.size() >= 27) {
-                    BlockEntityType<LootableContainerBlockEntity> lootableType = (BlockEntityType<LootableContainerBlockEntity>) blockEntityType;
-                    BlockEntityRendererFactories.register(lootableType, BlockNametagRenderer::new);
+                BlockEntity blockEntity = blockEntityType.create(BlockPos.ZERO, state);
+                if (blockEntity instanceof RandomizableContainerBlockEntity randomizableContainerBlockEntity && randomizableContainerBlockEntity.getContainerSize() >= 27) {
+                    BlockEntityType<RandomizableContainerBlockEntity> lootableType = (BlockEntityType<RandomizableContainerBlockEntity>) blockEntityType;
+                    BlockEntityRenderers.register(lootableType, BlockNametagRenderer::new);
                     TerrastorageClient.CLIENT_LOGGER.info("Registered a block nametag renderer to '{}' and its block entity type.", state.getBlock().getName().getString());
                 }
             }
@@ -56,7 +56,7 @@ public class BlockEntityRendererManager {
      */
     private static BlockState getBlockState(BlockEntityType<?> blockEntityType) {
         Set<Block> blocks = ((BlockEntityTypeAccessor) blockEntityType).getBlocks();
-        return blocks.stream().findFirst().map(Block::getDefaultState).orElse(null);
+        return blocks.stream().findFirst().map(Block::defaultBlockState).orElse(null);
     }
 
     /**
@@ -65,6 +65,6 @@ public class BlockEntityRendererManager {
      * @return True if it has, false otherwise.
      */
     private static boolean hasRenderer(BlockEntityType<?> blockEntityType) {
-        return BlockEntityRendererFactoriesMixin.getFactories().containsKey(blockEntityType);
+        return BlockEntityRenderersMixin.getFactories().containsKey(blockEntityType);
     }
 }

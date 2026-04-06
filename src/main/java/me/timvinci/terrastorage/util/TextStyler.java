@@ -1,8 +1,8 @@
 package me.timvinci.terrastorage.util;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.Locale;
 
@@ -11,14 +11,14 @@ import java.util.Locale;
  */
 public class TextStyler {
 
-    private static final Formatting TITLE_COLOR = Formatting.AQUA;
-    private static final Formatting TEXT_COLOR = Formatting.WHITE;
-    private static final Formatting VALUE_COLOR = Formatting.YELLOW;
-    private static final Formatting ERROR_COLOR = Formatting.RED;
-    private static final Formatting WARNING_COLOR = Formatting.GOLD;
+    private static final ChatFormatting TITLE_COLOR = ChatFormatting.AQUA;
+    private static final ChatFormatting TEXT_COLOR = ChatFormatting.WHITE;
+    private static final ChatFormatting VALUE_COLOR = ChatFormatting.YELLOW;
+    private static final ChatFormatting ERROR_COLOR = ChatFormatting.RED;
+    private static final ChatFormatting WARNING_COLOR = ChatFormatting.GOLD;
 
-    private static final Formatting ENABLED_COLOR = Formatting.GREEN;
-    private static final Formatting DISABLED_COLOR = Formatting.RED;
+    private static final ChatFormatting ENABLED_COLOR = ChatFormatting.GREEN;
+    private static final ChatFormatting DISABLED_COLOR = ChatFormatting.RED;
 
     private static final int[] ENUM_COLORS = new int[] {
             0xB8F296, // Bright green
@@ -31,45 +31,45 @@ public class TextStyler {
             0xFFE599  // Bright gold
     };
 
-    public static MutableText styleTitle(String title) {
-        return Text.literal(title).styled(style -> style.withBold(true).withColor(TITLE_COLOR));
+    public static MutableComponent styleTitle(String title) {
+        return Component.literal(title).withStyle(style -> style.withBold(true).withColor(TITLE_COLOR));
     }
 
-    public static MutableText styleText(MutableText text) {
-        return text.styled(style -> style.withBold(false).withColor(TEXT_COLOR));
+    public static MutableComponent styleText(MutableComponent text) {
+        return text.withStyle(style -> style.withBold(false).withColor(TEXT_COLOR));
     }
 
-    public static <T> MutableText styleGetProperty(String propertyName, T value, String valueUnit) {
+    public static <T> MutableComponent styleGetProperty(String propertyName, T value, String valueUnit) {
         return styleTitle(propertyName + ": ")
-                    .append(Text.literal(value + valueUnit)
-                    .styled(style -> style.withBold(false).withColor(VALUE_COLOR))
+                    .append(Component.literal(value + valueUnit)
+                    .withStyle(style -> style.withBold(false).withColor(VALUE_COLOR))
         );
     }
 
-    public static <T> MutableText stylePropertyUpdated(String propertyName, T value, String valueUnit) {
+    public static <T> MutableComponent stylePropertyUpdated(String propertyName, T value, String valueUnit) {
         return styleTitle(propertyName + " Updated\n")
-                    .append(Text.literal("New value: ")
-                    .styled(style -> style.withBold(false).withColor(TEXT_COLOR)))
-                    .append(Text.literal(value + valueUnit)
-                    .styled(style -> style.withColor(VALUE_COLOR))
+                    .append(Component.literal("New value: ")
+                    .withStyle(style -> style.withBold(false).withColor(TEXT_COLOR)))
+                    .append(Component.literal(value + valueUnit)
+                    .withStyle(style -> style.withColor(VALUE_COLOR))
         );
     }
 
-    public static MutableText styleBooleanValue(boolean value) {
-        return Text.translatable("terrastorage.option." + (value ? "enabled" : "disabled"))
-                .styled(style -> style.withColor(value ? ENABLED_COLOR : DISABLED_COLOR));
+    public static MutableComponent styleBooleanValue(boolean value) {
+        return Component.translatable("terrastorage.option." + (value ? "enabled" : "disabled"))
+                .withStyle(style -> style.withColor(value ? ENABLED_COLOR : DISABLED_COLOR));
     }
 
-    public static <T extends Enum<T>> MutableText styleEnumValue(String propertyKey, T value) {
-        return Text.translatable("terrastorage.option." + propertyKey + "." + value.name().toLowerCase(Locale.ENGLISH))
-                .styled(style -> style.withColor(ENUM_COLORS[value.ordinal() % ENUM_COLORS.length]));
+    public static <T extends Enum<T>> MutableComponent styleEnumValue(String propertyKey, T value) {
+        return Component.translatable("terrastorage.option." + propertyKey + "." + value.name().toLowerCase(Locale.ENGLISH))
+                .withStyle(style -> style.withColor(ENUM_COLORS[value.ordinal() % ENUM_COLORS.length]));
     }
 
-    public static MutableText error(String messageKey) {
-        return Text.translatable(messageKey).formatted(ERROR_COLOR);
+    public static MutableComponent error(String messageKey) {
+        return Component.translatable(messageKey).withStyle(ERROR_COLOR);
     }
 
-    public static MutableText warning(String messageKey) {
-        return Text.translatable(messageKey).formatted(WARNING_COLOR);
+    public static MutableComponent warning(String messageKey) {
+        return Component.translatable(messageKey).withStyle(WARNING_COLOR);
     }
 }

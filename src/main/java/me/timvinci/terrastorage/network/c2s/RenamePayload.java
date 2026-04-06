@@ -2,33 +2,34 @@ package me.timvinci.terrastorage.network.c2s;
 
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.TerrastorageCore;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 /**
  * A payload sent from the client to the server once a player renames a storage.
  * @param newName The new name of the storage.
  */
-public record RenamePayload(int syncId, String newName) implements CustomPayload {
-    public static final Id<RenamePayload> ID = new Id<>(Identifier.of(Reference.MOD_ID, "rename_action"));
-    public static final PacketCodec<PacketByteBuf, RenamePayload> renameCodec = PacketCodec.of(
+public record RenamePayload(int syncId, String newName) implements CustomPacketPayload {
+    public static final Type<RenamePayload> ID = new Type<>(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "rename_action"));
+    public static final StreamCodec<FriendlyByteBuf, RenamePayload> renameCodec = StreamCodec.ofMember(
             (value, buf) -> {
-                buf.writeSyncId(value.syncId);
-                buf.writeString(value.newName);
+                buf.writeContainerId(value.syncId);
+                buf.writeUtf(value.newName);
             },
             buf -> new RenamePayload(
-                    buf.readSyncId(),
-                    buf.readString()
+                    buf.readContainerId(),
+                    buf.readUtf()
             )
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 
@@ -37,13 +38,13 @@ public record RenamePayload(int syncId, String newName) implements CustomPayload
      * @param player The player initiating the rename action.
      * @param newName The new name to apply to the entity or block entity. If empty, the name will be reset to default.
      */
-    public static void receive(ServerPlayerEntity player, int syncId, String newName) {
-        if (player.currentScreenHandler == null || player.currentScreenHandler.syncId != syncId) {
+    public static void receive(ServerPlayer player, int syncId, String newName) {
+        if (player.containerMenu == null || player.containerMenu.containerId != syncId) {
             return;
         }
 
-        if (!player.currentScreenHandler.slots.getFirst().canTakeItems(player)) {
-            player.sendMessage(Text.translatable("terrastorage.message.restricted_inventory"));
+        if (!player.containerMenu.slots.getFirst().mayPickup(player)) {
+            player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
             return;
         }
 

@@ -4,12 +4,12 @@ import com.google.gson.JsonElement;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.serialization.JsonOps;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,12 +24,12 @@ public abstract class BlockEntityMixin {
     /**
      * Add the custom name to the initial chunk nbt data.
      */
-    @ModifyReturnValue(method = "toInitialChunkDataNbt", at = @At("RETURN"))
-    private NbtCompound toInitialChunkDataNbt(NbtCompound original, RegistryWrapper.WrapperLookup registryLookup) {
-        if ((BlockEntity) (Object) this instanceof LockableContainerBlockEntity lockableContainerBlockEntity) {
-            Text customName = lockableContainerBlockEntity.getCustomName();
+    @ModifyReturnValue(method = "getUpdateTag", at = @At("RETURN"))
+    private CompoundTag toInitialChunkDataNbt(CompoundTag original, HolderLookup.Provider registryLookup) {
+        if ((BlockEntity) (Object) this instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
+            Component customName = baseContainerBlockEntity.getCustomName();
             if (customName != null) {
-                JsonElement json = TextCodecs.CODEC.encodeStart(JsonOps.INSTANCE, customName).getOrThrow();
+                JsonElement json = ComponentSerialization.CODEC.encodeStart(JsonOps.INSTANCE, customName).getOrThrow();
                 original.putString("CustomName", json.toString());
             }
         }

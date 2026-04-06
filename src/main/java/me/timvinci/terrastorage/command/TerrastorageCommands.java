@@ -11,13 +11,13 @@ import me.timvinci.terrastorage.network.NetworkHandler;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.TextStyler;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.permission.LeveledPermissionPredicate;
-import net.minecraft.command.permission.Permission;
-import net.minecraft.command.permission.PermissionLevel;
-import net.minecraft.command.permission.Permissions;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.server.permissions.PermissionTypes;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -33,49 +33,49 @@ public class TerrastorageCommands {
     public static void registerCommands() {
         TerrastorageConfig config = ConfigManager.getInstance().getConfig();
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            LiteralArgumentBuilder<ServerCommandSource> command = CommandManager.literal(Reference.MOD_ID)
-                .requires(CommandManager.requirePermissionLevel(CommandManager.GAMEMASTERS_CHECK))
-                .then(CommandManager.literal("action-cooldown")
+            LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal(Reference.MOD_ID)
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                .then(Commands.literal("action-cooldown")
                     .executes(context -> executeGetValue(context, config::getActionCooldown, "Action Cooldown", " ticks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 100))
+                    .then(Commands.argument("value", IntegerArgumentType.integer(0, 100))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setActionCooldown, "Action Cooldown", " ticks"))
                     )
                 )
-                .then(CommandManager.literal("line-of-sight-check")
+                .then(Commands.literal("line-of-sight-check")
                     .executes(context -> executeGetValue(context, config::getLineOfSightCheck, "Line Of Sight Check", ""))
-                    .then(CommandManager.argument("value", BoolArgumentType.bool())
+                    .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> executeSetValue(context, BoolArgumentType.getBool(context, "value"), config::setLineOfSightCheck, "Line Of Sight Check", ""))
                     )
                 )
-                .then(CommandManager.literal("quick-stack-range")
+                .then(Commands.literal("quick-stack-range")
                     .executes(context -> executeGetValue(context, config::getQuickStackRange, "Quick Stack Range", " blocks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(3, 48))
+                    .then(Commands.argument("value", IntegerArgumentType.integer(3, 48))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setQuickStackRange, "Quick Stack Range", " blocks"))
                     )
                 )
-                .then(CommandManager.literal("item-animation-length")
+                .then(Commands.literal("item-animation-length")
                     .executes(context -> executeGetValue(context, config::getItemAnimationLength, "Item Animation Length", " ticks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 200))
+                    .then(Commands.argument("value", IntegerArgumentType.integer(0, 200))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationLength, "Item Animation Length", " ticks"))
                     )
                 )
-                .then(CommandManager.literal("item-animation-interval")
+                .then(Commands.literal("item-animation-interval")
                     .executes(context -> executeGetValue(context, config::getItemAnimationInterval, "Item Animation Interval", " ticks"))
-                    .then(CommandManager.argument("value", IntegerArgumentType.integer(0, 20))
+                    .then(Commands.argument("value", IntegerArgumentType.integer(0, 20))
                             .executes(context -> executeSetValue(context, IntegerArgumentType.getInteger(context, "value"), config::setItemAnimationInterval, "Item Animation Interval", " ticks"))
                     )
                 )
-                .then(CommandManager.literal("keep-favorites-on-drop")
+                .then(Commands.literal("keep-favorites-on-drop")
                     .executes(context -> executeGetValue(context, config::getKeepFavoritesOnDrop, "Keep Favorites On Drop", ""))
-                    .then(CommandManager.argument("value", BoolArgumentType.bool())
+                    .then(Commands.argument("value", BoolArgumentType.bool())
                             .executes(context -> executeSetValue(context, BoolArgumentType.getBool(context, "value"), config::setKeepFavoritesOnDrop, "Keep Favorites On Drop", ""))
                     )
                 );
 
             if (Terrastorage.environmentIsServer) {
-                command.then(CommandManager.literal("enable-item-favoriting")
+                command.then(Commands.literal("enable-item-favoriting")
                         .executes(context -> executeGetValue(context, config::getEnableItemFavoriting, "Enable Item Favoriting", ""))
-                        .then(CommandManager.argument("value", BoolArgumentType.bool())
+                        .then(Commands.argument("value", BoolArgumentType.bool())
                                 .executes(context -> executeUpdateItemFavoriting(context, BoolArgumentType.getBool(context, "value"), config::setEnableItemFavoriting))
                         )
                 );
@@ -93,9 +93,9 @@ public class TerrastorageCommands {
      * @param valueUnit The unit of the property value.
      * @return 1, to state a successful command use.
      */
-    private static <T> int executeGetValue(CommandContext<ServerCommandSource> context, Supplier<T> getter, String propertyName, String valueUnit) {
+    private static <T> int executeGetValue(CommandContext<CommandSourceStack> context, Supplier<T> getter, String propertyName, String valueUnit) {
         T currentValue = getter.get();
-        context.getSource().sendFeedback(
+        context.getSource().sendSuccess(
                 () -> TextStyler.styleGetProperty(propertyName, currentValue, valueUnit),
                 false
         );
@@ -112,10 +112,10 @@ public class TerrastorageCommands {
      * @param valueUnit The unit of the property value.
      * @return 1, to state a successful command use.
      */
-    private static <T> int executeSetValue(CommandContext<ServerCommandSource> context, T value, Consumer<T> setter, String propertyName, String valueUnit) {
+    private static <T> int executeSetValue(CommandContext<CommandSourceStack> context, T value, Consumer<T> setter, String propertyName, String valueUnit) {
         setter.accept(value);
         if (ConfigManager.getInstance().saveConfig()) {
-            context.getSource().sendFeedback(
+            context.getSource().sendSuccess(
                     () -> TextStyler.stylePropertyUpdated(propertyName, value, valueUnit),
                     true
             );
@@ -125,26 +125,26 @@ public class TerrastorageCommands {
                 NetworkHandler.sendGlobalServerConfigPayload(context.getSource().getServer());
             }
             else if (propertyName.equals("Quick Stack Range") && (Integer)value > 16) {
-                context.getSource().sendFeedback(() -> TextStyler.warning("terrastorage.message.high_quick_stack_range"), false);
+                context.getSource().sendSuccess(() -> TextStyler.warning("terrastorage.message.high_quick_stack_range"), false);
             }
         }
         else {
-            context.getSource().sendFeedback(() -> TextStyler.error("terrastorage.message.server_saving_error"), false);
+            context.getSource().sendSuccess(() -> TextStyler.error("terrastorage.message.server_saving_error"), false);
         }
 
         return 1;
     }
 
-    private static int executeUpdateItemFavoriting(CommandContext<ServerCommandSource> context, boolean value, Consumer<Boolean> setter) {
+    private static int executeUpdateItemFavoriting(CommandContext<CommandSourceStack> context, boolean value, Consumer<Boolean> setter) {
         setter.accept(value);
         if (ConfigManager.getInstance().saveConfig()) {
-            context.getSource().sendFeedback(() ->
+            context.getSource().sendSuccess(() ->
                     TextStyler.styleTitle("Item Favoriting Updated\n")
-                        .append(TextStyler.styleText(Text.translatable("terrastorage.message." + (value ? "enabled" : "disabled") + "_item_favoriting")))
+                        .append(TextStyler.styleText(Component.translatable("terrastorage.message." + (value ? "enabled" : "disabled") + "_item_favoriting")))
                     ,false);
         }
         else {
-            context.getSource().sendFeedback(() -> TextStyler.error("terrastorage.message.server_saving_error"), false);
+            context.getSource().sendSuccess(() -> TextStyler.error("terrastorage.message.server_saving_error"), false);
         }
 
         return 1;

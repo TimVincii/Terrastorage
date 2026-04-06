@@ -3,11 +3,11 @@ package me.timvinci.terrastorage.config;
 import me.timvinci.terrastorage.TerrastorageClient;
 import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.Reference;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Pair;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Tuple;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -44,8 +44,8 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
      * @return A list of ClickableWidgets, containing the buttons.
      */
     @SuppressWarnings("unchecked")
-    public List<Pair<ClickableWidget, Boolean>> asOptions() {
-        List<ClickableWidget> options = new ArrayList<>();
+    public List<Tuple<AbstractWidget, Boolean>> asOptions() {
+        List<AbstractWidget> options = new ArrayList<>();
         List<Boolean> singleOptionOrder = new ArrayList<>();
         int i = 0;
 
@@ -62,11 +62,11 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
 
                 Object fieldValue = getFieldValue(field, config, propertyKey);
                 if (fieldValue != null) {
-                    ButtonWidget optionButton = null;
+                    Button optionButton = null;
                     int finalI = i;
 
                     if (fieldValue.getClass().equals(Boolean.class)) {
-                        optionButton = ButtonWidget.builder(
+                        optionButton = Button.builder(
                                 LocalizedTextProvider.getBooleanOptionText(propertyKey, (Boolean) fieldValue),
                                 onPress -> {
                                     boolean currentValue = (Boolean) getFieldValue(field, config, propertyKey);
@@ -76,7 +76,7 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
                                 }
                         ).build();
                     } else if (fieldValue.getClass().isEnum()) {
-                        optionButton = ButtonWidget.builder(
+                        optionButton = Button.builder(
                                 LocalizedTextProvider.getEnumOptionText(propertyKey, (Enum) fieldValue),
                                 onPress -> {
                                     Enum<?> currentValue = (Enum<?>) getFieldValue(field, config, propertyKey);
@@ -96,7 +96,7 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
                     }
 
                     if (optionButton != null) {
-                        optionButton.setTooltip(Tooltip.of(Text.translatable("terrastorage.option.tooltip." + propertyKey)));
+                        optionButton.setTooltip(Tooltip.create(Component.translatable("terrastorage.option.tooltip." + propertyKey)));
                         options.add(i, optionButton);
                         singleOptionOrder.add(i++, singleOption);
                     }
@@ -107,9 +107,9 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
             }
         }
 
-        List<Pair<ClickableWidget, Boolean>> result = new ArrayList<>();
+        List<Tuple<AbstractWidget, Boolean>> result = new ArrayList<>();
         for (int j = 0; j < options.size(); j++) {
-            result.add(new Pair<>(options.get(j), singleOptionOrder.get(j)));
+            result.add(new Tuple<>(options.get(j), singleOptionOrder.get(j)));
         }
 
         return result;

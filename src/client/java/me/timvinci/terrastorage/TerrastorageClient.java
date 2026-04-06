@@ -12,8 +12,8 @@ import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.resource.v1.ResourceLoader;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class TerrastorageClient implements ClientModInitializer {
 	public static final Logger CLIENT_LOGGER = LoggerFactory.getLogger(Reference.MOD_ID + "_client");
-	private final Identifier RELOAD_LISTENER_ID = Identifier.of(Reference.MOD_ID, "text_cache_reload");
+	private final Identifier RELOAD_LISTENER_ID = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "text_cache_reload");
 
 	/**
 	 * Executes various tasks while Terrastorage is initializing on the client side.
@@ -37,7 +37,7 @@ public class TerrastorageClient implements ClientModInitializer {
 		TerrastorageKeybindings.registerKeybindings();
 		
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());
-        ResourceLoader.get(ResourceType.CLIENT_RESOURCES).registerReloader(
+        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloader(
                 RELOAD_LISTENER_ID,
                 (store, prepareExecutor, synchronizer, applyExecutor) -> {
 
@@ -45,7 +45,7 @@ public class TerrastorageClient implements ClientModInitializer {
                     CompletableFuture<Void> prepare = CompletableFuture.completedFuture(null);
 
                     // Synchronize with reload pipeline
-                    return synchronizer.whenPrepared(prepare)
+                    return synchronizer.wait(prepare)
                             .thenRunAsync(
                                     LocalizedTextProvider::initializeButtonCaches,
                                     applyExecutor

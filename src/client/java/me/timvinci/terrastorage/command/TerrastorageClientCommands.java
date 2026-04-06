@@ -3,7 +3,7 @@ package me.timvinci.terrastorage.command;
 import me.timvinci.terrastorage.gui.TerrastorageOptionsScreen;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 /**
  * Provides a method for registering client commands.
@@ -18,9 +18,9 @@ public class TerrastorageClientCommands {
             dispatcher.register(ClientCommandManager.literal("tsclient")
                 .then(ClientCommandManager.literal("options")
                     .executes(context -> {
-                        MinecraftClient client = context.getSource().getClient();
-                        client.send(() -> {
-                            client.setScreen(new TerrastorageOptionsScreen(client.currentScreen));
+                        Minecraft client = context.getSource().getClient();
+                        client.schedule(() -> {
+                            client.setScreen(new TerrastorageOptionsScreen(client.screen));
                         });
                         return 1;
                     })

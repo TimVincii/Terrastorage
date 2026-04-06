@@ -5,19 +5,21 @@ import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.config.TerrastorageClientConfig;
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
 import me.timvinci.terrastorage.gui.widget.StorageButtonWidget;
-import me.timvinci.terrastorage.mixin.client.GenericContainerScreenAccessor;
-import me.timvinci.terrastorage.mixin.client.SliderWidgetAccessor;
+import me.timvinci.terrastorage.mixin.client.ContainerScreenAccessor;
+import me.timvinci.terrastorage.mixin.client.AbstractSliderButtonAccessor;
 import me.timvinci.terrastorage.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.client.option.SimpleOption;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractOptionSliderButton;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +28,9 @@ import java.util.List;
  * The buttons customization screen.
  */
 public class ButtonsCustomizationScreen extends Screen {
-    private static final Identifier TEXTURE = GenericContainerScreenAccessor.TEXTURE();
+    private static final Identifier TEXTURE = ContainerScreenAccessor.CONTAINER_BACKGROUND();
     private final Screen parent;
-    private final Text storagePreviewTitle = Text.translatable("terrastorage.title.buttons_customization_screen.storage");
+    private final Component storagePreviewTitle = Component.translatable("terrastorage.title.buttons_customization_screen.storage");
 
     private int x;
     private int y;
@@ -37,19 +39,19 @@ public class ButtonsCustomizationScreen extends Screen {
     private final int storagePreviewTitleX = 8;
     private final int storagePreviewTitleY = 6;
 
-    private final Text playerInventoryTitle = Text.translatable("container.inventory");
+    private final Component playerInventoryTitle = Component.translatable("container.inventory");
     protected int playerInventoryTitleX = 8;
     protected int playerInventoryTitleY = backgroundHeight - 94;
 
     private int rows = 6;
     private boolean widgetsInitialized = false;
     private int buttonActionsLength;
-    private final List<ClickableWidget> customizationWidgets;
+    private final List<AbstractWidget> customizationWidgets;
     private final int customizationWidgetsWidth = 150;
     private final int customizationWidgetsHeight = 20;
     private final int customizationWidgetsSpacing = 5;
 
-    private final List<ButtonWidget> actionWidgets;
+    private final List<Button> actionWidgets;
 
     private final List<StorageButtonWidget> storageOptionsButtons;
     private boolean storageOptionsEnabled;
@@ -63,7 +65,7 @@ public class ButtonsCustomizationScreen extends Screen {
     private int storageOptionsSpacing;
 
     public ButtonsCustomizationScreen(Screen parent) {
-        super(Text.translatable("terrastorage.title.buttons_customization_screen"));
+        super(Component.translatable("terrastorage.title.buttons_customization_screen"));
         this.parent = parent;
         updateBackgroundHeight();
 
@@ -122,7 +124,7 @@ public class ButtonsCustomizationScreen extends Screen {
 
         for (int i = 0; i < customizationWidgets.size(); i++) {
             customizationWidgets.get(i).setPosition(buttonX, buttonY);
-            this.addDrawableChild(customizationWidgets.get(i));
+            this.addRenderableWidget(customizationWidgets.get(i));
 
             buttonY += customizationWidgetsHeight + (i == 0 ? 3 : 1) * customizationWidgetsSpacing;
         }
@@ -134,13 +136,13 @@ public class ButtonsCustomizationScreen extends Screen {
         // Positioning the action buttons.
         for (int i = 0; i < actionWidgets.size() - 1; i++) {
             actionWidgets.get(i).setPosition(buttonX, buttonY);
-            this.addDrawableChild(actionWidgets.get(i));
+            this.addRenderableWidget(actionWidgets.get(i));
 
             buttonY += customizationWidgetsHeight + customizationWidgetsSpacing;
         }
 
         actionWidgets.getLast().setPosition(this.width / 2 - 100, buttonY);
-        this.addDrawableChild(actionWidgets.getLast());
+        this.addRenderableWidget(actionWidgets.getLast());
     }
 
     /**
@@ -153,7 +155,7 @@ public class ButtonsCustomizationScreen extends Screen {
         // Storage option buttons.
         if (storageOptionsTooltip) {
             for (StorageAction storageAction : buttonActions) {
-                Text buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);
+                Component buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);
                 Tooltip buttonTooltip = LocalizedTextProvider.buttonTooltipCache.get(storageAction);
                 StorageButtonWidget storageButton = StorageButtonCreator.createDummyStorageButton(storageOptionsWidth, storageOptionsHeight, buttonText, storageOptionsStyle);
                 storageButton.setTooltip(buttonTooltip);
@@ -163,7 +165,7 @@ public class ButtonsCustomizationScreen extends Screen {
         }
         else {
             for (StorageAction storageAction : buttonActions) {
-                Text buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);
+                Component buttonText = LocalizedTextProvider.buttonTextCache.get(storageAction);
                 StorageButtonWidget storageButton = StorageButtonCreator.createDummyStorageButton(storageOptionsWidth, storageOptionsHeight, buttonText, storageOptionsStyle);
 
                 storageOptionsButtons.add(storageButton);
@@ -171,37 +173,37 @@ public class ButtonsCustomizationScreen extends Screen {
         }
 
         // [0] Preview row count button.
-        customizationWidgets.add(ButtonWidget.builder(Text.translatable("terrastorage.option.preview_row_count").append(": " + rows), onPress -> {
+        customizationWidgets.add(Button.builder(Component.translatable("terrastorage.option.preview_row_count").append(": " + rows), onPress -> {
             this.rows = (this.rows == 6) ? 3 : 6;
-            customizationWidgets.get(0).setMessage(Text.translatable("terrastorage.option.preview_row_count").append(": " + rows));  // Update the button text
+            customizationWidgets.get(0).setMessage(Component.translatable("terrastorage.option.preview_row_count").append(": " + rows));  // Update the button text
             updateBackgroundHeight();
             this.x = (this.width - this.backgroundWidth) / 2;
             this.y = (this.height - this.backgroundHeight) / 2;
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
         // [1] Buttons enabled button.
-        customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getBooleanOptionText("buttons_enabled", storageOptionsEnabled), onPress -> {
+        customizationWidgets.add(Button.builder(LocalizedTextProvider.getBooleanOptionText("buttons_enabled", storageOptionsEnabled), onPress -> {
             storageOptionsEnabled = !storageOptionsEnabled;
             customizationWidgets.get(1).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_enabled", storageOptionsEnabled));
             updateStorageOptionsEnabled();
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
         // [2] Buttons tooltip button.
-        customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip), onPress -> {
+        customizationWidgets.add(Button.builder(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip), onPress -> {
             storageOptionsTooltip = !storageOptionsTooltip;
             customizationWidgets.get(2).setMessage(LocalizedTextProvider.getBooleanOptionText("buttons_tooltip", storageOptionsTooltip));
             updateStorageOptionsTooltip();
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
         // [3] Buttons style button.
-        customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle), onPress -> {
+        customizationWidgets.add(Button.builder(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle), onPress -> {
             storageOptionsStyle = ButtonsStyle.next(storageOptionsStyle);
             customizationWidgets.get(3).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_style", storageOptionsStyle));
             updateStorageOptionsStyle();
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
         // [4] Buttons placement button.
-        customizationWidgets.add(ButtonWidget.builder(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement), onPress -> {
+        customizationWidgets.add(Button.builder(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement), onPress -> {
             storageOptionsPlacement = ButtonsPlacement.next(storageOptionsPlacement);
             customizationWidgets.get(4).setMessage(LocalizedTextProvider.getEnumOptionText("buttons_placement", storageOptionsPlacement));
             updateStorageOptionsX();
@@ -209,90 +211,90 @@ public class ButtonsCustomizationScreen extends Screen {
         }).size(customizationWidgetsWidth, customizationWidgetsHeight).build());
 
         // [5] Buttons x offset slider.
-        customizationWidgets.add(new SimpleOption<>(
+        customizationWidgets.add(new OptionInstance<>(
                 "terrastorage.option.buttons_x_offset",
-                SimpleOption.emptyTooltip(),
-                (text, value) -> Text.of(text.getString() + ": " + value),
-                new SimpleOption.ValidatingIntSliderCallbacks(-100, 100),
+                OptionInstance.noTooltip(),
+                (text, value) -> Component.nullToEmpty(text.getString() + ": " + value),
+                new OptionInstance.IntRange(-100, 100),
                 Codec.INT,
                 storageOptionsXOffset,
                 newValue -> {
                     storageOptionsXOffset = newValue;
                     updateStorageOptionsX();
                 }
-        ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
+        ).createButton(this.minecraft.options, 0, 0, customizationWidgetsWidth));
 
         // [6] Buttons y offset slider.
-        customizationWidgets.add(new SimpleOption<>(
+        customizationWidgets.add(new OptionInstance<>(
                 "terrastorage.option.buttons_y_offset",
-                SimpleOption.emptyTooltip(),
-                (text, value) -> Text.of(text.getString() + ": " + value),
-                new SimpleOption.ValidatingIntSliderCallbacks(-100, 100),
+                OptionInstance.noTooltip(),
+                (text, value) -> Component.nullToEmpty(text.getString() + ": " + value),
+                new OptionInstance.IntRange(-100, 100),
                 Codec.INT,
                 storageOptionsYOffset,
                 newValue -> {
                     storageOptionsYOffset = newValue;
                     updateStorageOptionsY();
                 }
-        ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
+        ).createButton(this.minecraft.options, 0, 0, customizationWidgetsWidth));
 
         // [7] Buttons width slider.
-        customizationWidgets.add(new SimpleOption<>(
+        customizationWidgets.add(new OptionInstance<>(
                 "terrastorage.option.buttons_width",
-                SimpleOption.emptyTooltip(),
-                (text, value) -> Text.of(text.getString() + ": " + value),
-                new SimpleOption.ValidatingIntSliderCallbacks(20, 150),
+                OptionInstance.noTooltip(),
+                (text, value) -> Component.nullToEmpty(text.getString() + ": " + value),
+                new OptionInstance.IntRange(20, 150),
                 Codec.INT,
                 storageOptionsWidth,
                 newValue -> {
                     storageOptionsWidth = newValue;
                     updateStorageOptionsWidth();
                 }
-        ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
+        ).createButton(this.minecraft.options, 0, 0, customizationWidgetsWidth));
         if (storageOptionsStyle == ButtonsStyle.TEXT_ONLY) {
             setWidthCustomizationEnabled(false);
         }
 
         // [8] Buttons height slider.
-        customizationWidgets.add(new SimpleOption<>(
+        customizationWidgets.add(new OptionInstance<>(
                 "terrastorage.option.buttons_height",
-                SimpleOption.emptyTooltip(),
-                (text, value) -> Text.of(text.getString() + ": " + value),
-                new SimpleOption.ValidatingIntSliderCallbacks(5, 50),
+                OptionInstance.noTooltip(),
+                (text, value) -> Component.nullToEmpty(text.getString() + ": " + value),
+                new OptionInstance.IntRange(5, 50),
                 Codec.INT,
                 storageOptionsHeight,
                 newValue -> {
                     storageOptionsHeight = newValue;
                     updateStorageOptionsHeight();
                 }
-        ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
+        ).createButton(this.minecraft.options, 0, 0, customizationWidgetsWidth));
 
         // [9] Buttons spacing slider.
-        customizationWidgets.add(new SimpleOption<>(
+        customizationWidgets.add(new OptionInstance<>(
                 "terrastorage.option.buttons_spacing",
-                SimpleOption.emptyTooltip(),
-                (text, value) -> Text.of(text.getString() + ": " + value),
-                new SimpleOption.ValidatingIntSliderCallbacks(0, 20),
+                OptionInstance.noTooltip(),
+                (text, value) -> Component.nullToEmpty(text.getString() + ": " + value),
+                new OptionInstance.IntRange(0, 20),
                 Codec.INT,
                 storageOptionsSpacing,
                 newValue -> {
                     storageOptionsSpacing = newValue;
                     updateStorageOptionsY();
                 }
-        ).createWidget(this.client.options, 0, 0, customizationWidgetsWidth));
+        ).createButton(this.minecraft.options, 0, 0, customizationWidgetsWidth));
 
         // [0] Reset To Default button.
-        actionWidgets.add(ButtonWidget.builder(Text.translatable("terrastorage.option.reset_to_default"), onPress -> {
+        actionWidgets.add(Button.builder(Component.translatable("terrastorage.option.reset_to_default"), onPress -> {
             applyFromConfig(ClientConfigManager.getInstance().getDefaultConfig());
-        }).size(customizationWidgetsWidth, customizationWidgetsHeight).tooltip(Tooltip.of(Text.translatable("terrastorage.option.tooltip.reset_to_default"))).build());
+        }).size(customizationWidgetsWidth, customizationWidgetsHeight).tooltip(Tooltip.create(Component.translatable("terrastorage.option.tooltip.reset_to_default"))).build());
 
         // [1] Undo Changes button.
-        actionWidgets.add(ButtonWidget.builder(Text.translatable("terrastorage.option.undo_changes"), onPress -> {
+        actionWidgets.add(Button.builder(Component.translatable("terrastorage.option.undo_changes"), onPress -> {
             applyFromConfig(ClientConfigManager.getInstance().getConfig());
-        }).size(customizationWidgetsWidth, customizationWidgetsHeight).tooltip(Tooltip.of(Text.translatable("terrastorage.option.tooltip.undo_changes"))).build());
+        }).size(customizationWidgetsWidth, customizationWidgetsHeight).tooltip(Tooltip.create(Component.translatable("terrastorage.option.tooltip.undo_changes"))).build());
 
         // [2] Save Changes button.
-        actionWidgets.add(ButtonWidget.builder(Text.translatable("terrastorage.option.save_and_exit"), onPress -> {
+        actionWidgets.add(Button.builder(Component.translatable("terrastorage.option.save_and_exit"), onPress -> {
             TerrastorageClientConfig config = ClientConfigManager.getInstance().getConfig();
             config.setButtonsEnabled(storageOptionsEnabled);
             config.setButtonsTooltip(storageOptionsTooltip);
@@ -304,11 +306,11 @@ public class ButtonsCustomizationScreen extends Screen {
             config.setButtonsHeight(storageOptionsHeight);
             config.setButtonsSpacing(storageOptionsSpacing);
 
-            if (!ClientConfigManager.getInstance().saveConfig() && MinecraftClient.getInstance().player != null) {
-                MinecraftClient.getInstance().player.sendMessage(TextStyler.error("terrastorage.message.client_saving_error"), false);
+            if (!ClientConfigManager.getInstance().saveConfig() && Minecraft.getInstance().player != null) {
+                Minecraft.getInstance().player.displayClientMessage(TextStyler.error("terrastorage.message.client_saving_error"), false);
             }
-            close();
-        }).size(200, customizationWidgetsHeight).tooltip(Tooltip.of(Text.translatable("terrastorage.option.tooltip.save_and_exit"))).build());
+            onClose();
+        }).size(200, customizationWidgetsHeight).tooltip(Tooltip.create(Component.translatable("terrastorage.option.tooltip.save_and_exit"))).build());
     }
 
     /**
@@ -331,16 +333,16 @@ public class ButtonsCustomizationScreen extends Screen {
             int buttonSectionHeight = buttonActionsLength * storageOptionsHeight + (buttonActionsLength - 1) * storageOptionsSpacing;
             int buttonY = this.y - (buttonSectionHeight - this.playerInventoryTitleY) / 2 + storageOptionsYOffset;
 
-            for (ButtonWidget storageOptionButton : storageOptionsButtons) {
+            for (Button storageOptionButton : storageOptionsButtons) {
                 storageOptionButton.setPosition(buttonX, buttonY);
-                this.addDrawableChild(storageOptionButton);
+                this.addRenderableWidget(storageOptionButton);
 
                 buttonY += storageOptionsHeight + storageOptionsSpacing;
             }
         }
         else {
-            for (ButtonWidget storageOptionButton : storageOptionsButtons) {
-                this.remove(storageOptionButton);
+            for (Button storageOptionButton : storageOptionsButtons) {
+                this.removeWidget(storageOptionButton);
             }
         }
     }
@@ -353,7 +355,7 @@ public class ButtonsCustomizationScreen extends Screen {
             }
         }
         else {
-            storageOptionsButtons.forEach(button -> button.setTooltip(Tooltip.of(Text.empty())));
+            storageOptionsButtons.forEach(button -> button.setTooltip(Tooltip.create(Component.empty())));
         }
     }
 
@@ -364,7 +366,7 @@ public class ButtonsCustomizationScreen extends Screen {
         boolean isTextOnly = storageOptionsStyle == ButtonsStyle.TEXT_ONLY;
         storageOptionsButtons.forEach(button -> {
             if (isTextOnly) {
-                button.setWidth(MinecraftClient.getInstance().textRenderer.getWidth(button.getMessage()) + 6);
+                button.setWidth(Minecraft.getInstance().font.width(button.getMessage()) + 6);
             }
             else {
                 button.setWidth(storageOptionsWidth);
@@ -424,7 +426,7 @@ public class ButtonsCustomizationScreen extends Screen {
      */
     private void setWidthCustomizationEnabled(boolean enabled) {
         customizationWidgets.get(7).active = enabled;
-        customizationWidgets.get(7).setTooltip(Tooltip.of(enabled ? Text.empty() : Text.translatable("terrastorage.option.tooltip.button_width_disabled")));
+        customizationWidgets.get(7).setTooltip(Tooltip.create(enabled ? Component.empty() : Component.translatable("terrastorage.option.tooltip.button_width_disabled")));
     }
 
     /**
@@ -460,18 +462,18 @@ public class ButtonsCustomizationScreen extends Screen {
         if (storageOptionsXOffset != config.getButtonsXOffset()) {
             storageOptionsXOffset = config.getButtonsXOffset();
             updateStorageOptionsX();
-            if (customizationWidgets.get(5) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(5) instanceof AbstractOptionSliderButton optionSliderWidget) {
                 double normalizedValue = (storageOptionsXOffset + 100) / 200.0;
-                ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
+                ((AbstractSliderButtonAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
         }
 
         if (storageOptionsYOffset != config.getButtonsYOffset()) {
             storageOptionsYOffset = config.getButtonsYOffset();
             updateStorageOptionsY();
-            if (customizationWidgets.get(6) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(6) instanceof AbstractOptionSliderButton optionSliderWidget) {
                 double normalizedValue = (storageOptionsYOffset + 100) / 200.0;
-                ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
+                ((AbstractSliderButtonAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
         }
 
@@ -480,27 +482,27 @@ public class ButtonsCustomizationScreen extends Screen {
             if (storageOptionsStyle == ButtonsStyle.DEFAULT) {
                 updateStorageOptionsWidth();
             }
-            if (customizationWidgets.get(7) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(7) instanceof AbstractOptionSliderButton optionSliderWidget) {
                 double normalizedValue = (storageOptionsWidth - 20) / 130.0;
-                ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
+                ((AbstractSliderButtonAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
         }
 
         if (storageOptionsHeight != config.getButtonsHeight()) {
             storageOptionsHeight = config.getButtonsHeight();
             updateStorageOptionsHeight();
-            if (customizationWidgets.get(8) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(8) instanceof AbstractOptionSliderButton optionSliderWidget) {
                 double normalizedValue = (storageOptionsHeight - 5) / 45.0;
-                ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
+                ((AbstractSliderButtonAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
         }
 
         if (storageOptionsSpacing != config.getButtonsSpacing()) {
             storageOptionsSpacing = config.getButtonsSpacing();
             updateStorageOptionsHeight();
-            if (customizationWidgets.get(9) instanceof OptionSliderWidget optionSliderWidget) {
+            if (customizationWidgets.get(9) instanceof AbstractOptionSliderButton optionSliderWidget) {
                 double normalizedValue = storageOptionsSpacing / 20.0;
-                ((SliderWidgetAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
+                ((AbstractSliderButtonAccessor)optionSliderWidget).invokeSetValue(normalizedValue);
             }
         }
     }
@@ -509,38 +511,38 @@ public class ButtonsCustomizationScreen extends Screen {
      * Adds the rendering of the title.
      */
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 5, 16777215);
+        context.drawCenteredString(this.font, this.title, this.width / 2, 5, 16777215);
     }
 
     /**
      * Renders the storage inventory screen in the background.
      */
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.renderBackground(context, mouseX, mouseY, delta);
 
         int i = (this.width - backgroundWidth) / 2;
         int j = (this.height - backgroundHeight) / 2;
 
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j, 0.0F, 0.0F, backgroundWidth, rows * 18 + 17, 256, 256, ColorHelper.getWhite(0.5f));
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j + rows * 18 + 17, 0.0F, 126.0F, backgroundWidth, 96, 256, 256, ColorHelper.getWhite(0.5f));
+        context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j, 0.0F, 0.0F, backgroundWidth, rows * 18 + 17, 256, 256, ARGB.white(0.5f));
+        context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j + rows * 18 + 17, 0.0F, 126.0F, backgroundWidth, 96, 256, 256, ARGB.white(0.5f));
 
-        context.drawText(this.textRenderer, storagePreviewTitle, x + storagePreviewTitleX, y + storagePreviewTitleY, 4210752, false);
-        context.drawText(this.textRenderer, playerInventoryTitle, x + playerInventoryTitleX, y + playerInventoryTitleY, 4210752, false);
+        context.drawString(this.font, storagePreviewTitle, x + storagePreviewTitleX, y + storagePreviewTitleY, 4210752, false);
+        context.drawString(this.font, playerInventoryTitle, x + playerInventoryTitleX, y + playerInventoryTitleY, 4210752, false);
     }
 
     /**
      * Stops the screen from pausing the game.
      */
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return true;
     }
 
     @Override
-    public void close(){
-        this.client.setScreen(this.parent);
+    public void onClose(){
+        this.minecraft.setScreen(this.parent);
     }
 }
