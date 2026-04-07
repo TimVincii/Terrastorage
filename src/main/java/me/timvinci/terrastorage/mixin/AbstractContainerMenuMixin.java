@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -33,13 +33,13 @@ public abstract class AbstractContainerMenuMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/inventory/Slot;setByPlayer(Lnet/minecraft/world/item/ItemStack;)V"
             ))
-    private void redirectSetStack(Slot slot, ItemStack stack, int slotIndex, int button, ClickType actionType, Player player) {
+    private void redirectSetStack(Slot slot, ItemStack stack, int slotIndex, int button, ContainerInput containerInput, Player player) {
         if (!(slot.container instanceof Inventory)) {
             if (ItemFavoritingUtils.isFavorite(stack)) {
                 ItemFavoritingUtils.setFavorite(stack, false);
             }
         }
-        else if (actionType == ClickType.QUICK_CRAFT && slot.hasItem()) {
+        else if (containerInput == ContainerInput.QUICK_CRAFT && slot.hasItem()) {
             boolean slotIsFavorite = ItemFavoritingUtils.isFavorite(slot.getItem());
             if (ItemFavoritingUtils.isFavorite(stack) != slotIsFavorite) {
                 ItemFavoritingUtils.setFavorite(stack, slotIsFavorite);
@@ -137,8 +137,8 @@ public abstract class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/inventory/AbstractContainerMenu;canItemQuickReplace(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;Z)Z"
             )
     )
-    private boolean redirectCanInsertItemIntoSlot(@Nullable Slot slot, ItemStack stack, boolean allowOverflow, int slotIndex, int button, ClickType actionType, Player player) {
-        if (actionType == ClickType.PICKUP_ALL) {
+    private boolean redirectCanInsertItemIntoSlot(@Nullable Slot slot, ItemStack stack, boolean allowOverflow, int slotIndex, int button, ContainerInput actionType, Player player) {
+        if (actionType == ContainerInput.PICKUP_ALL) {
             return originalCanInsertItemIntoSlot(slot, stack, allowOverflow);
         }
 

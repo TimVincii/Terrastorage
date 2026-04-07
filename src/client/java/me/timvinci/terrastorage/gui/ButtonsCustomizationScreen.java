@@ -9,11 +9,11 @@ import me.timvinci.terrastorage.mixin.client.ContainerScreenAccessor;
 import me.timvinci.terrastorage.mixin.client.AbstractSliderButtonAccessor;
 import me.timvinci.terrastorage.util.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractOptionSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.OptionInstance;
@@ -307,7 +307,7 @@ public class ButtonsCustomizationScreen extends Screen {
             config.setButtonsSpacing(storageOptionsSpacing);
 
             if (!ClientConfigManager.getInstance().saveConfig() && Minecraft.getInstance().player != null) {
-                Minecraft.getInstance().player.displayClientMessage(TextStyler.error("terrastorage.message.client_saving_error"), false);
+                Minecraft.getInstance().player.sendSystemMessage(TextStyler.error("terrastorage.message.client_saving_error"));
             }
             onClose();
         }).size(200, customizationWidgetsHeight).tooltip(Tooltip.create(Component.translatable("terrastorage.option.tooltip.save_and_exit"))).build());
@@ -511,26 +511,26 @@ public class ButtonsCustomizationScreen extends Screen {
      * Adds the rendering of the title.
      */
     @Override
-    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.render(context, mouseX, mouseY, delta);
-        context.drawCenteredString(this.font, this.title, this.width / 2, 5, 16777215);
+    public void extractRenderState(GuiGraphicsExtractor guiGraphicsExtractor, int mouseX, int mouseY, float a) {
+        super.extractRenderState(guiGraphicsExtractor, mouseX, mouseY, a);
+        guiGraphicsExtractor.centeredText(this.font, this.title, this.width / 2, 5, ARGB.color(255, 255, 255));
     }
 
     /**
      * Renders the storage inventory screen in the background.
      */
     @Override
-    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
-        super.renderBackground(context, mouseX, mouseY, delta);
+    public void extractBackground(GuiGraphicsExtractor guiGraphicsExtractor, int mouseX, int mouseY, float a) {
+        super.extractBackground(guiGraphicsExtractor, mouseX, mouseY, a);
 
         int i = (this.width - backgroundWidth) / 2;
         int j = (this.height - backgroundHeight) / 2;
 
-        context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j, 0.0F, 0.0F, backgroundWidth, rows * 18 + 17, 256, 256, ARGB.white(0.5f));
-        context.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j + rows * 18 + 17, 0.0F, 126.0F, backgroundWidth, 96, 256, 256, ARGB.white(0.5f));
+        guiGraphicsExtractor.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j, 0.0F, 0.0F, backgroundWidth, rows * 18 + 17, 256, 256, ARGB.white(0.5f));
+        guiGraphicsExtractor.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, i, j + rows * 18 + 17, 0.0F, 126.0F, backgroundWidth, 96, 256, 256, ARGB.white(0.5f));
 
-        context.drawString(this.font, storagePreviewTitle, x + storagePreviewTitleX, y + storagePreviewTitleY, 4210752, false);
-        context.drawString(this.font, playerInventoryTitle, x + playerInventoryTitleX, y + playerInventoryTitleY, 4210752, false);
+        guiGraphicsExtractor.text(this.font, storagePreviewTitle, x + storagePreviewTitleX, y + storagePreviewTitleY, -12566464, false);
+        guiGraphicsExtractor.text(this.font, playerInventoryTitle, x + playerInventoryTitleX, y + playerInventoryTitleY, -12566464, false);
     }
 
     /**

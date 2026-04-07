@@ -3,7 +3,7 @@ package me.timvinci.terrastorage.gui.widget;
 import me.timvinci.terrastorage.util.ButtonsStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
@@ -28,10 +28,10 @@ public class StorageButtonWidget extends Button {
      * Supports not drawing the background of the button.
      */
     @Override
-    protected void renderContents(GuiGraphics context, int mouseX, int mouseY, float deltaTicks) {
+    protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
         // Draw the button background if the option buttons style is set to default.
         if (this.buttonStyle == ButtonsStyle.DEFAULT)
-            this.renderDefaultSprite(context);
+            this.extractDefaultSprite(graphics);
 
         // Change the text color to yellow if the button is hovered.
         int color = isHovered ?
@@ -43,6 +43,6 @@ public class StorageButtonWidget extends Button {
         int x = this.getX() + (this.getWidth() - textRenderer.width(this.getMessage())) / 2;
         int y = this.getY() + (this.getHeight() - 9) / 2;
 
-        context.drawString(textRenderer, this.getMessage(), x, y, color, false);
+        graphics.text(textRenderer, this.getMessage(), x, y, color, false);
     }
 }

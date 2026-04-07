@@ -1,6 +1,8 @@
 package me.timvinci.terrastorage.mixin.client;
 
 import me.timvinci.terrastorage.render.NametagRenderer;
+import net.minecraft.client.renderer.state.GameRenderState;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.client.Minecraft;
@@ -11,7 +13,6 @@ import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.state.LevelRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -46,12 +47,12 @@ public class LevelRendererMixin {
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(Minecraft client,
-                        EntityRenderDispatcher entityRenderManager,
-                        BlockEntityRenderDispatcher blockEntityRenderManager,
-                        RenderBuffers bufferBuilders,
-                        LevelRenderState worldRenderState,
-                        FeatureRenderDispatcher entityRenderDispatcher,
+    private void onInit(Minecraft minecraft,
+                        EntityRenderDispatcher entityRenderDispatcher,
+                        BlockEntityRenderDispatcher blockEntityRenderDispatcher,
+                        RenderBuffers renderBuffers,
+                        GameRenderState gameRenderState,
+                        FeatureRenderDispatcher featureRenderDispatcher,
                         CallbackInfo ci) {
         nametagRenderer = new NametagRenderer(Minecraft.getInstance().font);
     }
@@ -63,15 +64,15 @@ public class LevelRendererMixin {
             method = "submitBlockEntities",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;submit(Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/CameraRenderState;)V",
+                    target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;submit(Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
                     shift = At.Shift.AFTER
             ),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION
     )
     private void afterRenderBlockEntity(
-            PoseStack matrices,
-            LevelRenderState renderStates,
-            SubmitNodeStorage queue,
+            PoseStack poseStack,
+            LevelRenderState levelRenderState,
+            SubmitNodeStorage submitNodeStorage,
             CallbackInfo ci,
             Vec3 vec3d,
             double d,
@@ -93,6 +94,6 @@ public class LevelRendererMixin {
                 || !nametagRenderer.hasLabel(container, Minecraft.getInstance().hitResult))
             return;
 
-        nametagRenderer.renderNametag(blockPos, container.getCustomName(), level, matrices, queue, renderStates.cameraRenderState);
+        nametagRenderer.renderNametag(blockPos, container.getCustomName(), level, poseStack, submitNodeStorage, levelRenderState.cameraRenderState);
     }
 }

@@ -1,7 +1,7 @@
 package me.timvinci.terrastorage.keybinding;
 
 import me.timvinci.terrastorage.util.Reference;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.resources.Identifier;
@@ -23,7 +23,7 @@ public class TerrastorageKeybindings {
                 terrastorage_main
         );
 
-        KeyBindingHelper.registerKeyBinding(favoriteItemModifier);
+        KeyMappingHelper.registerKeyMapping(favoriteItemModifier);
 
         sortInventoryBind = new KeyMapping(
                 "terrastorage.keybinding.sort_inventory_bind",
@@ -32,6 +32,6 @@ public class TerrastorageKeybindings {
                 terrastorage_main
         );
 
-        KeyBindingHelper.registerKeyBinding(sortInventoryBind);
+        KeyMappingHelper.registerKeyMapping(sortInventoryBind);
     }
 }

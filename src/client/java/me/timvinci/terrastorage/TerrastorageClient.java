@@ -37,7 +37,7 @@ public class TerrastorageClient implements ClientModInitializer {
 		TerrastorageKeybindings.registerKeybindings();
 		
 		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());
-        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloader(
+        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(
                 RELOAD_LISTENER_ID,
                 (store, prepareExecutor, synchronizer, applyExecutor) -> {
 

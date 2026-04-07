@@ -1,7 +1,7 @@
 package me.timvinci.terrastorage.command;
 
 import me.timvinci.terrastorage.gui.TerrastorageOptionsScreen;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.client.Minecraft;
 
@@ -15,8 +15,8 @@ public class TerrastorageClientCommands {
      */
     public static void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("tsclient")
-                .then(ClientCommandManager.literal("options")
+            dispatcher.register(ClientCommands.literal("tsclient")
+                .then(ClientCommands.literal("options")
                     .executes(context -> {
                         Minecraft client = context.getSource().getClient();
                         client.schedule(() -> {

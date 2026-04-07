@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 version = project.mod_version
@@ -12,16 +12,9 @@ base {
 repositories {
 	mavenCentral()
 	maven { url "https://maven.terraformersmc.com/releases/" }
-	exclusiveContent {
-		forRepository {
-			maven {
-				name = "Modrinth"
-				url = "https://api.modrinth.com/maven"
-			}
-		}
-		filter {
-			includeGroup "maven.modrinth"
-		}
+	maven {
+		url "https://maven.nucleoid.xyz/"
+		name "Nucleoid"
 	}
 }
 
@@ -39,18 +32,17 @@ loom {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// NightConfig.
 	include implementation("com.electronwill.night-config:core:${project.night_config_version}")
 	include implementation("com.electronwill.night-config:toml:${project.night_config_version}")
 
 	// ModMenu integration.
-	modCompileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
+	compileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
 }
 
 processResources {
@@ -62,7 +54,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = 25
 }
 
 java {
@@ -71,8 +63,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
@@ -81,12 +73,14 @@ jar {
 	}
 }
 
-tasks.named("remapJar") {
+tasks.jar {
 	destinationDirectory = layout.buildDirectory.dir("libs/${project.minecraft_version_range}")
-	archiveFileName = "${project.archives_base_name}-${project.mod_version}+${project.minecraft_version_range}.jar"
+	archiveBaseName.set(project.archives_base_name)
+	archiveVersion.set("${project.mod_version}+${project.minecraft_version_range}")
 }
 
-tasks.named("remapSourcesJar") {
+tasks.sourcesJar {
 	destinationDirectory = layout.buildDirectory.dir("libs/${project.minecraft_version_range}")
-	archiveFileName = "${project.archives_base_name}-${project.mod_version}+${project.minecraft_version_range}-sources.jar"
+	archiveBaseName.set(project.archives_base_name)
+	archiveVersion.set("${project.mod_version}+${project.minecraft_version_range}")
 }

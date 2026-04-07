@@ -9,11 +9,11 @@ import me.timvinci.terrastorage.keybinding.TerrastorageKeybindings;
 import me.timvinci.terrastorage.network.ClientNetworkHandler;
 import me.timvinci.terrastorage.util.*;
 import me.timvinci.terrastorage.gui.widget.StorageButtonWidget;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -22,12 +22,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.KeyEvent;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.inventory.ChestMenu;
-import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -179,12 +175,12 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
             return;
         }
 
-        boolean modifierIsPressed = InputConstants.isKeyDown(minecraft.getWindow(), KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue());
+        boolean modifierIsPressed = InputConstants.isKeyDown(minecraft.getWindow(), KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue());
         boolean playerOwnedSlot = slot.container instanceof Inventory;
 
         if (modifierIsPressed && playerOwnedSlot) {
             if (!ServerConfigHolder.enableItemFavoriting) {
-                minecraft.player.displayClientMessage(Component.translatable("terrastorage.message.item_favoriting_disabled"), false);
+                minecraft.player.sendSystemMessage(Component.translatable("terrastorage.message.item_favoriting_disabled"));
             }
             else {
                 ItemStack slotStack = slot.getItem();
@@ -218,9 +214,9 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     /**
      * Calls the ScreenInteractionUtils to process a slot click.
      */
-    @Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ClickType;)V", at = @At("HEAD"), cancellable = true)
-    private void onMouseClick(Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
-        ScreenInteractionUtils.processSlotClick(this.minecraft, this.menu.getCarried(), slot, slotId, button, actionType, ci);
+    @Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V", at = @At("HEAD"), cancellable = true)
+    private void onMouseClick(Slot slot, int slotId, int button, ContainerInput containerInput, CallbackInfo ci) {
+        ScreenInteractionUtils.processSlotClick(this.minecraft, this.menu.getCarried(), slot, slotId, button, containerInput, ci);
     }
 
     /**
@@ -241,13 +237,14 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     /**
      * Draws the favorite border on slots that hold a favorite item stack.
      */
-    @Inject(method = "renderSlot",
+    // TODO
+    @Inject(method = "extractSlot",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
+                    target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;itemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
                     shift = At.Shift.BEFORE),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void drawSlot(GuiGraphics context, Slot slot, int mouseX, int mouseY, CallbackInfo ci, int i, int j, ItemStack itemStack, boolean bl, boolean bl2, ItemStack itemStack2, String string) {
+    private void drawSlot(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci, int i, int j, ItemStack itemStack, boolean bl, boolean bl2, ItemStack itemStack2, String string) {
         if (!(slot.container instanceof Inventory) || !ItemFavoritingUtils.isFavorite(itemStack)) {
             return;
         }
@@ -260,8 +257,8 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         boolean needsModifierPressed = borderVisibility == BorderVisibility.ON_PRESS || borderVisibility == BorderVisibility.ON_PRESS_NON_HOTBAR;
 
         if (!needsModifierPressed || InputConstants.isKeyDown(minecraft.getWindow(),
-                KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
-            context.blit(RenderPipelines.GUI_TEXTURED, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
+                KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
         }
     }
 }

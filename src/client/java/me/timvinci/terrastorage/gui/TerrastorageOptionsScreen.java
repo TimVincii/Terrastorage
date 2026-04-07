@@ -60,7 +60,7 @@ public class TerrastorageOptionsScreen extends OptionsSubScreen {
     @Override
     public void onClose() {
         if (!ClientConfigManager.getInstance().saveConfig() && Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.displayClientMessage(TextStyler.error("terrastorage.message.client_saving_error"), false);
+            Minecraft.getInstance().player.sendSystemMessage(TextStyler.error("terrastorage.message.client_saving_error"));
         }
         this.minecraft.setScreen(this.lastScreen);
     }

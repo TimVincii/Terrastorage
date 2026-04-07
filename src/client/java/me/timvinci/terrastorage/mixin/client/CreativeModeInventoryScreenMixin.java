@@ -9,12 +9,12 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Tuple;
 import org.jetbrains.annotations.Nullable;
@@ -52,14 +52,14 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
      * process the slot click.
      */
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
-    private void onMouseClick(@Nullable Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
+    private void onMouseClick(@Nullable Slot slot, int slotId, int buttonNum, ContainerInput containerInput, CallbackInfo ci) {
         ItemStack cursorStack = this.menu.getCarried();
         if (Objects.equals(slot, destroyItemSlot) && !cursorStack.isEmpty() && ItemFavoritingUtils.isFavorite(cursorStack)) {
             ci.cancel();
             return;
         }
 
-        ScreenInteractionUtils.processSlotClick(this.minecraft, cursorStack, slot, slotId, button, actionType, ci);
+        ScreenInteractionUtils.processSlotClick(this.minecraft, cursorStack, slot, slotId, buttonNum, containerInput, ci);
     }
 
     /**
@@ -85,14 +85,14 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     @Redirect(method = "slotClicked",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;handleCreativeModeItemAdd(Lnet/minecraft/world/item/ItemStack;I)V"))
-    private void redirectClickCreativeStack(MultiPlayerGameMode interactionManager, ItemStack stack, int i, @Nullable Slot slot, int slotId, int button, ClickType actionType) {
-        if (actionType != ClickType.QUICK_MOVE) {
-            interactionManager.handleCreativeModeItemAdd(stack, i);
+    private void redirectClickCreativeStack(MultiPlayerGameMode interactionManager, ItemStack clicked, int i, @Nullable Slot slot, int slotId, int buttonNum, ContainerInput containerInput) {
+        if (containerInput != ContainerInput.QUICK_MOVE) {
+            interactionManager.handleCreativeModeItemAdd(clicked, i);
             return;
         }
 
         if (i < 0 || i >= this.minecraft.player.inventoryMenu.getItems().size()) {
-            this.minecraft.player.displayClientMessage(Component.translatable("terrastorage.message.general_error"), false);
+            this.minecraft.player.sendSystemMessage(Component.translatable("terrastorage.message.general_error"));
             return;
         }
 
@@ -104,10 +104,10 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
                 return;
             }
 
-            interactionManager.handleCreativeModeItemAdd(stack, i);
+            interactionManager.handleCreativeModeItemAdd(clicked, i);
         }
         catch (Exception e) {
-            this.minecraft.player.displayClientMessage(Component.translatable("terrastorage.message.general_error"), false);
+            this.minecraft.player.sendSystemMessage(Component.translatable("terrastorage.message.general_error"));
             TerrastorageClient.CLIENT_LOGGER.error(e.getMessage(), e);
         }
     }
@@ -136,8 +136,8 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
      * Modifies the visibility of the buttons to only appear in the inventory tab.
      */
     @Inject(method = "selectTab", at = @At("TAIL"))
-    private void onSetSelectedTab(CreativeModeTab group, CallbackInfo ci) {
-        if (BuiltInRegistries.CREATIVE_MODE_TAB.wrapAsHolder(group).is(CreativeModeTabs.INVENTORY)) {
+    private void onSetSelectedTab(CreativeModeTab tab, CallbackInfo ci) {
+        if (BuiltInRegistries.CREATIVE_MODE_TAB.wrapAsHolder(tab).is(CreativeModeTabs.INVENTORY)) {
             quickStackButton.visible = true;
             sortInventoryButton.visible = true;
         }

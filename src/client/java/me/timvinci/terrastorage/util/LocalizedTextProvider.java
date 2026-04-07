@@ -60,10 +60,10 @@ public class LocalizedTextProvider {
     }
 
     public static void sendUnsupportedMessage() {
-        Minecraft.getInstance().player.displayClientMessage(Component.translatable("terrastorage.message.unsupported_payload"), false);
+        Minecraft.getInstance().player.sendSystemMessage(Component.translatable("terrastorage.message.unsupported_payload"));
     }
 
     public static void sendCooldownMessage() {
-        Minecraft.getInstance().player.displayClientMessage(Component.translatable("terrastorage.message.payload_cooldown"), false);
+        Minecraft.getInstance().player.sendSystemMessage(Component.translatable("terrastorage.message.payload_cooldown"));
     }
 }
