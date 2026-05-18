@@ -2,7 +2,6 @@ package me.timvinci.terrastorage.item;
 
 import net.minecraft.world.item.ItemStack;
 
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -10,17 +9,16 @@ import java.util.function.Predicate;
  */
 public class StackProcessor {
     private final Predicate<ItemStack> shouldProcess;
-    private final Consumer<ItemStack> process;
+    private final Predicate<ItemStack> process;
 
-    public StackProcessor(Predicate<ItemStack> shouldProcess, Consumer<ItemStack> process) {
+    public StackProcessor(Predicate<ItemStack> shouldProcess, Predicate<ItemStack> process) {
         this.shouldProcess = shouldProcess;
         this.process = process;
     }
 
     public boolean tryProcess(ItemStack stack) {
         if (shouldProcess.test(stack)) {
-            process.accept(stack);
-            return true;
+            return process.test(stack);
         }
 
         return false;

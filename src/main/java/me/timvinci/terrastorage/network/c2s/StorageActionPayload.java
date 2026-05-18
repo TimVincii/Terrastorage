@@ -2,6 +2,7 @@ package me.timvinci.terrastorage.network.c2s;
 
 import me.timvinci.terrastorage.inventory.SlotBackedInventory;
 import me.timvinci.terrastorage.util.Reference;
+import me.timvinci.terrastorage.util.StorageMenuCompatibility;
 import me.timvinci.terrastorage.util.StorageAction;
 import me.timvinci.terrastorage.util.TerrastorageCore;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
@@ -63,10 +64,19 @@ public record StorageActionPayload(
             if (player.containerMenu == null || player.containerMenu.containerId != syncId.get()) {
                 return;
             }
+            if (StorageMenuCompatibility.shouldSkipStorageActions(player.containerMenu)) {
+                return;
+            }
 
             Container storageInventory;
             Slot firstSlot = player.containerMenu.slots.getFirst();
-            if (firstSlot.container.getContainerSize() != 0) {
+            if (StorageMenuCompatibility.shouldUseSlotBackedStorage(player.containerMenu)) {
+                List<Slot> nonPlayerSlots = player.containerMenu.slots.stream()
+                        .filter(slot -> !(slot.container instanceof Inventory))
+                        .toList();
+                storageInventory = new SlotBackedInventory(nonPlayerSlots);
+            }
+            else if (firstSlot.container.getContainerSize() != 0) {
                 if (!firstSlot.mayPickup(player)) {
                     player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
                     return;
@@ -87,7 +97,7 @@ public record StorageActionPayload(
 
             switch (action) {
                 case LOOT_ALL -> TerrastorageCore.lootAll(player.getInventory(), storageInventory, hotbarProtection);
-                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player.getInventory(), storageInventory, firstSlot, hotbarProtection);
+                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player.getInventory(), storageInventory, hotbarProtection);
                 case QUICK_STACK -> TerrastorageCore.quickStack(player.getInventory(), storageInventory, hotbarProtection, smartDepositMode.get());
                 case RESTOCK -> TerrastorageCore.restock(player.getInventory(), storageInventory, hotbarProtection);
                 default -> throw new IllegalArgumentException("Unknown storage action: " + action);

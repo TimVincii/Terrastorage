@@ -17,7 +17,6 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
@@ -61,16 +60,15 @@ public class TerrastorageCore {
      * Attempts to deposit all the items from the player to the storage.
      * @param playerInventory The player's inventory.
      * @param storageInventory The storage's inventory.
-     * @param firstSlot The first slot of the screen handler of the storage inventory.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    public static void depositAll(Inventory playerInventory, Container storageInventory, Slot firstSlot, boolean hotbarProtection) {
+    public static void depositAll(Inventory playerInventory, Container storageInventory, boolean hotbarProtection) {
         // Create an inventory state from the storage's inventory.
         CompleteInventoryState storageInventoryState = new CompleteInventoryState(storageInventory);
 
         for (int i = Inventory.getSelectionSize(); i < playerInventory.getNonEquipmentItems().size(); i++) {
             ItemStack playerStack = playerInventory.getItem(i);
-            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.mayPlace(playerStack)) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
                 continue;
             }
 
@@ -81,7 +79,7 @@ public class TerrastorageCore {
             for (int i = 0; i < Inventory.getSelectionSize(); i++) {
                 ItemStack playerStack = playerInventory.getItem(i);
 
-                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.mayPlace(playerStack)) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
                     continue;
                 }
 
@@ -153,10 +151,16 @@ public class TerrastorageCore {
      */
     public static void sortStorageItems(Container storageInventory, SortType type) {
         List<ItemStack> sortedStacks = InventoryUtils.combineAndSortInventory(storageInventory, type, 0, storageInventory.getContainerSize(), false);
+        ArrayDeque<ItemStack> pendingStacks = new ArrayDeque<>(sortedStacks);
 
         int slotIndex = 0;
-        for (ItemStack stack : sortedStacks) {
-            storageInventory.setItem(slotIndex++, stack);
+        while (!pendingStacks.isEmpty() && slotIndex < storageInventory.getContainerSize()) {
+            ItemStack stack = pendingStacks.peekFirst();
+            if (storageInventory.canPlaceItem(slotIndex, stack)) {
+                storageInventory.setItem(slotIndex, pendingStacks.pollFirst());
+            }
+
+            slotIndex++;
         }
 
         storageInventory.setChanged();

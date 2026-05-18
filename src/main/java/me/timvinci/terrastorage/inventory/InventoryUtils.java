@@ -50,24 +50,49 @@ public class InventoryUtils {
      * @param receiverState An InventoryState object of the receiver inventory.
      * @param stack The stack to transfer.
      */
-    public static void transferStack(Container to, InventoryState receiverState, ItemStack stack) {
+    public static boolean transferStack(Container to, InventoryState receiverState, ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+
+        int initialCount = stack.getCount();
         StackIdentifier stackIdentifier = new StackIdentifier(stack);
 
         // Attempt to transfer the stack to an existing item stack of the same item.
         if (receiverState.getNonFullItemSlots().containsKey(stackIdentifier) && transferToExistingStack(to, receiverState, stack)) {
-            return;
+            return true;
         }
 
-        if (!receiverState.getEmptySlots().isEmpty()) {
+        while (!stack.isEmpty() && !receiverState.getEmptySlots().isEmpty()) {
             int emptySlot = receiverState.getEmptySlots().poll();
-            to.setItem(emptySlot, stack.copyAndClear());
+            if (!to.getItem(emptySlot).isEmpty() || !to.canPlaceItem(emptySlot, stack)) {
+                continue;
+            }
+
+            int transferAmount = Math.min(stack.getCount(), to.getMaxStackSize(stack));
+            if (transferAmount <= 0) {
+                continue;
+            }
+
+            ItemStack transferredStack = stack.copy();
+            transferredStack.setCount(transferAmount);
+            to.setItem(emptySlot, transferredStack);
+
+            ItemStack insertedStack = to.getItem(emptySlot);
+            if (insertedStack.isEmpty()) {
+                continue;
+            }
+
+            stack.shrink(insertedStack.getCount());
             receiverState.setModified();
             // Check if the stack that was transferred isn't full.
-            if (stack.getCount() != stack.getMaxStackSize()) {
+            if (insertedStack.getCount() < Math.min(insertedStack.getMaxStackSize(), to.getMaxStackSize(insertedStack))) {
                 // Add this slot to the item slots of the receiver state.
-                receiverState.getNonFullItemSlots().computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(emptySlot);
+                receiverState.getNonFullItemSlots().computeIfAbsent(new StackIdentifier(insertedStack), k -> new ArrayList<>()).add(emptySlot);
             }
         }
+
+        return stack.getCount() != initialCount;
     }
 
     /**
@@ -86,8 +111,17 @@ public class InventoryUtils {
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
             ItemStack existingStack = to.getItem(slotWithItem);
+            if (existingStack.isEmpty() || !to.canPlaceItem(slotWithItem, stackToTransfer)) {
+                slotsIterator.remove();
+                continue;
+            }
 
-            int spaceLeft = existingStack.getMaxStackSize() - existingStack.getCount();
+            int spaceLeft = Math.min(existingStack.getMaxStackSize(), to.getMaxStackSize(existingStack)) - existingStack.getCount();
+            if (spaceLeft <= 0) {
+                slotsIterator.remove();
+                continue;
+            }
+
             int transferAmount;
             // Check if the about to be combined stack will be a full stack.
             if (spaceLeft <= stackToTransfer.getCount()) {
@@ -447,12 +481,16 @@ public class InventoryUtils {
                         return storageInventoryState.getNonFullItemSlots().containsKey(stackIdentifier) ||
                                 ((ExpandedInventoryState)storageInventoryState).getStoredItems().contains(stackIdentifier) && !storageInventoryState.getEmptySlots().isEmpty();
                     },
-                    (stack) -> InventoryUtils.transferStack(storageInventory, storageInventoryState, stack)
+                    stack -> InventoryUtils.transferStack(storageInventory, storageInventoryState, stack)
             ) :
             new StackProcessor(
                     stack -> !stack.isEmpty() &&
                             storageInventoryState.getNonFullItemSlots().containsKey(new StackIdentifier(stack)),
-                    (stack) -> InventoryUtils.transferToExistingStack(storageInventory, storageInventoryState, stack)
+                    stack -> {
+                        int initialCount = stack.getCount();
+                        InventoryUtils.transferToExistingStack(storageInventory, storageInventoryState, stack);
+                        return stack.getCount() != initialCount;
+                    }
             );
     }
 

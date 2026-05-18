@@ -66,7 +66,8 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         // Return if the player is in spectator mode, or if the handled screen is that of the player's inventory.
         if (Minecraft.getInstance().player.isSpectator() ||
             menu instanceof CreativeModeInventoryScreen.ItemPickerMenu ||
-            menu instanceof InventoryMenu) {
+            menu instanceof InventoryMenu ||
+            StorageMenuCompatibility.shouldSkipStorageActions(menu)) {
             return;
         }
 
@@ -116,7 +117,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         }
 
         boolean isEnderChest = menu instanceof ChestMenu && this.getTitle().equals(Component.translatable("container.enderchest"));
-        StorageAction[] buttonActions = StorageAction.getButtonsActions(isEnderChest);
+        StorageAction[] buttonActions = StorageMenuCompatibility.getCompatibleButtonActions(menu, isEnderChest);
 
         ButtonsStyle buttonsStyle = ClientConfigManager.getInstance().getConfig().getButtonsStyle();
         // Set the buttons offset.
@@ -202,7 +203,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      */
     @Inject(method = "mouseClicked", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
     private void mouseClickedTail(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
-        if (slot == null || slot.container.getContainerSize() < 27) {
+        if (slot == null || slot.container.getContainerSize() < 27 || StorageMenuCompatibility.shouldSkipStorageActions(menu)) {
             return;
         }
 
@@ -225,7 +226,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      */
     @Inject(method = "keyPressed", at = @At("TAIL"))
     private void onKeyPressed(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-        if (hoveredSlot == null || hoveredSlot.container.getContainerSize() < 27) {
+        if (hoveredSlot == null || hoveredSlot.container.getContainerSize() < 27 || StorageMenuCompatibility.shouldSkipStorageActions(menu)) {
             return;
         }
 
