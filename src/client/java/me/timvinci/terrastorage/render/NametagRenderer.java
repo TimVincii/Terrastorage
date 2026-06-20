@@ -4,7 +4,7 @@ import net.minecraft.client.renderer.SubmitNodeStorage;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -57,7 +57,7 @@ public class NametagRenderer {
             renderPos = renderPos.add(0, 1, 0);
 
 
-        int light = LevelRenderer.getLightCoords(level, BlockPos.containing(renderPos));
+        int light = LightCoordsUtil.getLightCoords(level, BlockPos.containing(renderPos));
 
         poseStack.pushPose();
         poseStack.translate(
