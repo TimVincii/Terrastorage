@@ -7,7 +7,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -44,7 +44,7 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
      * @return A list of ClickableWidgets, containing the buttons.
      */
     @SuppressWarnings("unchecked")
-    public List<Tuple<AbstractWidget, Boolean>> asOptions() {
+    public List<Pair<AbstractWidget, Boolean>> asOptions() {
         List<AbstractWidget> options = new ArrayList<>();
         List<Boolean> singleOptionOrder = new ArrayList<>();
         int i = 0;
@@ -107,9 +107,9 @@ public class ClientConfigManager extends BaseConfigManager<TerrastorageClientCon
             }
         }
 
-        List<Tuple<AbstractWidget, Boolean>> result = new ArrayList<>();
+        List<Pair<AbstractWidget, Boolean>> result = new ArrayList<>();
         for (int j = 0; j < options.size(); j++) {
-            result.add(new Tuple<>(options.get(j), singleOptionOrder.get(j)));
+            result.add(Pair.of(options.get(j), singleOptionOrder.get(j)));
         }
 
         return result;

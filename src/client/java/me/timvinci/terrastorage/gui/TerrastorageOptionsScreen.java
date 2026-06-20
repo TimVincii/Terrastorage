@@ -9,7 +9,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 
 import java.util.Iterator;
 import java.util.List;
@@ -29,19 +29,19 @@ public class TerrastorageOptionsScreen extends OptionsSubScreen {
     @Override
     protected void addOptions() {
         if (this.list != null) {
-            List<Tuple<AbstractWidget, Boolean>> options = ClientConfigManager.getInstance().asOptions();
-            options.add(3, new Tuple<>(getButtonsCustomizationButton(), false));
-            Iterator<Tuple<AbstractWidget, Boolean>> iterator = options.iterator();
+            List<Pair<AbstractWidget, Boolean>> options = ClientConfigManager.getInstance().asOptions();
+            options.add(3, Pair.of(getButtonsCustomizationButton(), false));
+            Iterator<Pair<AbstractWidget, Boolean>> iterator = options.iterator();
 
             while (iterator.hasNext()) {
-                Tuple<AbstractWidget, Boolean> current = iterator.next();
+                Pair<AbstractWidget, Boolean> current = iterator.next();
 
-                if (current.getB()) {
-                    current.getA().setWidth(310);
-                    this.list.addSmall(current.getA(), null);
+                if (current.getSecond()) {
+                    current.getFirst().setWidth(310);
+                    this.list.addSmall(current.getFirst(), null);
                 } else {
-                    AbstractWidget secondWidget = iterator.hasNext() ? iterator.next().getA() : null;
-                    this.list.addSmall(current.getA(), secondWidget);
+                    AbstractWidget secondWidget = iterator.hasNext() ? iterator.next().getFirst() : null;
+                    this.list.addSmall(current.getFirst(), secondWidget);
                 }
             }
         }

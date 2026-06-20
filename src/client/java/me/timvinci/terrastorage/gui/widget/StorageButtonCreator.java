@@ -14,7 +14,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 
 import java.util.Locale;
 
@@ -82,7 +82,7 @@ public class StorageButtonCreator {
      * @param y The y position.
      * @return A pair of the inventory TexturedButtonWidgets.
      */
-    public static Tuple<ImageButton, ImageButton> createInventoryButtons(int x, int y) {
+    public static Pair<ImageButton, ImageButton> createInventoryButtons(int x, int y) {
         WidgetSprites quickStackTexture = getButtonTextures("quick_stack");
         WidgetSprites sortInventoryTexture = getButtonTextures("sort_inventory");
         ImageButton quickStackButton = new ImageButton(
@@ -105,7 +105,7 @@ public class StorageButtonCreator {
         );
         sortInventoryButton.setTooltip(Tooltip.create(Component.translatable("terrastorage.button.tooltip.sort_inventory")));
 
-        return new Tuple<>(quickStackButton, sortInventoryButton);
+        return Pair.of(quickStackButton, sortInventoryButton);
     }
 
     private static WidgetSprites getButtonTextures(String buttonName) {
