@@ -20,7 +20,7 @@ public class TerrastorageClientCommands {
                     .executes(context -> {
                         Minecraft client = context.getSource().getClient();
                         client.schedule(() -> {
-                            client.setScreen(new TerrastorageOptionsScreen(client.screen));
+                            client.setScreenAndShow(new TerrastorageOptionsScreen(client.gui.screen()));
                         });
                         return 1;
                     })

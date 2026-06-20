@@ -49,7 +49,7 @@ public class TerrastorageOptionsScreen extends OptionsSubScreen {
 
     private Button getButtonsCustomizationButton() {
         return Button.builder(Component.translatable("terrastorage.button.buttons_customization"),
-                onPress -> Minecraft.getInstance().setScreen(new ButtonsCustomizationScreen(Minecraft.getInstance().screen)))
+                onPress -> Minecraft.getInstance().setScreenAndShow(new ButtonsCustomizationScreen(Minecraft.getInstance().gui.screen())))
         .tooltip(Tooltip.create(Component.translatable("terrastorage.button.tooltip.buttons_customization"))).build();
     }
 
@@ -62,6 +62,6 @@ public class TerrastorageOptionsScreen extends OptionsSubScreen {
         if (!ClientConfigManager.getInstance().saveConfig() && Minecraft.getInstance().player != null) {
             Minecraft.getInstance().player.sendSystemMessage(TextStyler.error("terrastorage.message.client_saving_error"));
         }
-        this.minecraft.setScreen(this.lastScreen);
+        this.minecraft.setScreenAndShow(this.lastScreen);
     }
 }

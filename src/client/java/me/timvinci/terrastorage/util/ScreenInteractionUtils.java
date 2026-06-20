@@ -31,7 +31,7 @@ public class ScreenInteractionUtils {
         }
 
         boolean cancel = switch (containerInput) {
-            case QUICK_MOVE -> ItemFavoritingUtils.isFavorite(slot.getItem()) && !(client.screen instanceof InventoryScreen || client.screen instanceof CreativeModeInventoryScreen);
+            case QUICK_MOVE -> ItemFavoritingUtils.isFavorite(slot.getItem()) && !(client.gui.screen() instanceof InventoryScreen || client.gui.screen() instanceof CreativeModeInventoryScreen);
             case THROW -> ItemFavoritingUtils.isFavorite(slot.getItem());
             case SWAP -> !(slot.container instanceof Inventory) && ItemFavoritingUtils.isFavorite(client.player.getInventory().getItem(button));
             default -> false;

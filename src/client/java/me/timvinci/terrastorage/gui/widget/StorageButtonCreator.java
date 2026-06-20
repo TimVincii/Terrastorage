@@ -37,9 +37,9 @@ public class StorageButtonCreator {
             case SORT_ITEMS -> button -> ClientNetworkHandler.sendSortPayload(false);
             case RENAME -> button -> {
                 Minecraft client = Minecraft.getInstance();
-                String name = client.screen.getTitle().getString();
+                String name = client.gui.screen().getTitle().getString();
                 client.execute(() -> {
-                    client.setScreen(new RenameScreen(client.screen, name));
+                    client.setScreenAndShow(new RenameScreen(client.gui.screen(), name));
                 });
             };
             default -> button -> ClientNetworkHandler.sendActionPayload(action);
