@@ -6,12 +6,16 @@ import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.ShaderManager;
+import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.SubmitNodeStorage;
-import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -39,20 +43,20 @@ public class LevelRendererMixin {
     @Final
     @Shadow
     private BlockEntityRenderDispatcher blockEntityRenderDispatcher;
-    @Shadow
-    @Nullable
-    private ClientLevel level;
 
     /**
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(Minecraft minecraft,
-                        EntityRenderDispatcher entityRenderDispatcher,
+    private void onInit(EntityRenderDispatcher entityRenderDispatcher,
                         BlockEntityRenderDispatcher blockEntityRenderDispatcher,
-                        RenderBuffers renderBuffers,
-                        GameRenderState gameRenderState,
-                        FeatureRenderDispatcher featureRenderDispatcher,
+                        ModelManager modelManager,
+                        TextureManager textureManager,
+                        AtlasManager atlasManager,
+                        ShaderManager shaderManager,
+                        GameRenderer gameRenderer,
+                        int i,
+                        int j,
                         CallbackInfo ci) {
         nametagRenderer = new NametagRenderer(Minecraft.getInstance().font);
     }
@@ -72,7 +76,7 @@ public class LevelRendererMixin {
     private void afterRenderBlockEntity(
             PoseStack poseStack,
             LevelRenderState levelRenderState,
-            SubmitNodeStorage submitNodeStorage,
+            SubmitNodeCollector submitNodeCollector,
             CallbackInfo ci,
             Vec3 vec3d,
             double d,
@@ -81,6 +85,7 @@ public class LevelRendererMixin {
             Iterator<BlockEntityRenderState> iterator,
             BlockEntityRenderState blockEntityRenderState
     ) {
+        ClientLevel level = Minecraft.getInstance().level;
         if (level == null)
             return;
 
@@ -94,6 +99,6 @@ public class LevelRendererMixin {
                 || !nametagRenderer.hasLabel(container, Minecraft.getInstance().hitResult))
             return;
 
-        nametagRenderer.renderNametag(blockPos, container.getCustomName(), level, poseStack, submitNodeStorage, levelRenderState.cameraRenderState);
+        nametagRenderer.renderNametag(blockPos, container.getCustomName(), level, poseStack, (SubmitNodeStorage) submitNodeCollector, levelRenderState.cameraRenderState);
     }
 }
