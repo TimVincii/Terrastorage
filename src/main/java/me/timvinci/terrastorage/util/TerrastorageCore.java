@@ -21,7 +21,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
@@ -271,7 +271,7 @@ public class TerrastorageCore {
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
     public static void quickStackToNearbyStorages(ServerPlayer player, boolean hotbarProtection, boolean smartDepositMode) {
-        List<Tuple<Container, Vec3>> nearbyStorages = InventoryUtils.getNearbyStorages(player);
+        List<Pair<Container, Vec3>> nearbyStorages = InventoryUtils.getNearbyStorages(player);
         if (nearbyStorages.isEmpty()) {
             return;
         }
@@ -283,9 +283,9 @@ public class TerrastorageCore {
         int startIndex = hotbarProtection ? Inventory.getSelectionSize() : 0;
         boolean playerInventoryModified = false;
 
-        for (Tuple<Container, Vec3> storagePair : nearbyStorages) {
-            Container storage = storagePair.getA();
-            Vec3 storagePos = storagePair.getB();
+        for (Pair<Container, Vec3> storagePair : nearbyStorages) {
+            Container storage = storagePair.getFirst();
+            Vec3 storagePos = storagePair.getSecond();
 
             InventoryState storageState = stateFactory.apply(storage);
             StackProcessor processor = InventoryUtils.createStackProcessor(storageState, storage, smartDepositMode);

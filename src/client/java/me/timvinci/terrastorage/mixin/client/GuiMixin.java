@@ -9,7 +9,7 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.client.DeltaTracker;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * A mixin of the Gui class, used for adding item favoriting support.
  */
-@Mixin(Gui.class)
+@Mixin(Hud.class)
 public class GuiMixin {
     @Unique
     private final Identifier favoriteBorder = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/sprites/favorite_border.png");

@@ -100,7 +100,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
                             Component.translatable("terrastorage.button.options"),
                             onPress -> {
                                 minecraft.execute(() -> {
-                                    minecraft.setScreen(new TerrastorageOptionsScreen(minecraft.screen));
+                                    minecraft.setScreenAndShow(new TerrastorageOptionsScreen(minecraft.gui.screen()));
                                 });
                             })
                     .size(120, 15)

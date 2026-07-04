@@ -76,7 +76,7 @@ public class RenameScreen extends Screen {
     @Override
     public void onClose() {
         // Set the screen to the parent screen when this screen is closed.
-        this.minecraft.setScreen(parent);
+        this.minecraft.setScreenAndShow(parent);
     }
 
     /**

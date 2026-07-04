@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -124,11 +124,11 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     private void onInit(CallbackInfo ci) {
         int buttonX = this.leftPos + 138;
         int buttonY = this.topPos + 19;
-        Tuple<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
-        quickStackButton = buttons.getA();
+        Pair<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
+        quickStackButton = buttons.getFirst();
         this.addRenderableWidget(quickStackButton);
 
-        sortInventoryButton = buttons.getB();
+        sortInventoryButton = buttons.getSecond();
         this.addRenderableWidget(sortInventoryButton);
     }
 

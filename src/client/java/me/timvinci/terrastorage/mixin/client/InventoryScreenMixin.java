@@ -9,7 +9,7 @@ import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
+import com.mojang.datafixers.util.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -43,11 +43,11 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
 
         int buttonX = this.leftPos + 128;
         int buttonY = this.height / 2 - 22;
-        Tuple<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
-        quickStackButton = buttons.getA();
+        Pair<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
+        quickStackButton = buttons.getFirst();
         this.addRenderableWidget(quickStackButton);
 
-        sortInventoryButton = buttons.getB();
+        sortInventoryButton = buttons.getSecond();
         this.addRenderableWidget(sortInventoryButton);
     }
 
