@@ -58,8 +58,12 @@ public class InventoryUtils {
             return;
         }
 
-        if (!receiverState.getEmptySlots().isEmpty()) {
+        while (!stack.isEmpty() && !receiverState.getEmptySlots().isEmpty()) {
             int emptySlot = receiverState.getEmptySlots().poll();
+            if (!to.getItem(emptySlot).isEmpty() || !to.canPlaceItem(emptySlot, stack)) {
+                continue;
+            }
+
             to.setItem(emptySlot, stack.copyAndClear());
             receiverState.setModified();
             // Check if the stack that was transferred isn't full.
@@ -67,6 +71,8 @@ public class InventoryUtils {
                 // Add this slot to the item slots of the receiver state.
                 receiverState.getNonFullItemSlots().computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(emptySlot);
             }
+
+            break;
         }
     }
 
@@ -86,6 +92,10 @@ public class InventoryUtils {
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
             ItemStack existingStack = to.getItem(slotWithItem);
+            if (!to.canPlaceItem(slotWithItem, stackToTransfer)) {
+                slotsIterator.remove();
+                continue;
+            }
 
             int spaceLeft = existingStack.getMaxStackSize() - existingStack.getCount();
             int transferAmount;
