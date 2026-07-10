@@ -54,7 +54,16 @@ public class SlotBackedInventory implements Container {
 
     @Override
     public void setItem(int slot, ItemStack stack) {
+        if (!stack.isEmpty() && !this.slots.get(slot).mayPlace(stack)) {
+            return;
+        }
+
         this.slots.get(slot).setByPlayer(stack);
+    }
+
+    @Override
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        return this.slots.get(slot).mayPlace(stack);
     }
 
     @Override
