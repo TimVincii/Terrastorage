@@ -1,11 +1,11 @@
 package me.timvinci.terrastorage.gui;
 
 import me.timvinci.terrastorage.network.ClientNetworkHandler;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
 
 /**
  * The rename screen.
@@ -15,7 +15,7 @@ public class RenameScreen extends Screen {
     private final String currentName;
 
     public RenameScreen(Screen parent, String currentName) {
-        super(Text.empty());
+        super(Component.empty());
         this.parent = parent;
         this.currentName = currentName;
     }
@@ -36,54 +36,54 @@ public class RenameScreen extends Screen {
         // Name field widget.
         int textFieldX = (this.width - (textFieldWidth + 5 + resetButtonWidth)) / 2;
         int textFieldY = (this.height - height) / 2;
-        TextFieldWidget nameTextField = new TextFieldWidget(
-            this.textRenderer,
+        EditBox nameTextField = new EditBox(
+            this.font,
             textFieldX,
             textFieldY,
             textFieldWidth,
             height,
-            Text.empty());
+            Component.empty());
         nameTextField.setMaxLength(25);
-        nameTextField.setText(currentName);
+        nameTextField.setValue(currentName);
 
-        this.addDrawableChild(nameTextField);
+        this.addRenderableWidget(nameTextField);
         this.setFocused(nameTextField);
 
         // Reset button widget.
-        ButtonWidget resetButtonWidget = ButtonWidget.builder(
-            Text.translatable("terrastorage.button.reset"),
+        Button resetButtonWidget = Button.builder(
+            Component.translatable("terrastorage.button.reset"),
             onPress -> {
-                nameTextField.setText("");
+                nameTextField.setValue("");
             })
             .size(resetButtonWidth, height)
-            .position(textFieldX + textFieldWidth + 5, textFieldY)
+            .pos(textFieldX + textFieldWidth + 5, textFieldY)
         .build();
-        resetButtonWidget.setTooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.reset")));
-        this.addDrawableChild(resetButtonWidget);
+        resetButtonWidget.setTooltip(Tooltip.create(Component.translatable("terrastorage.button.tooltip.reset")));
+        this.addRenderableWidget(resetButtonWidget);
 
         // Rename button widget.
         int renameButtonX = (this.width - renameButtonWidth) / 2;
         int renameButtonY = this.height - 40;
-        ButtonWidget renameButtonWidget = ButtonWidget.builder(
-            Text.translatable("terrastorage.button.rename"),
-            onPress -> rename(nameTextField.getText()))
+        Button renameButtonWidget = Button.builder(
+            Component.translatable("terrastorage.button.rename"),
+            onPress -> rename(nameTextField.getValue()))
             .size(renameButtonWidth, height)
-            .position(renameButtonX, renameButtonY)
+            .pos(renameButtonX, renameButtonY)
         .build();
-        this.addDrawableChild(renameButtonWidget);
+        this.addRenderableWidget(renameButtonWidget);
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         // Set the screen to the parent screen when this screen is closed.
-        this.client.setScreen(parent);
+        this.minecraft.setScreen(parent);
     }
 
     /**
      * Stops the screen from pausing the game.
      */
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 
@@ -96,6 +96,6 @@ public class RenameScreen extends Screen {
             ClientNetworkHandler.sendRenamePayload(newName);
         }
 
-        this.close();
+        this.onClose();
     }
 }

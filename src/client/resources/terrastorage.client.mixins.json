@@ -3,17 +3,17 @@
 	"package": "me.timvinci.terrastorage.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"BlockEntityRendererFactoriesMixin",
-		"ClientPlayerEntityMixin",
-		"CreativeInventoryScreenMixin",
-		"GenericContainerScreenAccessor",
-		"HandledScreenMixin",
-		"InGameHudMixin",
+      "BlockEntityRenderersMixin",
+      "LocalPlayerMixin",
+      "CreativeModeInventoryScreenMixin",
+      "ContainerScreenAccessor",
+      "AbstractContainerScreenMixin",
+      "GuiMixin",
 		"InventoryScreenMixin",
 		"ItemStackMixin",
-		"PressableWidgetAccessor",
-		"SliderWidgetAccessor",
-        "WorldRendererMixin"
+      "AbstractButtonAccessor",
+      "AbstractSliderButtonAccessor",
+      "LevelRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
