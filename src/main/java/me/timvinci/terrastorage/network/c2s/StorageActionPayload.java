@@ -1,12 +1,12 @@
 package me.timvinci.terrastorage.network.c2s;
 
-import me.timvinci.terrastorage.inventory.SlotBackedInventory;
+import me.timvinci.terrastorage.inventory.InventoryUtils;
+import me.timvinci.terrastorage.inventory.SlotStorageAccess;
+import me.timvinci.terrastorage.inventory.StorageAccess;
 import me.timvinci.terrastorage.util.Reference;
 import me.timvinci.terrastorage.util.StorageAction;
 import me.timvinci.terrastorage.util.TerrastorageCore;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.Container;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -50,7 +50,7 @@ public record StorageActionPayload(
     public Type<? extends CustomPacketPayload> type() { return ID ; }
 
     /**
-     * Handles the identification of the inventory the player is interacting with, before calling TerrastorageCore to
+     * Handles the identification of the storage the player is interacting with, before calling TerrastorageCore to
      * perform the storage action.
      * @param player The player initiating the storage action.
      * @param syncId The sync id of the screen handler from which the action was sent.
@@ -64,34 +64,25 @@ public record StorageActionPayload(
                 return;
             }
 
-            Container storageInventory;
-            Slot firstSlot = player.containerMenu.slots.getFirst();
-            if (firstSlot.container.getContainerSize() != 0) {
-                if (!firstSlot.mayPickup(player)) {
-                    player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
-                    return;
-                }
-
-                // Get the storage's inventory from the player's screen handler.
-                storageInventory = firstSlot.container;
-            }
-            else { // Handle "broken" screen handlers
-                List<Slot> nonPlayerSlots = player.containerMenu.slots.stream()
-                        .filter(slot -> !(slot.container instanceof Inventory))
-                        .toList();
-
-                // Create a SlotBackedInventory, which will hold a reference to all slots and will make inventory
-                // adjustments using them.
-                storageInventory = new SlotBackedInventory(nonPlayerSlots);
+            // Operate on the menu's storage-side slots directly, so slot rules are respected and every storage type
+            // (vanilla containers and item-handler backed storages alike) is handled the same way.
+            List<Slot> storageSlots = InventoryUtils.getStorageSlots(player.containerMenu, player);
+            if (storageSlots.isEmpty() || !InventoryUtils.hasUsableSlot(storageSlots, player)) {
+                player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
+                return;
             }
 
+            StorageAccess storage = new SlotStorageAccess(storageSlots);
             switch (action) {
-                case LOOT_ALL -> TerrastorageCore.lootAll(player.getInventory(), storageInventory, hotbarProtection);
-                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player.getInventory(), storageInventory, firstSlot, hotbarProtection);
-                case QUICK_STACK -> TerrastorageCore.quickStack(player.getInventory(), storageInventory, hotbarProtection, smartDepositMode.get());
-                case RESTOCK -> TerrastorageCore.restock(player.getInventory(), storageInventory, hotbarProtection);
+                case LOOT_ALL -> TerrastorageCore.lootAll(player, storage, hotbarProtection);
+                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player, storage, hotbarProtection);
+                case QUICK_STACK -> TerrastorageCore.quickStack(player, storage, hotbarProtection, smartDepositMode.get());
+                case RESTOCK -> TerrastorageCore.restock(player, storage, hotbarProtection);
                 default -> throw new IllegalArgumentException("Unknown storage action: " + action);
             }
+
+            // Push the corrected state to the client immediately, closing any desync window.
+            player.containerMenu.broadcastChanges();
         }
         else {
             TerrastorageCore.quickStackToNearbyStorages(player, hotbarProtection, smartDepositMode.get());
