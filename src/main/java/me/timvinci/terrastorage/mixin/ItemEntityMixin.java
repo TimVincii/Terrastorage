@@ -2,8 +2,8 @@ package me.timvinci.terrastorage.mixin;
 
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -20,7 +20,7 @@ public class ItemEntityMixin {
      * the item entity.
      */
     @ModifyVariable(
-            method = "setStack",
+            method = "setItem",
             at = @At("HEAD"),
             argsOnly = true
     )

@@ -1,22 +1,22 @@
 package me.timvinci.terrastorage.render;
 
-import net.minecraft.block.entity.LootableContainerBlockEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * An empty custom block entity renderer.
  * Any block entity that has this renderer registered to it, will then be passed to the BlockEntityRenderDispatcher for
  * rendering, which will in turn render the nametag for the block entity.
  */
-public class BlockNametagRenderer implements BlockEntityRenderer<LootableContainerBlockEntity> {
+public class BlockNametagRenderer implements BlockEntityRenderer<RandomizableContainerBlockEntity> {
 
-    public BlockNametagRenderer(BlockEntityRendererFactory.Context ctx) {}
+    public BlockNametagRenderer(BlockEntityRendererProvider.Context ctx) {}
 
     @Override
-    public void render(LootableContainerBlockEntity entity, float tickProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, Vec3d cameraPos) {
+    public void render(RandomizableContainerBlockEntity entity, float tickProgress, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, Vec3 cameraPos) {
     }
 }
