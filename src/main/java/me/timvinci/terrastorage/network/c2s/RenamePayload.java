@@ -5,10 +5,7 @@ import me.timvinci.terrastorage.util.TerrastorageCore;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -43,11 +40,8 @@ public record RenamePayload(int syncId, String newName) implements CustomPacketP
             return;
         }
 
-        if (!player.containerMenu.slots.getFirst().mayPickup(player)) {
-            player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
-            return;
-        }
-
+        // No slot check is needed here, as renaming doesn't move any items, and renameStorage reports the storages
+        // it doesn't support by itself.
         TerrastorageCore.renameStorage(player, newName);
     }
 }
