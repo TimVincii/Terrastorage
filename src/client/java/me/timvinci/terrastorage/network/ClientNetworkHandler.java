@@ -7,9 +7,9 @@ import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.QuickStackMode;
 import me.timvinci.terrastorage.util.StorageAction;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 
@@ -19,11 +19,11 @@ import java.util.Optional;
  */
 public class ClientNetworkHandler {
     private static long lastActionWorldTime = 0;
-    private static World lastWorld = null;
+    private static Level lastWorld = null;
 
     public static void sendActionPayload(StorageAction action) {
         if (!canSendPayload(StorageActionPayload.ID) ||
-            action != StorageAction.QUICK_STACK_TO_NEARBY && MinecraftClient.getInstance().player.currentScreenHandler == null) {
+            action != StorageAction.QUICK_STACK_TO_NEARBY && Minecraft.getInstance().player.containerMenu == null) {
             return;
         }
 
@@ -58,7 +58,7 @@ public class ClientNetworkHandler {
 
     public static void sendSortPayload(boolean playerInventory) {
         if (!canSendPayload(SortPayload.ID) ||
-            !playerInventory && MinecraftClient.getInstance().player.currentScreenHandler == null) {
+            !playerInventory && Minecraft.getInstance().player.containerMenu == null) {
             return;
         }
 
@@ -82,7 +82,7 @@ public class ClientNetworkHandler {
     }
 
     public static void sendRenamePayload(String newName) {
-        if (!canSendPayload(RenamePayload.ID) || MinecraftClient.getInstance().player.currentScreenHandler == null) {
+        if (!canSendPayload(RenamePayload.ID) || Minecraft.getInstance().player.containerMenu == null) {
             return;
         }
 
@@ -108,7 +108,7 @@ public class ClientNetworkHandler {
         return false;
     }
 
-    private static boolean canSendPayload(CustomPayload.Id<?> type) {
+    private static boolean canSendPayload(CustomPacketPayload.Type<?> type) {
         if (!ClientPlayNetworking.canSend(type)) {
             LocalizedTextProvider.sendUnsupportedMessage();
             return false;
@@ -127,10 +127,10 @@ public class ClientNetworkHandler {
             return true;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        World currentWorld = client.world;
+        Minecraft client = Minecraft.getInstance();
+        Level currentWorld = client.level;
 
-        long currentWorldTime = currentWorld.getTime();
+        long currentWorldTime = currentWorld.getGameTime();
 
         if (lastWorld != currentWorld) {
             lastActionWorldTime = 0;
@@ -146,6 +146,6 @@ public class ClientNetworkHandler {
     }
 
     private static int getSyncId() {
-        return MinecraftClient.getInstance().player.currentScreenHandler.syncId;
+        return Minecraft.getInstance().player.containerMenu.containerId;
     }
 }
