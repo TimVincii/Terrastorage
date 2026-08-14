@@ -1,16 +1,16 @@
 package me.timvinci.terrastorage.render;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.LootableContainerBlockEntity;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
@@ -20,9 +20,9 @@ import org.joml.Quaternionf;
 public class NametagRenderer {
     // Define a render dispatcher and a text renderer.
     private final BlockEntityRenderDispatcher dispatcher;
-    private final TextRenderer textRenderer;
+    private final Font textRenderer;
 
-    public NametagRenderer(BlockEntityRenderDispatcher dispatcher, TextRenderer textRenderer) {
+    public NametagRenderer(BlockEntityRenderDispatcher dispatcher, Font textRenderer) {
         this.dispatcher = dispatcher;
         this.textRenderer = textRenderer;
     }
@@ -35,13 +35,13 @@ public class NametagRenderer {
      * @param vertexConsumers The vertex consumer provider for rendering (passed to the rendering method).
      * @param light The light level for the rendering (passed to the rendering method).
      */
-    public void renderNametag(BlockEntity entity, Text customName, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-        BlockPos entityPos = entity.getPos();
-        Vec3d renderPos = Vec3d.ofCenter(entityPos);
+    public void renderNametag(BlockEntity entity, Component customName, PoseStack matrices, MultiBufferSource vertexConsumers, int light) {
+        BlockPos entityPos = entity.getBlockPos();
+        Vec3 renderPos = Vec3.atCenterOf(entityPos);
 
         // Check if the block above the block entity isn't air.
-        if (!dispatcher.world.isAir(entityPos.up())) {
-            Vec3d direction = dispatcher.camera.getPos().subtract(renderPos).normalize();
+        if (!dispatcher.level.isEmptyBlock(entityPos.above())) {
+            Vec3 direction = dispatcher.camera.getPosition().subtract(renderPos).normalize();
             // Set the render pos to a position towards the player.
             renderPos = renderPos.add(direction);
         } else { // Set the render pos to a single block above the block entity.
@@ -59,14 +59,14 @@ public class NametagRenderer {
      * @param matrices The matrix stack used for positioning transformations.
      * @param vertexConsumers The vertex consumer provider for rendering.
      */
-    public void renderBlockNametag(BlockEntity entity, Text customName, MatrixStack matrices, VertexConsumerProvider vertexConsumers) {
-        BlockPos entityPos = entity.getPos();
-        Vec3d renderPos = Vec3d.ofCenter(entityPos);
+    public void renderBlockNametag(BlockEntity entity, Component customName, PoseStack matrices, MultiBufferSource vertexConsumers) {
+        BlockPos entityPos = entity.getBlockPos();
+        Vec3 renderPos = Vec3.atCenterOf(entityPos);
         int light;
 
         // Check if the block above the block entity isn't air.
-        if (!dispatcher.world.isAir(entityPos.up())) {
-            Vec3d direction = dispatcher.camera.getPos().subtract(renderPos).normalize();
+        if (!dispatcher.level.isEmptyBlock(entityPos.above())) {
+            Vec3 direction = dispatcher.camera.getPosition().subtract(renderPos).normalize();
             // Set the render pos to a position towards the player.
             renderPos = renderPos.add(direction);
 
@@ -76,11 +76,11 @@ public class NametagRenderer {
                     (int)Math.floor(renderPos.z)
             );
 
-            light = WorldRenderer.getLightmapCoordinates(dispatcher.world, lightPos);
+            light = LevelRenderer.getLightColor(dispatcher.level, lightPos);
 
         } else { // Set the render pos to a single block above the block entity.
             renderPos = renderPos.subtract(0, -1, 0);
-            light = WorldRenderer.getLightmapCoordinates(dispatcher.world, entity.getCachedState(), entityPos.up());
+            light = LevelRenderer.getLightColor(dispatcher.level, entity.getBlockState(), entityPos.above());
         }
 
         this.renderNametag(entity, customName, matrices, vertexConsumers, renderPos, light);
@@ -95,7 +95,7 @@ public class NametagRenderer {
      * @param renderPos The position of the nametag.
      * @param light The light level for the rendering.
      */
-    private void renderNametag(BlockEntity entity, Text customName, MatrixStack matrices, VertexConsumerProvider vertexConsumers, Vec3d renderPos, int light) {
+    private void renderNametag(BlockEntity entity, Component customName, PoseStack matrices, MultiBufferSource vertexConsumers, Vec3 renderPos, int light) {
         double distanceToCamera = getSquaredDistanceToCamera(entity);
         // Warning - yapping session:
         // The check makes no sense, the only way a nametag will be rendered is if the player is looking at the block
@@ -104,22 +104,22 @@ public class NametagRenderer {
         // Then again, this exact check was made in the EntityRenderer class when rendering a nametag for an entity...
         // hopefully Mojang had a valid reason to do that.
         if (distanceToCamera <= 4096.0) {
-            matrices.push();
+            matrices.pushPose();
 
             matrices.translate(
-                    renderPos.x - entity.getPos().getX(),
-                    renderPos.y - entity.getPos().getY(),
-                    renderPos.z - entity.getPos().getZ()
+                    renderPos.x - entity.getBlockPos().getX(),
+                    renderPos.y - entity.getBlockPos().getY(),
+                    renderPos.z - entity.getBlockPos().getZ()
             );
 
-            matrices.multiply(getRotation());
+            matrices.mulPose(getRotation());
             matrices.scale(0.025F, -0.025F, 0.025F);
-            Matrix4f matrix4f = matrices.peek().getPositionMatrix();
-            float xPos = (float)(-textRenderer.getWidth(customName) / 2);
+            Matrix4f matrix4f = matrices.last().pose();
+            float xPos = (float)(-textRenderer.width(customName) / 2);
 
-            textRenderer.drawWithOutline(customName.asOrderedText(), xPos, 0, -1, 0, matrix4f, vertexConsumers, light);
+            textRenderer.drawInBatch8xOutline(customName.getVisualOrderText(), xPos, 0, -1, 0, matrix4f, vertexConsumers, light);
 
-            matrices.pop();
+            matrices.popPose();
         }
     }
 
@@ -128,23 +128,23 @@ public class NametagRenderer {
      * @param entity The block entity as a LootableContainerBlockEntity.
      * @return True if the entity has a custom name and is targeted by the player, false otherwise.
      */
-    public boolean hasLabel(LootableContainerBlockEntity entity) {
+    public boolean hasLabel(RandomizableContainerBlockEntity entity) {
         if (!entity.hasCustomName()) {
             return false;
         }
 
-        if (dispatcher.crosshairTarget instanceof BlockHitResult blockHitResult) {
-            return blockHitResult.getBlockPos().equals(entity.getPos());
+        if (dispatcher.cameraHitResult instanceof BlockHitResult blockHitResult) {
+            return blockHitResult.getBlockPos().equals(entity.getBlockPos());
         }
 
         return false;
     }
 
     private double getSquaredDistanceToCamera(BlockEntity entity) {
-        return dispatcher.camera.getPos().squaredDistanceTo(entity.getPos().getX(), entity.getPos().getY(), entity.getPos().getZ());
+        return dispatcher.camera.getPosition().distanceToSqr(entity.getBlockPos().getX(), entity.getBlockPos().getY(), entity.getBlockPos().getZ());
     }
 
     private Quaternionf getRotation() {
-        return dispatcher.camera.getRotation();
+        return dispatcher.camera.rotation();
     }
 }
