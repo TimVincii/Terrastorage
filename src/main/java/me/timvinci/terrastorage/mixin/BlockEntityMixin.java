@@ -1,11 +1,11 @@
 package me.timvinci.terrastorage.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.LockableContainerBlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -19,12 +19,12 @@ public abstract class BlockEntityMixin {
     /**
      * Add the custom name to the initial chunk nbt data.
      */
-    @ModifyReturnValue(method = "toInitialChunkDataNbt", at = @At("RETURN"))
-    private NbtCompound toInitialChunkDataNbt(NbtCompound original, RegistryWrapper.WrapperLookup registryLookup) {
-        if ((BlockEntity) (Object) this instanceof LockableContainerBlockEntity lockableContainerBlockEntity) {
-            Text customName = lockableContainerBlockEntity.getCustomName();
+    @ModifyReturnValue(method = "getUpdateTag", at = @At("RETURN"))
+    private CompoundTag toInitialChunkDataNbt(CompoundTag original, HolderLookup.Provider registryLookup) {
+        if ((BlockEntity) (Object) this instanceof BaseContainerBlockEntity lockableContainerBlockEntity) {
+            Component customName = lockableContainerBlockEntity.getCustomName();
             if (customName != null) {
-                original.putString("CustomName", Text.Serialization.toJsonString(customName, registryLookup));
+                original.putString("CustomName", Component.Serializer.toJson(customName, registryLookup));
             }
         }
 

@@ -2,10 +2,10 @@ package me.timvinci.terrastorage.inventory;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.item.StackIdentifier;
-import net.minecraft.component.ComponentMapImpl;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.component.PatchedDataComponentMap;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,10 +26,10 @@ public class CompactInventoryState implements InventoryState {
      * Iterates over the inventory's slots and adds them to the itemSlots map accordingly.
      * @param inventory The storage's inventory.
      */
-    public CompactInventoryState(Inventory inventory) {
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack inventoryStack = inventory.getStack(i);
-            if (inventoryStack.isEmpty() || inventoryStack.getCount() == inventoryStack.getMaxCount()) {
+    public CompactInventoryState(Container inventory) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack inventoryStack = inventory.getItem(i);
+            if (inventoryStack.isEmpty() || inventoryStack.getCount() == inventoryStack.getMaxStackSize()) {
                 continue;
             }
 
@@ -43,10 +43,10 @@ public class CompactInventoryState implements InventoryState {
      * @param playerInventory The player's inventory.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    public CompactInventoryState(PlayerInventory playerInventory, boolean hotbarProtection) {
-        for (int i = PlayerInventory.getHotbarSize(); i < playerInventory.main.size(); i++) {
-            ItemStack playerStack = playerInventory.getStack(i);
-            if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxCount()) {
+    public CompactInventoryState(Inventory playerInventory, boolean hotbarProtection) {
+        for (int i = Inventory.getSelectionSize(); i < playerInventory.items.size(); i++) {
+            ItemStack playerStack = playerInventory.getItem(i);
+            if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxStackSize()) {
                 continue;
             }
 
@@ -56,7 +56,7 @@ public class CompactInventoryState implements InventoryState {
             }
             else {
                 // Remove the item favorite component data from the stack identifier.
-                ComponentMapImpl components = new ComponentMapImpl(playerStack.getComponents());
+                PatchedDataComponentMap components = new PatchedDataComponentMap(playerStack.getComponents());
                 ItemFavoritingUtils.unFavorite(components);
                 stackIdentifier = new StackIdentifier(playerStack.getItem(), components);
             }
@@ -66,9 +66,9 @@ public class CompactInventoryState implements InventoryState {
 
         // Check if hotbar protection is disabled, and if that is the case, iterate over the hotbar slots as well.
         if (!hotbarProtection) {
-            for (int i = 0; i < PlayerInventory.getHotbarSize(); i++) {
-                ItemStack playerStack = playerInventory.getStack(i);
-                if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxCount()) {
+            for (int i = 0; i < Inventory.getSelectionSize(); i++) {
+                ItemStack playerStack = playerInventory.getItem(i);
+                if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxStackSize()) {
                     continue;
                 }
 
@@ -78,7 +78,7 @@ public class CompactInventoryState implements InventoryState {
                 }
                 else {
                     // Remove the item favorite component data from the stack identifier.
-                    ComponentMapImpl components = new ComponentMapImpl(playerStack.getComponents());
+                    PatchedDataComponentMap components = new PatchedDataComponentMap(playerStack.getComponents());
                     ItemFavoritingUtils.unFavorite(components);
                     stackIdentifier = new StackIdentifier(playerStack.getItem(), components);
                 }
