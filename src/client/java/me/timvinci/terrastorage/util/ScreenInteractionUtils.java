@@ -1,14 +1,14 @@
 package me.timvinci.terrastorage.util;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.ClickType;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -21,19 +21,19 @@ public class ScreenInteractionUtils {
      * Processes a slot click and cancels the original method if it needs to be.
      * Called from both the HandledScreen mixin and the CreativeInventoryScreen mixin.
      */
-    public static void processSlotClick(MinecraftClient client, ItemStack cursorStack, @Nullable Slot slot, int slotId, int button, SlotActionType actionType, CallbackInfo ci) {
+    public static void processSlotClick(Minecraft client, ItemStack cursorStack, @Nullable Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
         boolean cursorStackIsFavorite = ItemFavoritingUtils.isFavorite(cursorStack);
         if (slot == null) {
-            if (actionType == SlotActionType.PICKUP && slotId == ScreenHandler.EMPTY_SPACE_SLOT_INDEX && cursorStackIsFavorite) {
+            if (actionType == ClickType.PICKUP && slotId == AbstractContainerMenu.SLOT_CLICKED_OUTSIDE && cursorStackIsFavorite) {
                 ci.cancel();
             }
             return;
         }
 
         boolean cancel = switch (actionType) {
-            case QUICK_MOVE -> ItemFavoritingUtils.isFavorite(slot.getStack()) && !(client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof CreativeInventoryScreen);
-            case THROW -> ItemFavoritingUtils.isFavorite(slot.getStack());
-            case SWAP -> !(slot.inventory instanceof PlayerInventory) && ItemFavoritingUtils.isFavorite(client.player.getInventory().getStack(button));
+            case QUICK_MOVE -> ItemFavoritingUtils.isFavorite(slot.getItem()) && !(client.screen instanceof InventoryScreen || client.screen instanceof CreativeModeInventoryScreen);
+            case THROW -> ItemFavoritingUtils.isFavorite(slot.getItem());
+            case SWAP -> !(slot.container instanceof Inventory) && ItemFavoritingUtils.isFavorite(client.player.getInventory().getItem(button));
             default -> false;
         };
 
