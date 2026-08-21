@@ -1,91 +1,49 @@
 package me.timvinci.terrastorage.inventory;
 
-import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.item.StackIdentifier;
-import net.minecraft.core.component.PatchedDataComponentMap;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 
 /**
- * Represents the state of an inventory.
- * Stores a hashmap in which the key is a stack identifier, and the value is an array of the positions of non-full stacks of that
- * stack identifier in the inventory.
- * And a Queue of integers representing the empty slot indexes in the inventory.
+ * Represents the state of a player's inventory (the receiver of Loot All).
+ * Stores a hashmap in which the key is a stack identifier, and the value is an array of the positions of non-full
+ * stacks of that stack identifier in the inventory, as well as a list of the empty slot indexes.
+ * Whether a slot accepts an item is not precomputed here, as that depends on the incoming stack.
  */
 public class CompleteInventoryState implements InventoryState {
     private final Map<StackIdentifier, ArrayList<Integer>> nonFullItemSlots = new HashMap<>();
-    private final Queue<Integer> emptySlots = new ArrayDeque<>();
+    private final List<Integer> emptySlots = new ArrayList<>();
     private boolean modified = false;
 
     /**
-     * Instantiates a new CompleteInventoryState of an inventory.
-     * Iterates over the inventory's slots and adds them to the nonFullItemSlots and emptySlots maps accordingly.
-     * @param inventory The storage's inventory.
+     * Instantiates a new CompleteInventoryState of a player inventory.
+     * Iterates over the player's slots and adds them to the nonFullItemSlots and emptySlots collections accordingly.
+     * @param access The rule aware view of the player's inventory.
+     * @param hotbarProtection The hotbar protection value of the player.
      */
-    public CompleteInventoryState(Container inventory) {
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack inventoryStack = inventory.getItem(i);
-            if (inventoryStack.isEmpty()) {
-                emptySlots.add(i);
-            }
-            else if (inventoryStack.getCount() != inventoryStack.getMaxStackSize()) {
-                nonFullItemSlots.computeIfAbsent(new StackIdentifier(inventoryStack), k -> new ArrayList<>()).add(i);
-            }
+    public CompleteInventoryState(PlayerSlotAccess access, boolean hotbarProtection) {
+        Inventory playerInventory = access.inventory();
+        index(access, playerInventory, Inventory.getSelectionSize(), playerInventory.items.size());
+
+        // Check if hotbar protection is disabled, and if that is the case, iterate over the hotbar slots as well.
+        if (!hotbarProtection) {
+            index(access, playerInventory, 0, Inventory.getSelectionSize());
         }
     }
 
     /**
-     * Instantiates a new CompleteInventoryState of a player inventory.
-     * Iterates over the player's slots and adds them to the nonFullItemSlots and emptySlots maps accordingly.
-     * @param playerInventory The player's inventory.
-     * @param hotbarProtection The hotbar protection value of the player.
+     * Indexes a range of the player's inventory into the empty and non-full collections.
      */
-    public CompleteInventoryState(Inventory playerInventory, boolean hotbarProtection) {
-        for (int i = Inventory.getSelectionSize(); i < playerInventory.items.size(); i++) {
+    private void index(PlayerSlotAccess access, Inventory playerInventory, int startIndex, int endIndex) {
+        for (int i = startIndex; i < endIndex; i++) {
             ItemStack playerStack = playerInventory.getItem(i);
             if (playerStack.isEmpty()) {
                 emptySlots.add(i);
             }
-            else if (playerStack.getCount() != playerStack.getMaxStackSize()) {
-                StackIdentifier stackIdentifier;
-                if (!ItemFavoritingUtils.isFavorite(playerStack)) {
-                    stackIdentifier = new StackIdentifier(playerStack);
-                }
-                else {
-                    // Remove the item favorite component data from the stack identifier.
-                    PatchedDataComponentMap components = new PatchedDataComponentMap(playerStack.getComponents());
-                    ItemFavoritingUtils.unFavorite(components);
-                    stackIdentifier = new StackIdentifier(playerStack.getItem(), components);
-                }
-
-                nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
-            }
-        }
-
-        // Check if hotbar protection is disabled, and if that is the case, iterate over the hotbar slots as well.
-        if (!hotbarProtection) {
-            for (int i = 0; i < Inventory.getSelectionSize(); i++) {
-                ItemStack playerStack = playerInventory.getItem(i);
-                if (playerStack.isEmpty()) {
-                    emptySlots.add(i);
-                }
-                else if (playerStack.getCount() != playerStack.getMaxStackSize()) {
-                    StackIdentifier stackIdentifier;
-                    if (!ItemFavoritingUtils.isFavorite(playerStack)) {
-                        stackIdentifier = new StackIdentifier(playerStack);
-                    }
-                    else {
-                        // Remove the item favorite component data from the stack identifier.
-                        PatchedDataComponentMap components = new PatchedDataComponentMap(playerStack.getComponents());
-                        ItemFavoritingUtils.unFavorite(components);
-                        stackIdentifier = new StackIdentifier(playerStack.getItem(), components);
-                    }
-
-                    nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
-                }
+            else if (playerStack.getCount() < access.maxStackSize(i, playerStack)) {
+                nonFullItemSlots.computeIfAbsent(InventoryUtils.favoriteAgnosticIdentifier(playerStack), k -> new ArrayList<>()).add(i);
             }
         }
     }
@@ -96,7 +54,7 @@ public class CompleteInventoryState implements InventoryState {
     }
 
     @Override
-    public Queue<Integer> getEmptySlots() {
+    public List<Integer> getEmptySlots() {
         return emptySlots;
     }
 

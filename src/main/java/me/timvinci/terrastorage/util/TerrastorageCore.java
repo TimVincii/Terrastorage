@@ -17,105 +17,124 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Utility class that stores the implementation of the core options provided by Terrastorage.
+ * Storages are accessed exclusively through a {@link StorageAccess}, and the player's inventory through a
+ * {@link PlayerSlotAccess}, so that every operation respects the rules of both the slots it takes from and the slots
+ * it places into.
  */
 public class TerrastorageCore {
 
     /**
      * Attempts to loot all the items from the storage to the player.
-     * @param playerInventory The player's inventory.
-     * @param storageInventory The storage's inventory.
+     * @param player The player performing the operation.
+     * @param storage The storage access.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    public static void lootAll(Inventory playerInventory, Container storageInventory, boolean hotbarProtection) {
-        // Create an inventory state from the player's inventory.
-        CompleteInventoryState playerInventoryState = new CompleteInventoryState(playerInventory, hotbarProtection);
+    public static void lootAll(ServerPlayer player, StorageAccess storage, boolean hotbarProtection) {
+        Inventory playerInventory = player.getInventory();
+        PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
+        // Create an inventory state from the player's inventory (the receiver).
+        CompleteInventoryState playerInventoryState = new CompleteInventoryState(playerAccess, hotbarProtection);
 
-        for (int i = 0; i < storageInventory.getContainerSize(); i++) {
-            ItemStack storageStack = storageInventory.getItem(i);
+        boolean modified = false;
+        for (int i = 0; i < storage.size(); i++) {
+            if (!storage.canTake(i, player)) {
+                continue;
+            }
+
+            ItemStack storageStack = storage.get(i);
             if (storageStack.isEmpty()) {
                 continue;
             }
 
-            InventoryUtils.transferStack(playerInventory, playerInventoryState, storageStack);
+            // Work on a copy; transferStack shrinks it by whatever the player could accept.
+            ItemStack working = storageStack.copy();
+            int before = working.getCount();
+            InventoryUtils.transferStack(playerAccess, playerInventoryState, working);
+
+            int moved = before - working.getCount();
+            if (moved > 0) {
+                storage.take(i, moved, player);
+                modified = true;
+            }
         }
 
-        if (playerInventoryState.wasModified()) {
+        if (modified) {
             playerInventory.setChanged();
-            storageInventory.setChanged();
         }
     }
 
     /**
      * Attempts to deposit all the items from the player to the storage.
-     * @param playerInventory The player's inventory.
-     * @param storageInventory The storage's inventory.
-     * @param firstSlot The first slot of the screen handler of the storage inventory.
+     * @param player The player performing the operation.
+     * @param storage The storage access.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    public static void depositAll(Inventory playerInventory, Container storageInventory, Slot firstSlot, boolean hotbarProtection) {
-        // Create an inventory state from the storage's inventory.
-        CompleteInventoryState storageInventoryState = new CompleteInventoryState(storageInventory);
+    public static void depositAll(ServerPlayer player, StorageAccess storage, boolean hotbarProtection) {
+        Inventory playerInventory = player.getInventory();
+        StorageState storageState = new StorageState(storage);
+        // Respect the source-side pickup rules: never deposit an item the player isn't allowed to take from its slot
+        // (e.g. the currently-open backpack, which must not be placed inside itself).
+        PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
 
         for (int i = Inventory.getSelectionSize(); i < playerInventory.items.size(); i++) {
             ItemStack playerStack = playerInventory.getItem(i);
-            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.mayPlace(playerStack)) {
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !playerAccess.canTake(i)) {
                 continue;
             }
 
-            InventoryUtils.transferStack(storageInventory, storageInventoryState, playerStack);
+            // playerStack is the player's live stack; inserting shrinks it, removing the deposited items.
+            InventoryUtils.insertIntoStorage(storage, storageState, playerStack);
         }
 
         if (!hotbarProtection) {
             for (int i = 0; i < Inventory.getSelectionSize(); i++) {
                 ItemStack playerStack = playerInventory.getItem(i);
-
-                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !firstSlot.mayPlace(playerStack)) {
+                if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !playerAccess.canTake(i)) {
                     continue;
                 }
 
-                InventoryUtils.transferStack(storageInventory, storageInventoryState, playerStack);
+                InventoryUtils.insertIntoStorage(storage, storageState, playerStack);
             }
         }
 
-        if (storageInventoryState.wasModified()) {
+        if (storageState.wasModified()) {
             playerInventory.setChanged();
-            storageInventory.setChanged();
         }
     }
 
     /**
-     * Performs a quick stack operation on a storage inventory.
-     * @param playerInventory The player's inventory.
-     * @param storageInventory The storage's inventory.
+     * Performs a quick stack operation on a storage.
+     * @param player The player performing the operation.
+     * @param storage The storage access.
      * @param hotbarProtection The hotbar protection value of the player.
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
-    public static void quickStack(Inventory playerInventory, Container storageInventory, boolean hotbarProtection, boolean smartDepositMode) {
-        InventoryState storageInventoryState = smartDepositMode ?
-                new ExpandedInventoryState(storageInventory) :
-                new CompactInventoryState(storageInventory);
-
-        StackProcessor processor = InventoryUtils.createStackProcessor(storageInventoryState, storageInventory, smartDepositMode);
+    public static void quickStack(ServerPlayer player, StorageAccess storage, boolean hotbarProtection, boolean smartDepositMode) {
+        Inventory playerInventory = player.getInventory();
+        StorageState storageState = new StorageState(storage);
+        StackProcessor processor = InventoryUtils.createStorageStackProcessor(storage, storageState, smartDepositMode);
+        PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
 
         int startIndex = hotbarProtection ? Inventory.getSelectionSize() : 0;
         for (int i = startIndex; i < playerInventory.items.size(); i++) {
+            if (!playerAccess.canTake(i)) {
+                continue;
+            }
+
             processor.tryProcess(playerInventory.getItem(i));
         }
 
-        if (storageInventoryState.wasModified()) {
+        if (storageState.wasModified()) {
             playerInventory.setChanged();
-            storageInventory.setChanged();
         }
     }
 
@@ -123,43 +142,121 @@ public class TerrastorageCore {
     /**
      * Attempts to loot all the items of the storage that can stack with existing items of the player, from the storage
      * to the player.
-     * @param playerInventory The player's inventory.
-     * @param storageInventory The storage's inventory.
+     * @param player The player performing the operation.
+     * @param storage The storage access.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    public static void restock(Inventory playerInventory, Container storageInventory, boolean hotbarProtection) {
-        // Create an inventory state from the player's inventory.
-        CompactInventoryState playerInventoryState = new CompactInventoryState(playerInventory, hotbarProtection);
+    public static void restock(ServerPlayer player, StorageAccess storage, boolean hotbarProtection) {
+        Inventory playerInventory = player.getInventory();
+        PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
+        // Create an inventory state from the player's inventory (the receiver).
+        CompactInventoryState playerInventoryState = new CompactInventoryState(playerAccess, hotbarProtection);
 
-        for (int i = 0; i < storageInventory.getContainerSize(); i++) {
-            ItemStack storageStack = storageInventory.getItem(i);
+        boolean modified = false;
+        for (int i = 0; i < storage.size(); i++) {
+            if (!storage.canTake(i, player)) {
+                continue;
+            }
+
+            ItemStack storageStack = storage.get(i);
             if (storageStack.isEmpty() || !playerInventoryState.getNonFullItemSlots().containsKey(new StackIdentifier(storageStack))) {
                 continue;
             }
 
-            InventoryUtils.transferToExistingStack(playerInventory, playerInventoryState, storageStack);
+            ItemStack working = storageStack.copy();
+            int before = working.getCount();
+            InventoryUtils.transferToExistingStack(playerAccess, playerInventoryState, working);
+
+            int moved = before - working.getCount();
+            if (moved > 0) {
+                storage.take(i, moved, player);
+                modified = true;
+            }
         }
 
-        if (playerInventoryState.wasModified()) {
+        if (modified) {
             playerInventory.setChanged();
-            storageInventory.setChanged();
         }
     }
 
     /**
      * Sorts the items of a storage.
-     * @param storageInventory The storage's inventory.
+     * Only slots the player may take from are sorted, so special slots such as upgrade or tool slots exclude
+     * themselves via their own rules. If anything can't be placed back, the original contents are restored.
+     * @param player The player performing the operation.
+     * @param storage The storage access.
      * @param type The sorting type of the player.
      */
-    public static void sortStorageItems(Container storageInventory, SortType type) {
-        List<ItemStack> sortedStacks = InventoryUtils.combineAndSortInventory(storageInventory, type, 0, storageInventory.getContainerSize(), false);
-
-        int slotIndex = 0;
-        for (ItemStack stack : sortedStacks) {
-            storageInventory.setItem(slotIndex++, stack);
+    public static void sortStorageItems(ServerPlayer player, StorageAccess storage, SortType type) {
+        List<Integer> sortableSlots = new ArrayList<>();
+        for (int i = 0; i < storage.size(); i++) {
+            if (storage.canTake(i, player)) {
+                sortableSlots.add(i);
+            }
+        }
+        if (sortableSlots.isEmpty()) {
+            return;
         }
 
-        storageInventory.setChanged();
+        // Snapshot the sortable slots (for restore-on-failure) and gather their items.
+        List<ItemStack> snapshot = new ArrayList<>(sortableSlots.size());
+        List<ItemStack> gathered = new ArrayList<>();
+        for (int index : sortableSlots) {
+            ItemStack stack = storage.get(index);
+            snapshot.add(stack.copy());
+            if (!stack.isEmpty()) {
+                gathered.add(stack.copy());
+            }
+        }
+
+        // Clear the sortable slots.
+        for (int index : sortableSlots) {
+            ItemStack stack = storage.get(index);
+            if (!stack.isEmpty()) {
+                storage.take(index, stack.getCount(), player);
+            }
+        }
+
+        // Redistribute the sorted, merged stacks. safeInsert splits each oversized stack across slots by capacity.
+        Deque<ItemStack> sorted = new ArrayDeque<>(InventoryUtils.combineForStorageSort(gathered, type));
+        for (int index : sortableSlots) {
+            if (sorted.isEmpty()) {
+                break;
+            }
+
+            ItemStack head = sorted.peekFirst();
+            storage.insert(index, head);
+            if (head.isEmpty()) {
+                sorted.pollFirst();
+            }
+        }
+
+        if (!sorted.isEmpty()) {
+            restoreStorageSnapshot(storage, sortableSlots, snapshot, player);
+        }
+    }
+
+    /**
+     * Restores a set of storage slots to a previously captured snapshot, used when a sort could not be completed.
+     * @param storage The storage access.
+     * @param slots The slot indexes that were affected.
+     * @param snapshot The captured stacks, parallel to the slots.
+     * @param player The player performing the operation.
+     */
+    private static void restoreStorageSnapshot(StorageAccess storage, List<Integer> slots, List<ItemStack> snapshot, ServerPlayer player) {
+        for (int index : slots) {
+            ItemStack stack = storage.get(index);
+            if (!stack.isEmpty()) {
+                storage.take(index, stack.getCount(), player);
+            }
+        }
+
+        for (int k = 0; k < slots.size(); k++) {
+            ItemStack original = snapshot.get(k);
+            if (!original.isEmpty()) {
+                storage.insert(slots.get(k), original.copy());
+            }
+        }
     }
 
     /**
@@ -232,37 +329,85 @@ public class TerrastorageCore {
 
     /**
      * Sorts the items of a player's inventory.
-     * @param playerInventory The player's inventory.
+     * Items are only gathered from slots the player may take from, and only placed into slots that accept them, so a
+     * slot that a mod has locked keeps its item instead of being shuffled elsewhere. If anything can't be placed
+     * back, the inventory is restored to its pre-sort state.
+     * @param player The player performing the operation.
      * @param type The sorting type of the player.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    public static void sortPlayerItems(Inventory playerInventory, SortType type, boolean hotbarProtection) {
-        List<ItemStack> sortedList = InventoryUtils.combineAndSortInventory(playerInventory, type, hotbarProtection ? Inventory.getSelectionSize() : 0, playerInventory.items.size(), true);
-        ArrayDeque<ItemStack> sortedStacks = new ArrayDeque<>(sortedList);
+    public static void sortPlayerItems(ServerPlayer player, SortType type, boolean hotbarProtection) {
+        Inventory playerInventory = player.getInventory();
+        PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
+        int size = playerInventory.items.size();
 
-        int slotIndex = Inventory.getSelectionSize();
-        while (!sortedStacks.isEmpty() && slotIndex < 36) {
-            if (playerInventory.items.get(slotIndex).isEmpty()) {
-                playerInventory.items.set(slotIndex, sortedStacks.pollFirst());
+        // Gather the sortable slots, snapshotting them so the whole sort can be rolled back.
+        List<Integer> gatheredSlots = new ArrayList<>();
+        List<ItemStack> snapshot = new ArrayList<>();
+        List<ItemStack> gathered = new ArrayList<>();
+        for (int i = hotbarProtection ? Inventory.getSelectionSize() : 0; i < size; i++) {
+            ItemStack playerStack = playerInventory.getItem(i);
+            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack) || !playerAccess.canTake(i)) {
+                continue;
             }
-            slotIndex++;
+
+            gatheredSlots.add(i);
+            snapshot.add(playerStack.copy());
+            gathered.add(playerStack.copy());
+            playerInventory.setItem(i, ItemStack.EMPTY);
         }
-        if (!hotbarProtection && !sortedStacks.isEmpty()) {
-            slotIndex = 0;
-            do {
-                if (playerInventory.items.get(slotIndex).isEmpty()) {
-                    playerInventory.items.set(slotIndex, sortedStacks.pollFirst());
-                }
-                slotIndex++;
+
+        if (gathered.isEmpty()) {
+            return;
+        }
+
+        // Redistribute over the main inventory first and then the hotbar, matching the established sort layout.
+        Deque<ItemStack> sortedStacks = new ArrayDeque<>(InventoryUtils.combineAndSort(gathered, type));
+        List<Integer> filledSlots = new ArrayList<>();
+        distributeSortedStacks(playerAccess, playerInventory, sortedStacks, filledSlots, Inventory.getSelectionSize(), size);
+        if (!hotbarProtection) {
+            distributeSortedStacks(playerAccess, playerInventory, sortedStacks, filledSlots, 0, Inventory.getSelectionSize());
+        }
+
+        // Everything gathered came out of these slots, so it should always fit back. If a slot refuses it anyway,
+        // undo the sort rather than lose the leftovers.
+        if (!sortedStacks.isEmpty()) {
+            for (int index : filledSlots) {
+                playerInventory.setItem(index, ItemStack.EMPTY);
             }
-            while (!sortedStacks.isEmpty());
+            for (int k = 0; k < gatheredSlots.size(); k++) {
+                playerInventory.setItem(gatheredSlots.get(k), snapshot.get(k));
+            }
         }
 
         playerInventory.setChanged();
     }
 
     /**
+     * Places sorted stacks into the empty slots of a player inventory range that accept them, recording which slots
+     * were filled so that the operation can be undone.
+     * @param access The rule aware view of the player's inventory.
+     * @param playerInventory The player's inventory.
+     * @param sortedStacks The remaining sorted stacks, polled as they are placed.
+     * @param filledSlots Collects the indices that received a stack.
+     * @param startIndex The index at which placement starts.
+     * @param endIndex The index at which placement ends.
+     */
+    private static void distributeSortedStacks(PlayerSlotAccess access, Inventory playerInventory, Deque<ItemStack> sortedStacks, List<Integer> filledSlots, int startIndex, int endIndex) {
+        for (int i = startIndex; i < endIndex && !sortedStacks.isEmpty(); i++) {
+            if (!playerInventory.getItem(i).isEmpty() || !access.canPlace(i, sortedStacks.peekFirst())) {
+                continue;
+            }
+
+            playerInventory.setItem(i, sortedStacks.pollFirst());
+            filledSlots.add(i);
+        }
+    }
+
+    /**
      * Performs a quick stack operation on all storage nearby the player.
+     * Nearby storages have no open menu, and so no slots to enforce rules, and are accessed through a
+     * {@link ContainerStorageAccess} instead.
      * @param player The player who initiated the operation.
      * @param hotbarProtection The player's hotbar protection value.
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
@@ -273,21 +418,26 @@ public class TerrastorageCore {
             return;
         }
 
-        Function<Container, InventoryState> stateFactory = InventoryUtils.getInventoryStateFactory(smartDepositMode);
         Map<Vec3, ArrayList<Item>> animationMap = new HashMap<>();
 
         Inventory playerInventory = player.getInventory();
         int startIndex = hotbarProtection ? Inventory.getSelectionSize() : 0;
+        PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
         boolean playerInventoryModified = false;
 
         for (Tuple<Container, Vec3> storagePair : nearbyStorages) {
             Container storage = storagePair.getA();
             Vec3 storagePos = storagePair.getB();
 
-            InventoryState storageState = stateFactory.apply(storage);
-            StackProcessor processor = InventoryUtils.createStackProcessor(storageState, storage, smartDepositMode);
+            StorageAccess access = new ContainerStorageAccess(storage);
+            StorageState storageState = new StorageState(access);
+            StackProcessor processor = InventoryUtils.createStorageStackProcessor(access, storageState, smartDepositMode);
 
             for (int i = startIndex; i < playerInventory.items.size(); i++) {
+                if (!playerAccess.canTake(i)) {
+                    continue;
+                }
+
                 ItemStack playerStack = playerInventory.getItem(i);
                 Item playerItem = playerStack.getItem();
                 if (processor.tryProcess(playerStack)) {
