@@ -7,28 +7,34 @@ import me.timvinci.terrastorage.item.StackProcessor;
 import me.timvinci.terrastorage.util.ComparatorTypes;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.SortType;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.block.enums.ChestType;
-import net.minecraft.entity.vehicle.VehicleEntity;
-import net.minecraft.inventory.DoubleInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.*;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Pair;
-import net.minecraft.util.TypeFilter;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
-import net.minecraft.entity.Entity;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.world.entity.vehicle.VehicleEntity;
+import net.minecraft.world.CompoundContainer;
+import net.minecraft.world.Container;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.Entity;
 
 import java.util.*;
 import java.util.function.Function;
@@ -46,7 +52,7 @@ public class InventoryUtils {
      * @param receiverState An InventoryState object of the receiver inventory.
      * @param stack The stack to transfer.
      */
-    public static void transferStack(Inventory to, InventoryState receiverState, ItemStack stack) {
+    public static void transferStack(Container to, InventoryState receiverState, ItemStack stack) {
         StackIdentifier stackIdentifier = new StackIdentifier(stack);
 
         // Attempt to transfer the stack to an existing item stack of the same item.
@@ -56,10 +62,10 @@ public class InventoryUtils {
 
         if (!receiverState.getEmptySlots().isEmpty()) {
             int emptySlot = receiverState.getEmptySlots().poll();
-            to.setStack(emptySlot, stack.copyAndEmpty());
+            to.setItem(emptySlot, stack.copyAndClear());
             receiverState.setModified();
             // Check if the stack that was transferred isn't full.
-            if (stack.getCount() != stack.getMaxCount()) {
+            if (stack.getCount() != stack.getMaxStackSize()) {
                 // Add this slot to the item slots of the receiver state.
                 receiverState.getNonFullItemSlots().computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(emptySlot);
             }
@@ -74,16 +80,16 @@ public class InventoryUtils {
      * @param stackToTransfer The stack to transfer.
      * @return True if the entire stack was transferred, false otherwise.
      */
-    public static boolean transferToExistingStack(Inventory to, InventoryState receiverState, ItemStack stackToTransfer) {
+    public static boolean transferToExistingStack(Container to, InventoryState receiverState, ItemStack stackToTransfer) {
         StackIdentifier stackIdentifier = new StackIdentifier(stackToTransfer);
         ArrayList<Integer> slotsWithItem = receiverState.getNonFullItemSlots().get(stackIdentifier);
         Iterator<Integer> slotsIterator = slotsWithItem.iterator();
 
         while (slotsIterator.hasNext() && !stackToTransfer.isEmpty()) {
             int slotWithItem = slotsIterator.next();
-            ItemStack existingStack = to.getStack(slotWithItem);
+            ItemStack existingStack = to.getItem(slotWithItem);
 
-            int spaceLeft = existingStack.getMaxCount() - existingStack.getCount();
+            int spaceLeft = existingStack.getMaxStackSize() - existingStack.getCount();
             int transferAmount;
             // Check if the about to be combined stack will be a full stack.
             if (spaceLeft <= stackToTransfer.getCount()) {
@@ -95,8 +101,8 @@ public class InventoryUtils {
                 transferAmount = stackToTransfer.getCount();
             }
 
-            existingStack.increment(transferAmount);
-            stackToTransfer.decrement(transferAmount);
+            existingStack.grow(transferAmount);
+            stackToTransfer.shrink(transferAmount);
             receiverState.setModified();
         }
 
@@ -114,7 +120,7 @@ public class InventoryUtils {
      * @param endIndex The index at which item iteration ends.
      * @return A sorted list of items.
      */
-    public static List<ItemStack> combineAndSortInventory(Inventory inventory, SortType type, int startIndex, int endIndex, boolean ignoreFavorites) {
+    public static List<ItemStack> combineAndSortInventory(Container inventory, SortType type, int startIndex, int endIndex, boolean ignoreFavorites) {
         List<ItemStack> combinedStacks = new ArrayList<>();
         // Rough estimate for an efficient initial capacity for the lastStackMap.
         int initialCapacity = Math.max(16, (endIndex - startIndex) / 3);
@@ -125,40 +131,40 @@ public class InventoryUtils {
                 ItemStack::isEmpty;
 
         for (int i = startIndex; i < endIndex; i++) {
-            ItemStack stack = inventory.getStack(i);
+            ItemStack stack = inventory.getItem(i);
             if (shouldSkip.test(stack)) {
                 continue;
             }
 
-            if (stack.getMaxCount() <= 1 || stack.getCount() == stack.getMaxCount()) {
+            if (stack.getMaxStackSize() <= 1 || stack.getCount() == stack.getMaxStackSize()) {
                 combinedStacks.add(stack.copy());
-                inventory.setStack(i, ItemStack.EMPTY);
+                inventory.setItem(i, ItemStack.EMPTY);
                 continue;
             }
 
             StackIdentifier identifier = new StackIdentifier(stack);
             ItemStack lastStack = lastStackMap.get(identifier);
 
-            if (lastStack == null || lastStack.getCount() == stack.getMaxCount()) {
+            if (lastStack == null || lastStack.getCount() == stack.getMaxStackSize()) {
                 ItemStack newStack = stack.copy();
                 combinedStacks.add(newStack);
                 lastStackMap.put(identifier, newStack);
             }
             else {
-                int spaceLeft = lastStack.getMaxCount() - lastStack.getCount();
+                int spaceLeft = lastStack.getMaxStackSize() - lastStack.getCount();
                 if (spaceLeft < stack.getCount()) {
-                    lastStack.increment(spaceLeft);
+                    lastStack.grow(spaceLeft);
                     ItemStack newStack = stack.copy();
                     newStack.setCount(stack.getCount() - spaceLeft);
                     combinedStacks.add(newStack);
                     lastStackMap.put(identifier, newStack);
                 }
                 else {
-                    lastStack.increment(stack.getCount());
+                    lastStack.grow(stack.getCount());
                 }
             }
 
-            inventory.setStack(i, ItemStack.EMPTY);
+            inventory.setItem(i, ItemStack.EMPTY);
         }
 
         Comparator<ItemStack> comparator = switch (type) {
@@ -189,17 +195,17 @@ public class InventoryUtils {
      * @param player The player.
      * @return A list consisting of pairs of inventories and their position.
      */
-    public static List<Pair<Inventory, Vec3d>> getNearbyStorages(ServerPlayerEntity player) {
-        World world = player.getWorld();
-        List<Pair<Inventory, Vec3d>> nearbyStorages = new ArrayList<>();
+    public static List<Tuple<Container, Vec3>> getNearbyStorages(ServerPlayer player) {
+        Level world = player.level();
+        List<Tuple<Container, Vec3>> nearbyStorages = new ArrayList<>();
         Set<BlockPos> processedChests = new HashSet<>();
 
         // Getting the range, and whether the los check is enabled.
         int range = ConfigManager.getInstance().getConfig().getQuickStackRange();
         boolean performLosCheck = ConfigManager.getInstance().getConfig().getLineOfSightCheck();
-        BlockPos playerPos = player.getBlockPos();
+        BlockPos playerPos = player.blockPosition();
 
-        BlockPos.iterateOutwards(playerPos, range, range, range).forEach(pos -> {
+        BlockPos.withinManhattan(playerPos, range, range, range).forEach(pos -> {
             if (processedChests.contains(pos)) {
                 return;
             }
@@ -210,54 +216,54 @@ public class InventoryUtils {
             }
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof Inventory inventory && inventory.size() >= 27) {
-                if (blockEntity instanceof LockableContainerBlockEntity lockable && !lockable.checkUnlocked(player)) {
+            if (blockEntity instanceof Container inventory && inventory.getContainerSize() >= 27) {
+                if (blockEntity instanceof BaseContainerBlockEntity lockable && !lockable.canOpen(player)) {
                     return; // Skip locked containers.
                 }
 
-                Vec3d losPoint;
+                Vec3 losPoint;
                 if (performLosCheck) {
                     losPoint = hasLineOfSight(player, world, pos);
                     // Return if the player doesn't have line of sight to the block entity.
-                    if (losPoint == Vec3d.ZERO) {
+                    if (losPoint == Vec3.ZERO) {
                         return;
                     }
                 }
                 else {
-                    losPoint = pos.toCenterPos();
+                    losPoint = pos.getCenter();
                 }
 
                 if (blockEntity instanceof ChestBlockEntity) {
-                    ChestType chestType = state.get(ChestBlock.CHEST_TYPE);
+                    ChestType chestType = state.getValue(ChestBlock.TYPE);
                     if (chestType == ChestType.SINGLE) {
-                        nearbyStorages.add(new Pair<>(inventory, losPoint));
+                        nearbyStorages.add(new Tuple<>(inventory, losPoint));
                         return;
                     }
 
-                    BlockPos neighboringChestPos = getNeighboringChestPos(pos, chestType, state.get(ChestBlock.FACING));
-                    Vec3d doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.toCenterPos());
-                    Inventory neighboringChestInventory = (Inventory) world.getBlockEntity(neighboringChestPos);
+                    BlockPos neighboringChestPos = getNeighboringChestPos(pos, chestType, state.getValue(ChestBlock.FACING));
+                    Vec3 doubleChestLosPoint = getDoubleChestCenter(losPoint, neighboringChestPos.getCenter());
+                    Container neighboringChestInventory = (Container) world.getBlockEntity(neighboringChestPos);
 
-                    DoubleInventory doubleInventory = chestType == ChestType.RIGHT ?
-                            new DoubleInventory(inventory, neighboringChestInventory) :
-                            new DoubleInventory(neighboringChestInventory,inventory);
-                    nearbyStorages.add(new Pair<>(doubleInventory, doubleChestLosPoint));
+                    CompoundContainer doubleInventory = chestType == ChestType.RIGHT ?
+                            new CompoundContainer(inventory, neighboringChestInventory) :
+                            new CompoundContainer(neighboringChestInventory,inventory);
+                    nearbyStorages.add(new Tuple<>(doubleInventory, doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else {
-                    nearbyStorages.add(new Pair<>(inventory, losPoint));
+                    nearbyStorages.add(new Tuple<>(inventory, losPoint));
                 }
             }
         });
 
-        Box searchBox = new Box(playerPos).expand(range);
-        world.getEntitiesByType(TypeFilter.instanceOf(VehicleEntity.class), searchBox, entity ->
-        entity instanceof Inventory inventory && inventory.size() >= 27)
+        AABB searchBox = new AABB(playerPos).inflate(range);
+        world.getEntities(EntityTypeTest.forClass(VehicleEntity.class), searchBox, entity ->
+        entity instanceof Container inventory && inventory.getContainerSize() >= 27)
             .forEach(entity -> {
-                Vec3d losPoint;
+                Vec3 losPoint;
                 if (performLosCheck) {
                     losPoint = hasLineOfSightToEntity(player, world, entity);
-                    if (losPoint == Vec3d.ZERO) {
+                    if (losPoint == Vec3.ZERO) {
                         return;
                     }
                 }
@@ -265,7 +271,7 @@ public class InventoryUtils {
                     losPoint = entity.getBoundingBox().getCenter();
                 }
 
-                nearbyStorages.add(new Pair<>((Inventory) entity, losPoint));
+                nearbyStorages.add(new Tuple<>((Container) entity, losPoint));
             }
         );
 
@@ -280,9 +286,9 @@ public class InventoryUtils {
      * @return The block position of the neighboring chest.
      */
     private static BlockPos getNeighboringChestPos(BlockPos chestBlockPos, ChestType chestType, Direction facing) {
-        return chestBlockPos.offset(chestType == ChestType.LEFT ?
-                facing.rotateYClockwise() :
-                facing.rotateYCounterclockwise());
+        return chestBlockPos.relative(chestType == ChestType.LEFT ?
+                facing.getClockWise() :
+                facing.getCounterClockWise());
     }
 
     /**
@@ -291,8 +297,8 @@ public class InventoryUtils {
      * @param secondChestCenter The center position of the second chest block in the double chest.
      * @return The center point of the entire double chest.
      */
-    private static Vec3d getDoubleChestCenter(Vec3d losPoint, Vec3d secondChestCenter) {
-        return (losPoint.add(secondChestCenter.x, losPoint.y, secondChestCenter.z)).multiply(0.5);
+    private static Vec3 getDoubleChestCenter(Vec3 losPoint, Vec3 secondChestCenter) {
+        return (losPoint.add(secondChestCenter.x, losPoint.y, secondChestCenter.z)).scale(0.5);
     }
 
     /**
@@ -303,27 +309,27 @@ public class InventoryUtils {
      * @param pos The block position of the block entity
      * @return The point that the player has line of sight to, or Vec3d.ZERO if the player doesn't have line of sight.
      */
-    private static Vec3d hasLineOfSight(ServerPlayerEntity player, World world, BlockPos pos) {
-        Vec3d playerEyes = player.getEyePos();
-        Vec3d centerPos = pos.toCenterPos();
+    private static Vec3 hasLineOfSight(ServerPlayer player, Level world, BlockPos pos) {
+        Vec3 playerEyes = player.getEyePosition();
+        Vec3 centerPos = pos.getCenter();
 
         // Define the points to check (center, top center, bottom center)
-        Vec3d[] pointsToCheck = new Vec3d[] {
+        Vec3[] pointsToCheck = new Vec3[] {
                 centerPos,
                 centerPos.add(0, 0.5, 0),
                 centerPos.add(0, -0.5, 0)
         };
 
-        for (Vec3d end : pointsToCheck) {
-            RaycastContext context = new RaycastContext(playerEyes, end, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, player);
-            BlockHitResult hitResult = world.raycast(context);
+        for (Vec3 end : pointsToCheck) {
+            ClipContext context = new ClipContext(playerEyes, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+            BlockHitResult hitResult = world.clip(context);
 
             if (hitResult.getBlockPos().equals(pos) || hitResult.getType() == HitResult.Type.MISS) {
                 return end;
             }
         }
 
-        return Vec3d.ZERO;
+        return Vec3.ZERO;
     }
 
     /**
@@ -333,18 +339,18 @@ public class InventoryUtils {
      * @param entity The entity.
      * @return The center of the entity, or Vec3d.ZERO if the player doesn't have line of sight.
      */
-    private static Vec3d hasLineOfSightToEntity(ServerPlayerEntity player, World world, Entity entity) {
-        Vec3d playerEyes = player.getEyePos();
-        Vec3d end = entity.getBoundingBox().getCenter();
+    private static Vec3 hasLineOfSightToEntity(ServerPlayer player, Level world, Entity entity) {
+        Vec3 playerEyes = player.getEyePosition();
+        Vec3 end = entity.getBoundingBox().getCenter();
 
-        BlockHitResult result = world.raycast(new RaycastContext(
+        BlockHitResult result = world.clip(new ClipContext(
                 playerEyes, end,
-                RaycastContext.ShapeType.COLLIDER,
-                RaycastContext.FluidHandling.NONE,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
                 player
         ));
 
-        return result.getType() == HitResult.Type.MISS ? end : Vec3d.ZERO;
+        return result.getType() == HitResult.Type.MISS ? end : Vec3.ZERO;
     }
 
     /**
@@ -353,12 +359,12 @@ public class InventoryUtils {
      * @param playerEyes The position of the player's eyes.
      * @param animationMap An animation map consisting of target positions and lists of items.
      */
-    public static void triggerFlyOutAnimation(ServerWorld world, Vec3d playerEyes, int itemAnimationLength, Map<Vec3d, ArrayList<Item>> animationMap) {
+    public static void triggerFlyOutAnimation(ServerLevel world, Vec3 playerEyes, int itemAnimationLength, Map<Vec3, ArrayList<Item>> animationMap) {
         int itemAnimationInterval = ConfigManager.getInstance().getConfig().getItemAnimationInterval();
 
-        for (Map.Entry<Vec3d, ArrayList<Item>> entry : animationMap.entrySet()) {
-            Vec3d targetPos = entry.getKey();
-            Vec3d itemVelocity = new Vec3d(
+        for (Map.Entry<Vec3, ArrayList<Item>> entry : animationMap.entrySet()) {
+            Vec3 targetPos = entry.getKey();
+            Vec3 itemVelocity = new Vec3(
                     (targetPos.x - playerEyes.x) / itemAnimationLength,
                     (targetPos.y - playerEyes.y) / itemAnimationLength,
                     (targetPos.z - playerEyes.z) / itemAnimationLength
@@ -372,13 +378,13 @@ public class InventoryUtils {
                         playerEyes.x,
                         playerEyes.y,
                         playerEyes.z,
-                        items.get(i).getDefaultStack(),
+                        items.get(i).getDefaultInstance(),
                         itemVelocity,
                         itemAnimationLength,
                         movementDelay
                 );
 
-                world.spawnEntity(ghostItem);
+                world.addFreshEntity(ghostItem);
             }
         }
     }
@@ -388,7 +394,7 @@ public class InventoryUtils {
      * for any two item stacks whose only NBT difference is one being favorite while the other isn't.
      */
     public static boolean canCombine(ItemStack firstStack, ItemStack secondStack) {
-        return ItemStack.areItemsEqual(firstStack, secondStack) && areComponentsEqual(firstStack, secondStack);
+        return ItemStack.isSameItem(firstStack, secondStack) && areComponentsEqual(firstStack, secondStack);
     }
 
     /**
@@ -396,23 +402,23 @@ public class InventoryUtils {
      * for any two item stacks whose only NBT difference is one being favorite while the other isn't.
      */
     private static boolean areComponentsEqual(ItemStack firstStack, ItemStack secondStack) {
-        if (Objects.equals(firstStack.getNbt(), secondStack.getNbt())) {
+        if (Objects.equals(firstStack.getTag(), secondStack.getTag())) {
             return true;
         }
 
         boolean firstStackIsFavorite = ItemFavoritingUtils.isFavorite(firstStack);
         boolean secondStackIsFavorite = ItemFavoritingUtils.isFavorite(secondStack);
-        if (firstStack.hasNbt() && secondStack.hasNbt()) {
+        if (firstStack.hasTag() && secondStack.hasTag()) {
             if (firstStackIsFavorite ^ secondStackIsFavorite) {
                 if (firstStackIsFavorite) { // Case 1 - first stack is favorite, and the second isn't.
-                    NbtCompound firstCompound = firstStack.getNbt().copy();
+                    CompoundTag firstCompound = firstStack.getTag().copy();
                     ItemFavoritingUtils.unFavorite(firstCompound);
-                    return areNbtCompoundsEqual(firstCompound, secondStack.getNbt());
+                    return areNbtCompoundsEqual(firstCompound, secondStack.getTag());
                 }
                 else { // Case 2 - second stack is favorite, and the first isn't.
-                    NbtCompound secondCompound = secondStack.getNbt().copy();
+                    CompoundTag secondCompound = secondStack.getTag().copy();
                     ItemFavoritingUtils.unFavorite(secondCompound);
-                    return areNbtCompoundsEqual(firstStack.getNbt(), secondCompound);
+                    return areNbtCompoundsEqual(firstStack.getTag(), secondCompound);
                 }
             }
             else {
@@ -421,26 +427,26 @@ public class InventoryUtils {
         }
 
         if (firstStackIsFavorite) { // Case 3 - first stack is favorite, and the second stack is NBT'less.
-            return firstStack.getNbt().getSize() == 1;
+            return firstStack.getTag().size() == 1;
         }
         if (secondStackIsFavorite) { // Case 4 - second stack is favorite, and the first stack is NBT'less.
-            return secondStack.getNbt().getSize() == 1;
+            return secondStack.getTag().size() == 1;
         }
 
         return false;
     }
 
-    private static boolean areNbtCompoundsEqual(NbtCompound firstCompound, NbtCompound secondCompound) {
-        if (firstCompound.getSize() != secondCompound.getSize()) {
+    private static boolean areNbtCompoundsEqual(CompoundTag firstCompound, CompoundTag secondCompound) {
+        if (firstCompound.size() != secondCompound.size()) {
             return false;
         }
 
-        for (String key : firstCompound.getKeys()) {
+        for (String key : firstCompound.getAllKeys()) {
             if (!secondCompound.contains(key)) {
                 return false;
             }
-            NbtElement firstElement = firstCompound.get(key);
-            NbtElement secondElement = secondCompound.get(key);
+            Tag firstElement = firstCompound.get(key);
+            Tag secondElement = secondCompound.get(key);
             if (!Objects.equals(firstElement, secondElement)) {
                 return false;
             }
@@ -455,7 +461,7 @@ public class InventoryUtils {
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      * @return A consumer that processes an ItemStack according to the provided mode
      */
-    public static StackProcessor createStackProcessor(InventoryState storageInventoryState, Inventory storageInventory, boolean smartDepositMode) {
+    public static StackProcessor createStackProcessor(InventoryState storageInventoryState, Container storageInventory, boolean smartDepositMode) {
         return smartDepositMode ?
                 new StackProcessor(
                         stack -> {
@@ -478,7 +484,7 @@ public class InventoryUtils {
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'
      * @return The factory
      */
-    public static Function<Inventory, InventoryState> getInventoryStateFactory(boolean smartDepositMode) {
+    public static Function<Container, InventoryState> getInventoryStateFactory(boolean smartDepositMode) {
         return smartDepositMode ?
                 ExpandedInventoryState::new :
                 CompactInventoryState::new;

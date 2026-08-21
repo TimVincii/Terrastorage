@@ -1,11 +1,11 @@
 package me.timvinci.terrastorage.mixin.client;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,14 +20,14 @@ public class ItemStackMixin {
     /**
      * Adds the "Marked as favorite" tooltip if the item stack is favorite.
      */
-    @Inject(method = "getTooltip", at = @At("RETURN"), cancellable = true)
-    public void onGetTooltipReturn(@Nullable PlayerEntity player, TooltipContext context, CallbackInfoReturnable<List<Text>> cir) {
+    @Inject(method = "getTooltipLines", at = @At("RETURN"), cancellable = true)
+    public void onGetTooltipReturn(@Nullable Player player, TooltipFlag context, CallbackInfoReturnable<List<Component>> cir) {
         if (!ItemFavoritingUtils.isFavorite(((ItemStack) (Object) this))) {
             return;
         }
 
-        List<Text> tooltips = cir.getReturnValue();
-        tooltips.add(Text.translatable("terrastorage.item.tooltip.favorite").formatted(Formatting.GOLD));
+        List<Component> tooltips = cir.getReturnValue();
+        tooltips.add(Component.translatable("terrastorage.item.tooltip.favorite").withStyle(ChatFormatting.GOLD));
         cir.setReturnValue(tooltips);
     }
 }

@@ -1,8 +1,8 @@
 package me.timvinci.terrastorage.inventory;
 
 import me.timvinci.terrastorage.item.StackIdentifier;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 
@@ -24,15 +24,15 @@ public class ExpandedInventoryState implements InventoryState {
      * storedItems set.
      * @param inventory The storage's inventory.
      */
-    public ExpandedInventoryState(Inventory inventory) {
-        for (int i = 0; i < inventory.size(); i++) {
-            ItemStack inventoryStack = inventory.getStack(i);
+    public ExpandedInventoryState(Container inventory) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack inventoryStack = inventory.getItem(i);
             if (inventoryStack.isEmpty()) {
                 emptySlots.add(i);
             }
             else {
                 StackIdentifier stackIdentifier = new StackIdentifier(inventoryStack);
-                if (inventoryStack.getCount() != inventoryStack.getMaxCount()) {
+                if (inventoryStack.getCount() != inventoryStack.getMaxStackSize()) {
                     nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
                 }
 

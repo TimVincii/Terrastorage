@@ -5,11 +5,11 @@
 	"mixins": [
 		"BlockEntityMixin",
 		"ChestBlockMixin",
-		"DoubleInventoryAccessor",
+      "CompoundContainerAccessor",
 		"EntityAccessor",
 		"ItemEntityMixin",
-		"LockableContainerBlockEntityAccessor",
-		"ScreenHandlerMixin"
+      "BaseContainerBlockEntityAccessor",
+      "AbstractContainerMenuMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

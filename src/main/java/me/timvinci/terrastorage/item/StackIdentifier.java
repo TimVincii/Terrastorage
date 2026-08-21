@@ -1,8 +1,8 @@
 package me.timvinci.terrastorage.item;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,9 +10,9 @@ import org.jetbrains.annotations.Nullable;
  * @param item The item of the stack.
  * @param nbt The nbt data of the stack.
  */
-public record StackIdentifier(Item item, @Nullable NbtCompound nbt) {
+public record StackIdentifier(Item item, @Nullable CompoundTag nbt) {
 
     public StackIdentifier(ItemStack stack) {
-        this(stack.getItem(), stack.hasNbt() ? stack.getNbt().copy() : null);
+        this(stack.getItem(), stack.hasTag() ? stack.getTag().copy() : null);
     }
 }
