@@ -2,25 +2,28 @@ package me.timvinci.terrastorage.gui;
 
 import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.option.GameOptionsScreen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
-import net.minecraft.util.Pair;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.layouts.FrameLayout;
+import net.minecraft.client.gui.layouts.GridLayout;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.OptionsSubScreen;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Tuple;
 
 import java.util.List;
 
 /**
  * The options screen.
  */
-public class TerrastorageOptionsScreen extends GameOptionsScreen {
+public class TerrastorageOptionsScreen extends OptionsSubScreen {
 
     public TerrastorageOptionsScreen(Screen parent) {
-        super(parent, MinecraftClient.getInstance().options, Text.translatable("terrastorage.button.options"));
+        super(parent, Minecraft.getInstance().options, Component.translatable("terrastorage.button.options"));
     }
 
     /**
@@ -28,29 +31,29 @@ public class TerrastorageOptionsScreen extends GameOptionsScreen {
      */
     @Override
     protected void init() {
-        GridWidget grid = new GridWidget();
-        grid.getMainPositioner()
-                .marginRight(10)
-                .marginBottom(5)
-                .alignHorizontalCenter();
+        GridLayout grid = new GridLayout();
+        grid.defaultCellSetting()
+                .paddingRight(10)
+                .paddingBottom(5)
+                .alignHorizontallyCenter();
 
-        GridWidget.Adder adder = grid.createAdder(2);
-        List<Pair<ClickableWidget, Boolean>> options = ClientConfigManager.getInstance().asOptions();
-        options.add(3, new Pair<>(getButtonsCustomizationButton(), false));
-        for (Pair<ClickableWidget, Boolean> option : options) {
-            if (!option.getRight()) {
-                adder.add(option.getLeft());
+        GridLayout.RowHelper adder = grid.createRowHelper(2);
+        List<Tuple<AbstractWidget, Boolean>> options = ClientConfigManager.getInstance().asOptions();
+        options.add(3, new Tuple<>(getButtonsCustomizationButton(), false));
+        for (Tuple<AbstractWidget, Boolean> option : options) {
+            if (!option.getB()) {
+                adder.addChild(option.getA());
             }
             else {
-                ClickableWidget optionWidget = option.getLeft();
+                AbstractWidget optionWidget = option.getA();
                 optionWidget.setWidth(310);
-                adder.add(optionWidget, 2);
+                adder.addChild(optionWidget, 2);
             }
         }
 
-        grid.refreshPositions();
+        grid.arrangeElements();
 
-        SimplePositioningWidget.setPos(
+        FrameLayout.alignInRectangle(
                 grid,
                 0,
                 this.height / 6 - 12,
@@ -60,26 +63,26 @@ public class TerrastorageOptionsScreen extends GameOptionsScreen {
                 0.0F
         );
 
-        grid.forEachChild(this::addDrawableChild);
+        grid.visitWidgets(this::addRenderableWidget);
 
-        this.addDrawableChild(ButtonWidget.builder(
-                        ScreenTexts.DONE, (button) -> this.close()).position(this.width / 2 - 100, this.height - 27)
+        this.addRenderableWidget(Button.builder(
+                        CommonComponents.GUI_DONE, (button) -> this.onClose()).pos(this.width / 2 - 100, this.height - 27)
                 .size(200, 20).build());
     }
 
-    private ButtonWidget getButtonsCustomizationButton() {
-        return ButtonWidget.builder(Text.translatable("terrastorage.button.buttons_customization"),
-                    onPress -> MinecraftClient.getInstance().setScreen(new ButtonsCustomizationScreen(MinecraftClient.getInstance().currentScreen)))
-        .tooltip(Tooltip.of(Text.translatable("terrastorage.button.tooltip.buttons_customization"))).build();
+    private Button getButtonsCustomizationButton() {
+        return Button.builder(Component.translatable("terrastorage.button.buttons_customization"),
+                    onPress -> Minecraft.getInstance().setScreen(new ButtonsCustomizationScreen(Minecraft.getInstance().screen)))
+        .tooltip(Tooltip.create(Component.translatable("terrastorage.button.tooltip.buttons_customization"))).build();
     }
 
     /**
      * Adds the rendering of the background and the title.
      */
     @Override
-    public void render(DrawContext DrawContext, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics DrawContext, int mouseX, int mouseY, float delta) {
         this.renderBackground(DrawContext);
-        DrawContext.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, 5, 0xffffff);
+        DrawContext.drawCenteredString(this.font, this.title, this.width / 2, 5, 0xffffff);
         super.render(DrawContext, mouseX, mouseY, delta);
     }
 
@@ -87,10 +90,10 @@ public class TerrastorageOptionsScreen extends GameOptionsScreen {
      * Saving the changes when the screen is closed.
      */
     @Override
-    public void close() {
-        if (!ClientConfigManager.getInstance().saveConfig() && MinecraftClient.getInstance().player != null) {
-            MinecraftClient.getInstance().player.sendMessage(TextStyler.error("terrastorage.message.client_saving_error"));
+    public void onClose() {
+        if (!ClientConfigManager.getInstance().saveConfig() && Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.sendSystemMessage(TextStyler.error("terrastorage.message.client_saving_error"));
         }
-        this.client.setScreen(this.parent);
+        this.minecraft.setScreen(this.lastScreen);
     }
 }

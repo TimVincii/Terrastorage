@@ -1,14 +1,14 @@
 package me.timvinci.terrastorage.mixin.client;
 
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
-import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Pair;
+import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Tuple;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,13 +20,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * A mixin of the InventoryScreen class, adds the inventory storage buttons to the survival inventory screen.
  */
 @Mixin(InventoryScreen.class)
-public abstract class InventoryScreenMixin extends AbstractInventoryScreen<PlayerScreenHandler> {
+public abstract class InventoryScreenMixin extends EffectRenderingInventoryScreen<InventoryMenu> {
     @Unique
-    private TexturedButtonWidget quickStackButton;
+    private ImageButton quickStackButton;
     @Unique
-    private TexturedButtonWidget sortInventoryButton;
+    private ImageButton sortInventoryButton;
 
-    public InventoryScreenMixin(PlayerScreenHandler screenHandler, PlayerInventory playerInventory, Text text) {
+    public InventoryScreenMixin(InventoryMenu screenHandler, Inventory playerInventory, Component text) {
         super(screenHandler, playerInventory, text);
     }
 
@@ -36,18 +36,18 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
     @Inject(method = "init", at = @At("TAIL"))
     public void onInit(CallbackInfo ci) {
         // Return if the player is in spectator mode.
-        if (client.player.isSpectator()) {
+        if (minecraft.player.isSpectator()) {
             return;
         }
 
-        int buttonX = this.x + 128;
+        int buttonX = this.leftPos + 128;
         int buttonY = this.height / 2 - 22;
-        Pair<TexturedButtonWidget, TexturedButtonWidget> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
-        quickStackButton = buttons.getLeft();
-        this.addDrawableChild(quickStackButton);
+        Tuple<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
+        quickStackButton = buttons.getA();
+        this.addRenderableWidget(quickStackButton);
 
-        sortInventoryButton = buttons.getRight();
-        this.addDrawableChild(sortInventoryButton);
+        sortInventoryButton = buttons.getB();
+        this.addRenderableWidget(sortInventoryButton);
     }
 
     /**
@@ -58,11 +58,11 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
      */
     @ModifyArg(method = "init", at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/widget/TexturedButtonWidget;<init>(IIIIIIILnet/minecraft/util/Identifier;Lnet/minecraft/client/gui/widget/ButtonWidget$PressAction;)V"
+            target = "Lnet/minecraft/client/gui/components/ImageButton;<init>(IIIIIIILnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/gui/components/Button$OnPress;)V"
     )
     )
-    private ButtonWidget.PressAction modifyRecipeBookButtonPress(ButtonWidget.PressAction original) {
-        if (client.player.isSpectator()) {
+    private Button.OnPress modifyRecipeBookButtonPress(Button.OnPress original) {
+        if (minecraft.player.isSpectator()) {
             return original;
         }
 
@@ -70,7 +70,7 @@ public abstract class InventoryScreenMixin extends AbstractInventoryScreen<Playe
             // Call the original press action.
             original.onPress(button);
             // Reposition the buttons.
-            int buttonX = this.x + 128;
+            int buttonX = this.leftPos + 128;
             quickStackButton.setPosition(buttonX, quickStackButton.getY());
             buttonX += 24;
             sortInventoryButton.setPosition(buttonX, sortInventoryButton.getY());

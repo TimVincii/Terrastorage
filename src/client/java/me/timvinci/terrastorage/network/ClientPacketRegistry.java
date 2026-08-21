@@ -1,10 +1,10 @@
 package me.timvinci.terrastorage.network;
 
-import me.timvinci.terrastorage.mixin.LockableContainerBlockEntityAccessor;
+import me.timvinci.terrastorage.mixin.BaseContainerBlockEntityAccessor;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 /**
  * Provides a method for registering client global receivers and holds packet processing methods.
@@ -17,9 +17,9 @@ public class ClientPacketRegistry {
     public static void registerReceivers() {
         ClientPlayNetworking.registerGlobalReceiver(PacketRegistry.blockRenamedIdentifier, (client, handler, buf, responseSender) -> {
             BlockPos pos = buf.readBlockPos();
-            String newName = buf.readString();
+            String newName = buf.readUtf();
 
-            client.execute(() -> processBlockRenamedPacket(client.world, pos, newName));
+            client.execute(() -> processBlockRenamedPacket(client.level, pos, newName));
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PacketRegistry.serverConfigIdentifier, (client, handler, buf, responseSender) -> {
@@ -33,8 +33,8 @@ public class ClientPacketRegistry {
      * @param pos The position of the block entity.
      * @param newName The new name of the block entity.
      */
-    private static void processBlockRenamedPacket(World world, BlockPos pos, String newName) {
-        LockableContainerBlockEntityAccessor accessor = (LockableContainerBlockEntityAccessor) world.getBlockEntity(pos);
-        accessor.setCustomName(newName.isEmpty() ? null : Text.literal(newName));
+    private static void processBlockRenamedPacket(Level world, BlockPos pos, String newName) {
+        BaseContainerBlockEntityAccessor accessor = (BaseContainerBlockEntityAccessor) world.getBlockEntity(pos);
+        accessor.setName(newName.isEmpty() ? null : Component.literal(newName));
     }
 }

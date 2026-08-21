@@ -4,15 +4,15 @@
 	"compatibilityLevel": "JAVA_17",
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
-		"BlockEntityRendererFactoriesMixin",
-		"ClientPlayerEntityMixin",
-		"CreativeInventoryScreenMixin",
-		"GenericContainerScreenAccessor",
-		"HandledScreenMixin",
-		"InGameHudMixin",
+		"BlockEntityRenderersMixin",
+		"LocalPlayerMixin",
+		"CreativeModeInventoryScreenMixin",
+		"ContainerScreenAccessor",
+		"AbstractContainerScreenMixin",
+		"GuiMixin",
 		"InventoryScreenMixin",
 		"ItemStackMixin",
-		"SliderWidgetAccessor"
+		"AbstractSliderButtonAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

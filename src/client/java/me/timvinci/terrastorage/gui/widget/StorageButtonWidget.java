@@ -2,20 +2,21 @@ package me.timvinci.terrastorage.gui.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import me.timvinci.terrastorage.util.ButtonsStyle;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Button.OnPress;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 /**
  * A customized button widget.
  */
-public class StorageButtonWidget extends ButtonWidget {
+public class StorageButtonWidget extends Button {
     private ButtonsStyle buttonStyle;
 
-    public StorageButtonWidget(int x, int y, int width, int height, Text message, ButtonsStyle buttonStyle, PressAction onPress) {
-        super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
+    public StorageButtonWidget(int x, int y, int width, int height, Component message, ButtonsStyle buttonStyle, OnPress onPress) {
+        super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
         this.setButtonStyle(buttonStyle);
     }
 
@@ -32,27 +33,27 @@ public class StorageButtonWidget extends ButtonWidget {
      * Supports not drawing the background of the button.
      */
     @Override
-    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
-        MinecraftClient minecraftClient = MinecraftClient.getInstance();
-        context.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        Minecraft minecraftClient = Minecraft.getInstance();
+        context.setColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
 
         // Draw the button background if the option buttons style is set to default.
         if (buttonStyle == ButtonsStyle.DEFAULT) {
-            context.drawNineSlicedTexture(WIDGETS_TEXTURE, this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, getTextureY());
+            context.blitNineSliced(WIDGETS_LOCATION, this.getX(), this.getY(), this.getWidth(), this.getHeight(), 20, 4, 200, 20, 0, getTextureY());
         }
-        context.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        context.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         // Change the text color to yellow if the button is hovered.
-        int i = this.hovered ? 16776960 : 16777215;
-        this.drawMessage(context, minecraftClient.textRenderer, i | MathHelper.ceil(this.alpha * 255.0F) << 24);
+        int i = this.isHovered ? 16776960 : 16777215;
+        this.renderString(context, minecraftClient.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
     }
 
     private int getTextureY() {
         int i = 1;
         if (!this.active) {
             i = 0;
-        } else if (this.isSelected()) {
+        } else if (this.isHoveredOrFocused()) {
             i = 2;
         }
 
