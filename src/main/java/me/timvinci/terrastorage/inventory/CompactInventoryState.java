@@ -1,98 +1,52 @@
 package me.timvinci.terrastorage.inventory;
 
-import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.item.StackIdentifier;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 /**
- * Represents the state of an inventory.
- * Stores a hashmap in which the key is a stack identifier, and the value is an array of the positions of non-full stacks of that
- * stack identifier in the inventory.
+ * Represents the state of a player's inventory (the receiver of Restock).
+ * Stores a hashmap in which the key is a stack identifier, and the value is an array of the positions of non-full
+ * stacks of that stack identifier in the inventory.
+ * No empty slots are tracked, since Restock only tops off stacks the player already holds.
  */
 public class CompactInventoryState implements InventoryState {
     private final Map<StackIdentifier, ArrayList<Integer>> nonFullItemSlots = new HashMap<>();
     private boolean modified = false;
 
     /**
-     * Instantiates a new CompactInventoryState of an inventory.
-     * Iterates over the inventory's slots and adds them to the itemSlots map accordingly.
-     * @param inventory The storage's inventory.
+     * Instantiates a new CompactInventoryState of a player inventory.
+     * Iterates over the player's slots and adds them to the nonFullItemSlots map accordingly.
+     * @param access The rule aware view of the player's inventory.
+     * @param hotbarProtection The hotbar protection value of the player.
      */
-    public CompactInventoryState(Container inventory) {
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack inventoryStack = inventory.getItem(i);
-            if (inventoryStack.isEmpty() || inventoryStack.getCount() == inventoryStack.getMaxStackSize()) {
-                continue;
-            }
+    public CompactInventoryState(PlayerSlotAccess access, boolean hotbarProtection) {
+        Inventory playerInventory = access.inventory();
+        index(access, playerInventory, Inventory.getSelectionSize(), playerInventory.items.size());
 
-            nonFullItemSlots.computeIfAbsent(new StackIdentifier(inventoryStack), k -> new ArrayList<>()).add(i);
+        // Check if hotbar protection is disabled, and if that is the case, iterate over the hotbar slots as well.
+        if (!hotbarProtection) {
+            index(access, playerInventory, 0, Inventory.getSelectionSize());
         }
     }
 
     /**
-     * Instantiates a new CompactInventoryState of a player inventory.
-     * Iterates over the player's slots and adds them to the itemSlots map accordingly.
-     * @param playerInventory The player's inventory.
-     * @param hotbarProtection The hotbar protection value of the player.
+     * Indexes a range of the player's inventory into the non-full collection.
      */
-    public CompactInventoryState(Inventory playerInventory, boolean hotbarProtection) {
-        for (int i = Inventory.getSelectionSize(); i < playerInventory.items.size(); i++) {
+    private void index(PlayerSlotAccess access, Inventory playerInventory, int startIndex, int endIndex) {
+        for (int i = startIndex; i < endIndex; i++) {
             ItemStack playerStack = playerInventory.getItem(i);
-            if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxStackSize()) {
+            if (playerStack.isEmpty() || playerStack.getCount() >= access.maxStackSize(i, playerStack)) {
                 continue;
             }
 
-            StackIdentifier stackIdentifier;
-            if (!ItemFavoritingUtils.isFavorite(playerStack)) {
-                stackIdentifier = new StackIdentifier(playerStack);
-            }
-            else {
-                // Remove the item favorite nbt data from the stack identifier.
-                CompoundTag copiedCompound = playerStack.getTag().copy();
-                ItemFavoritingUtils.unFavorite(copiedCompound);
-                if (copiedCompound.isEmpty()) {
-                    copiedCompound = null;
-                }
-
-                stackIdentifier = new StackIdentifier(playerStack.getItem(), copiedCompound);
-            }
-
-            nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
-        }
-
-        // Check if hotbar protection is disabled, and if that is the case, iterate over the hotbar slots as well.
-        if (!hotbarProtection) {
-            for (int i = 0; i < Inventory.getSelectionSize(); i++) {
-                ItemStack playerStack = playerInventory.getItem(i);
-                if (playerStack.isEmpty() || playerStack.getCount() == playerStack.getMaxStackSize()) {
-                    continue;
-                }
-
-                StackIdentifier stackIdentifier;
-                if (!ItemFavoritingUtils.isFavorite(playerStack)) {
-                    stackIdentifier = new StackIdentifier(playerStack);
-                }
-                else {
-                    // Remove the item favorite nbt data from the stack identifier.
-                    CompoundTag copiedCompound = playerStack.getTag().copy();
-                    ItemFavoritingUtils.unFavorite(copiedCompound);
-                    if (copiedCompound.isEmpty()) {
-                        copiedCompound = null;
-                    }
-
-                    stackIdentifier = new StackIdentifier(playerStack.getItem(), copiedCompound);
-                }
-
-                nonFullItemSlots.computeIfAbsent(stackIdentifier, k -> new ArrayList<>()).add(i);
-            }
+            nonFullItemSlots.computeIfAbsent(InventoryUtils.favoriteAgnosticIdentifier(playerStack), k -> new ArrayList<>()).add(i);
         }
     }
 
@@ -102,8 +56,8 @@ public class CompactInventoryState implements InventoryState {
     }
 
     @Override
-    public Queue<Integer> getEmptySlots() {
-        return null;
+    public List<Integer> getEmptySlots() {
+        return List.of();
     }
 
     @Override

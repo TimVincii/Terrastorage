@@ -1,7 +1,9 @@
 package me.timvinci.terrastorage.network;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
-import me.timvinci.terrastorage.inventory.SlotBackedInventory;
+import me.timvinci.terrastorage.inventory.InventoryUtils;
+import me.timvinci.terrastorage.inventory.SlotStorageAccess;
+import me.timvinci.terrastorage.inventory.StorageAccess;
 import me.timvinci.terrastorage.util.*;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.world.entity.player.Inventory;
@@ -44,10 +46,10 @@ public class PacketRegistry {
 
         ServerPlayNetworking.registerGlobalReceiver(sortIdentifier, (server, player, handler, buf, responseSender) -> {
             Optional<Integer> syncId = buf.readOptional(FriendlyByteBuf::readInt);
-            SortType type = buf.readEnum(SortType.class);
+            SortType sortType = buf.readEnum(SortType.class);
             Optional<Boolean> hotbarProtection = buf.readOptional(FriendlyByteBuf::readBoolean);
 
-            server.execute(() -> processSortPacket(player, syncId, type, hotbarProtection));
+            server.execute(() -> processSortPacket(player, syncId, sortType, hotbarProtection));
         });
 
         ServerPlayNetworking.registerGlobalReceiver(renameIdentifier, (server, player, handler, buf, responseSender) -> {
@@ -81,35 +83,25 @@ public class PacketRegistry {
                 return;
             }
 
-            Container storageInventory;
-            Slot firstSlot = player.containerMenu.slots.get(0);
-            if (firstSlot.container.getContainerSize() != 0) {
-                if (!firstSlot.mayPickup(player)) {
-                    player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
-                    return;
-                }
-
-                // Get the storage's inventory from the player's screen handler.
-                storageInventory = firstSlot.container;
-            }
-            else { // Handle "broken" screen handlers
-                List<Slot> nonPlayerSlots = player.containerMenu.slots.stream()
-                        .filter(slot -> !(slot.container instanceof Inventory))
-                        .toList();
-
-                // Create a SlotBackedInventory, which will hold a reference to all slots and will make inventory
-                // adjustments using them.
-                storageInventory = new SlotBackedInventory(nonPlayerSlots);
+            // Operate on the menu's storage-side slots directly, so slot rules are respected and every storage sortType
+            // (vanilla containers and item-handler backed storages alike) is handled the same way.
+            List<Slot> storageSlots = InventoryUtils.getStorageSlots(player.containerMenu, player);
+            if (storageSlots.isEmpty() || !InventoryUtils.hasUsableSlot(storageSlots, player)) {
+                player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
+                return;
             }
 
-
+            StorageAccess storage = new SlotStorageAccess(storageSlots);
             switch (action) {
-                case LOOT_ALL -> TerrastorageCore.lootAll(player.getInventory(), storageInventory, hotbarProtection);
-                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player.getInventory(), storageInventory, firstSlot, hotbarProtection);
-                case QUICK_STACK -> TerrastorageCore.quickStack(player.getInventory(), storageInventory, hotbarProtection, smartDepositMode.get());
-                case RESTOCK -> TerrastorageCore.restock(player.getInventory(), storageInventory, hotbarProtection);
+                case LOOT_ALL -> TerrastorageCore.lootAll(player, storage, hotbarProtection);
+                case DEPOSIT_ALL -> TerrastorageCore.depositAll(player, storage, hotbarProtection);
+                case QUICK_STACK -> TerrastorageCore.quickStack(player, storage, hotbarProtection, smartDepositMode.get());
+                case RESTOCK -> TerrastorageCore.restock(player, storage, hotbarProtection);
                 default -> throw new IllegalArgumentException("Unknown storage action: " + action);
             }
+
+            // Push the corrected state to the client immediately, closing any desync window.
+            player.containerMenu.broadcastChanges();
         }
         else {
             TerrastorageCore.quickStackToNearbyStorages(player, hotbarProtection, smartDepositMode.get());
@@ -120,13 +112,13 @@ public class PacketRegistry {
      * Handles the identification of the inventory to be sorted, before calling TerrastorageCore to perform the sorting.
      * @param player The player initiating the sort.
      * @param syncId The sync id of the screen handler from which the action was sent.
-     * @param type The sorting type of the player.
+     * @param sortType The sorting sortType of the player.
      * @param hotbarProtection The hotbar protection value of the player.
      */
-    private static void processSortPacket(ServerPlayer player, Optional<Integer> syncId, SortType type, Optional<Boolean> hotbarProtection) {
+    private static void processSortPacket(ServerPlayer player, Optional<Integer> syncId, SortType sortType, Optional<Boolean> hotbarProtection) {
         if (hotbarProtection.isPresent()) {
             // Player inventory sorting.
-            TerrastorageCore.sortPlayerItems(player.getInventory(), type, hotbarProtection.get());
+            TerrastorageCore.sortPlayerItems(player, sortType, hotbarProtection.get());
         }
         else {
             // Storage sorting.
@@ -134,28 +126,16 @@ public class PacketRegistry {
                 return;
             }
 
-            Container storageInventory;
-            Slot firstSlot = player.containerMenu.slots.get(0);
-            if (firstSlot.container.getContainerSize() != 0) {
-                if (!firstSlot.mayPickup(player)) {
-                    player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
-                    return;
-                }
-
-                // Get the storage's inventory from the player's screen handler.
-                storageInventory = firstSlot.container;
-            }
-            else { // Handle "broken" screen handlers
-                List<Slot> nonPlayerSlots = player.containerMenu.slots.stream()
-                        .filter(slot -> !(slot.container instanceof Inventory))
-                        .toList();
-
-                // Create a SlotBackedInventory, which will hold a reference to all slots and will make inventory
-                // adjustments using them.
-                storageInventory = new SlotBackedInventory(nonPlayerSlots);
+            List<Slot> storageSlots = InventoryUtils.getStorageSlots(player.containerMenu, player);
+            if (storageSlots.isEmpty() || !InventoryUtils.hasUsableSlot(storageSlots, player)) {
+                player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
+                return;
             }
 
-            TerrastorageCore.sortStorageItems(storageInventory, type);
+            TerrastorageCore.sortStorageItems(player, new SlotStorageAccess(storageSlots), sortType);
+
+            // Push the corrected state to the client immediately, closing any desync window.
+            player.containerMenu.broadcastChanges();
         }
     }
 
@@ -167,11 +147,8 @@ public class PacketRegistry {
             return;
         }
 
-        if (!player.containerMenu.slots.get(0).mayPickup(player)) {
-            player.sendSystemMessage(Component.translatable("terrastorage.message.restricted_inventory"));
-            return;
-        }
-
+        // No slot check is needed here, as renaming doesn't move any items, and renameStorage reports the storages
+        // it doesn't support by itself.
         TerrastorageCore.renameStorage(player, newName);
     }
 
