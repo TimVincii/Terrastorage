@@ -4,8 +4,6 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"BlockEntityRenderDispatcherMixin",
-		"BlockEntityRenderersMixin",
-		"BlockEntityTypeAccessor",
 		"LocalPlayerMixin",
 		"CreativeModeInventoryScreenMixin",
 		"ContainerScreenAccessor",
