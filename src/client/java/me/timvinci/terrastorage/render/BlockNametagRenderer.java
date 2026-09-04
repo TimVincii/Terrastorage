@@ -3,17 +3,18 @@ package me.timvinci.terrastorage.render;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 /**
  * An empty custom block entity renderer.
- * Any block entity that has this renderer registered to it, will then be passed to the BlockEntityRenderDispatcher for
- * rendering, which will in turn render the nametag for the block entity.
+ * Any block entity that has this renderer returned for it will be processed by the BlockEntityRenderDispatcher, which
+ * will in turn give the NametagRenderer a chance to render a nametag for it.
+ * A single instance is shared.
  */
 public class BlockNametagRenderer implements BlockEntityRenderer<RandomizableContainerBlockEntity> {
+    public static final BlockNametagRenderer INSTANCE = new BlockNametagRenderer();
 
-    public BlockNametagRenderer(BlockEntityRendererProvider.Context ctx) {}
+    private BlockNametagRenderer() {}
 
     @Override
     public void render(RandomizableContainerBlockEntity entity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay) {}
