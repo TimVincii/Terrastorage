@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.mixin.client;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import me.timvinci.terrastorage.render.BlockNametagRenderer;
 import me.timvinci.terrastorage.render.NametagRenderer;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -26,8 +27,10 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.util.function.Supplier;
 
 /**
- * A mixin of the BlockEntityRenderDispatcher class, adds support for nametag rendering of block entities that have
- * a registered block entity renderer.
+ * A mixin of the BlockEntityRenderDispatcher class, adds support for nametag rendering of block entities.
+ * Block entities only reach the rendering pipeline if getRenderer returns a renderer for them, so storages that
+ * vanilla has no renderer for are given the empty BlockNametagRenderer, which is what gives the NametagRenderer a
+ * chance to render a nametag for them.
  */
 @Mixin(BlockEntityRenderDispatcher.class)
 public class BlockEntityRenderDispatcherMixin {
@@ -71,5 +74,20 @@ public class BlockEntityRenderDispatcherMixin {
                 nametagRenderer.renderNametag(blockEntity, lootableContainerBlockEntity.getCustomName(), matrices, vertexConsumers, i);
             }
         }
+    }
+
+
+    /**
+     * Provides the nametag renderer for renameable storages that vanilla has no renderer for.
+     * The check is performed on the block entity itself rather than on its type, since the size of a storage can
+     * differ between block entities of the same type, for example when a mod's storage can be upgraded.
+     */
+    @ModifyReturnValue(method = "getRenderer(Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;", at = @At("RETURN"))
+    private BlockEntityRenderer<?> provideNametagRenderer(BlockEntityRenderer<?> original, BlockEntity blockEntity) {
+        if (original == null && blockEntity instanceof RandomizableContainerBlockEntity container && container.getContainerSize() >= 27) {
+            return BlockNametagRenderer.INSTANCE;
+        }
+
+        return original;
     }
 }
