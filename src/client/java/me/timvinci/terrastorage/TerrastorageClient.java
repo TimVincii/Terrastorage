@@ -4,12 +4,10 @@ import me.timvinci.terrastorage.command.TerrastorageClientCommands;
 import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.keybinding.TerrastorageKeybindings;
 import me.timvinci.terrastorage.network.ClientPacketRegistry;
-import me.timvinci.terrastorage.render.BlockEntityRendererManager;
 import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.Reference;
 
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -36,7 +34,6 @@ public class TerrastorageClient implements ClientModInitializer {
 		LocalizedTextProvider.initializeButtonCaches();
 		TerrastorageKeybindings.registerKeybindings();
 
-		ClientLifecycleEvents.CLIENT_STARTED.register(client -> BlockEntityRendererManager.registerLootableRenderers());
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
 			@Override
 			public ResourceLocation getFabricId() {
