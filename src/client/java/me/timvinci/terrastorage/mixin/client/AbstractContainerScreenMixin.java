@@ -1,9 +1,12 @@
 package me.timvinci.terrastorage.mixin.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.gui.TerrastorageOptionsScreen;
 import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
+import me.timvinci.terrastorage.gui.widget.StorageButtonWidget;
+import me.timvinci.terrastorage.inventory.InventoryUtils;
 import me.timvinci.terrastorage.keybinding.TerrastorageKeybindings;
 import me.timvinci.terrastorage.network.ClientNetworkHandler;
 import me.timvinci.terrastorage.util.ButtonsPlacement;
@@ -11,25 +14,22 @@ import me.timvinci.terrastorage.util.ButtonsStyle;
 import me.timvinci.terrastorage.util.LocalizedTextProvider;
 import me.timvinci.terrastorage.util.ScreenInteractionUtils;
 import me.timvinci.terrastorage.util.*;
-import me.timvinci.terrastorage.gui.widget.StorageButtonWidget;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.Button;
-import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.*;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -70,32 +70,16 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      */
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
+        Player player = minecraft.player;
         // Return if the player is in spectator mode, or if the handled screen is that of the player's inventory.
-        if (Minecraft.getInstance().player.isSpectator() ||
+        if (player.isSpectator() ||
             menu instanceof CreativeModeInventoryScreen.ItemPickerMenu ||
             menu instanceof InventoryMenu) {
             return;
         }
 
-        // Check if the handled screen is a storage.
-        // Primary check scans for a non player slot with an inventory size of at least 27.
-        // Secondary check counts the amount of non player slots and is for screen handlers whose slots list doesn't
-        // provide a proper reference to the inventory.
-        boolean largeNonPlayerInventory = false;
-        int nonPlayerSlotCount = 0;
-        for (Slot slot : menu.slots) {
-            if (!(slot.container instanceof Inventory)) {
-                if (slot.container.getContainerSize() >= 27) {
-                    largeNonPlayerInventory = true;
-                    break;
-                }
-
-                nonPlayerSlotCount++;
-            }
-        }
-
-        // If both checks fail, this is (most very likely) not a storage.
-        if (!largeNonPlayerInventory && nonPlayerSlotCount < 27) {
+        // Return if the handled screen isn't that of a storage.
+        if (!InventoryUtils.isStorageMenu(menu, player)) {
             return;
         }
 
@@ -181,7 +165,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         }
 
         boolean modifierIsPressed = InputConstants.isKeyDown(minecraft.getWindow().getWindow(), KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue());
-        boolean playerOwnedSlot = slot.container instanceof Inventory;
+        boolean playerOwnedSlot = InventoryUtils.isPlayerSlot(slot, minecraft.player);
 
         if (modifierIsPressed && playerOwnedSlot) {
             ItemStack slotStack = slot.getItem();
@@ -202,12 +186,13 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      */
     @Inject(method = "mouseClicked", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
     private void mouseClickedTail(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
-        if (slot == null || slot.container.getContainerSize() < 27) {
+        if (slot == null || !TerrastorageKeybindings.sortInventoryBind.matchesMouse(button)) {
             return;
         }
 
-        if (TerrastorageKeybindings.sortInventoryBind.matchesMouse(button)) {
-            ClientNetworkHandler.sendSortPacket(slot.container instanceof Inventory);
+        boolean playerInventory = InventoryUtils.isPlayerSlot(slot, minecraft.player);
+        if (playerInventory || InventoryUtils.isStorageMenu(menu, minecraft.player)) {
+            ClientNetworkHandler.sendSortPacket(playerInventory);
         }
     }
 
@@ -225,12 +210,13 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      */
     @Inject(method = "keyPressed", at = @At("TAIL"))
     private void onKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-        if (hoveredSlot == null || hoveredSlot.container.getContainerSize() < 27) {
+        if (hoveredSlot == null || !TerrastorageKeybindings.sortInventoryBind.matches(keyCode, scanCode)) {
             return;
         }
 
-        if (TerrastorageKeybindings.sortInventoryBind.matches(keyCode, scanCode)) {
-            ClientNetworkHandler.sendSortPacket(hoveredSlot.container instanceof Inventory);
+        boolean playerInventory = InventoryUtils.isPlayerSlot(hoveredSlot, minecraft.player);
+        if (playerInventory || InventoryUtils.isStorageMenu(menu, minecraft.player)) {
+            ClientNetworkHandler.sendSortPacket(playerInventory);
         }
     }
 
@@ -244,7 +230,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
                     shift = At.Shift.BEFORE),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION)
     private void drawSlot(GuiGraphics context, Slot slot, CallbackInfo ci, int i, int j, ItemStack itemStack) {
-        if (!(slot.container instanceof Inventory) || !ItemFavoritingUtils.isFavorite(itemStack)) {
+        if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(itemStack)) {
             return;
         }
 
