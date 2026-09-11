@@ -3,7 +3,6 @@ package me.timvinci.terrastorage.mixin;
 import me.timvinci.terrastorage.inventory.InventoryUtils;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
@@ -34,7 +33,7 @@ public class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/inventory/Slot;setByPlayer(Lnet/minecraft/world/item/ItemStack;)V"
             ))
     private void redirectSetStack(Slot slot, ItemStack stack, int slotIndex, int button, ClickType actionType, Player player) {
-        if (!(slot.container instanceof Inventory)) {
+        if (!InventoryUtils.isPlayerSlot(slot, player)) {
             if (ItemFavoritingUtils.isFavorite(stack)) {
                 ItemFavoritingUtils.setFavorite(stack, false);
             }
@@ -61,9 +60,9 @@ public class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/inventory/Slot;safeInsert(Lnet/minecraft/world/item/ItemStack;I)Lnet/minecraft/world/item/ItemStack;"
             )
     )
-    private ItemStack redirectInsertStack(Slot slot, ItemStack cursorStack, int count) {
+    private ItemStack redirectInsertStack(Slot slot, ItemStack cursorStack, int count, int slotIndex, int button, ClickType actionType, Player player) {
         if (!slot.hasItem()) {
-            if (!(slot.container instanceof Inventory) && ItemFavoritingUtils.isFavorite(cursorStack)) {
+            if (!InventoryUtils.isPlayerSlot(slot, player) && ItemFavoritingUtils.isFavorite(cursorStack)) {
                 if (count == 1 && cursorStack.getCount() > 1) {
                     // If the insertion count is one, pass a single non-favorite copy of the cursor stack to the slot.
                     // This is done to prevent the entire cursor stack from being un-favorited.
