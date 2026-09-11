@@ -46,23 +46,61 @@ import java.util.*;
 public class InventoryUtils {
 
     /**
+     * Checks whether a slot is backed by the player's own inventory.
+     * The player's inventory instance is used as the discriminator rather than an instanceof check, since a storage
+     * that happens to be backed by an Inventory, such as a grave holding a dead player's items, would otherwise be
+     * mistaken for the player's own inventory.
+     * @param slot The slot to check.
+     * @param player The player.
+     * @return True if the slot is one of the player's inventory slots.
+     */
+    public static boolean isPlayerSlot(Slot slot, Player player) {
+        return slot.container == player.getInventory();
+    }
+
+    /**
      * Collects the storage side slots of a menu, meaning every slot that isn't backed by the player's inventory.
-     * The player's inventory instance is used as the discriminator rather than an instanceof check, so modded
-     * storages that happen to be backed by a vanilla Inventory are still treated as storage.
      * @param menu The player's open menu.
      * @param player The player.
      * @return The storage side slots, in menu order.
      */
     public static List<Slot> getStorageSlots(AbstractContainerMenu menu, Player player) {
-        Inventory playerInventory = player.getInventory();
         List<Slot> storageSlots = new ArrayList<>();
         for (Slot slot : menu.slots) {
-            if (slot.container != playerInventory) {
+            if (!isPlayerSlot(slot, player)) {
                 storageSlots.add(slot);
             }
         }
 
         return storageSlots;
+    }
+
+    /**
+     * Checks whether a menu is that of a storage, meaning its storage side is large enough to be worth operating on.
+     * Primary check scans for a storage slot with an inventory size of at least 27.
+     * Secondary check counts the storage slots, and is for menus whose slots don't provide a proper reference to the
+     * inventory, such as item handler backed slots, which are all backed by the same empty dummy container.
+     * Slots the menu refuses to gather items into are skipped by both, as overriding canTakeItemForPickAll is how a
+     * menu locks itself without disabling its slots.
+     * @param menu The player's open menu.
+     * @param player The player.
+     * @return True if the menu is that of a storage.
+     */
+    public static boolean isStorageMenu(AbstractContainerMenu menu, Player player) {
+        int storageSlotCount = 0;
+        for (Slot slot : getStorageSlots(menu, player)) {
+            if (!menu.canTakeItemForPickAll(slot.getItem(), slot)) {
+                continue;
+            }
+
+            if (slot.container.getContainerSize() >= 27) {
+                return true;
+            }
+
+            storageSlotCount++;
+        }
+
+        return storageSlotCount >= 27;
     }
 
     /**
