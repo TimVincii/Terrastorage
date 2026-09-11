@@ -1,6 +1,7 @@
 package me.timvinci.terrastorage.inventory;
 
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
+import com.mojang.datafixers.util.Pair;
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.item.GhostItemEntity;
 import me.timvinci.terrastorage.item.StackIdentifier;
@@ -13,7 +14,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
@@ -25,6 +25,11 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
@@ -34,11 +39,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.world.level.entity.EntityTypeTest;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
@@ -338,9 +338,9 @@ public class InventoryUtils {
      * @param player The player.
      * @return A list consisting of pairs of inventories and their position.
      */
-    public static List<Tuple<Container, Vec3>> getNearbyStorages(ServerPlayer player) {
+    public static List<Pair<Container, Vec3>> getNearbyStorages(ServerPlayer player) {
         Level world = player.level();
-        List<Tuple<Container, Vec3>> nearbyStorages = new ArrayList<>();
+        List<Pair<Container, Vec3>> nearbyStorages = new ArrayList<>();
         Set<BlockPos> processedChests = new HashSet<>();
 
         // Getting the range, and whether the los check is enabled.
@@ -379,7 +379,7 @@ public class InventoryUtils {
                 if (blockEntity instanceof ChestBlockEntity) {
                     ChestType chestType = state.getValue(ChestBlock.TYPE);
                     if (chestType == ChestType.SINGLE) {
-                        nearbyStorages.add(new Tuple<>(inventory, losPoint));
+                        nearbyStorages.add(Pair.of(inventory, losPoint));
                         return;
                     }
 
@@ -389,12 +389,12 @@ public class InventoryUtils {
 
                     CompoundContainer doubleInventory = chestType == ChestType.RIGHT ?
                             new CompoundContainer(inventory, neighboringChestInventory) :
-                            new CompoundContainer(neighboringChestInventory,inventory);
-                    nearbyStorages.add(new Tuple<>(doubleInventory, doubleChestLosPoint));
+                            new CompoundContainer(neighboringChestInventory, inventory);
+                    nearbyStorages.add(Pair.of(doubleInventory, doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else {
-                    nearbyStorages.add(new Tuple<>(inventory, losPoint));
+                    nearbyStorages.add(Pair.of(inventory, losPoint));
                 }
             }
         });
@@ -414,7 +414,7 @@ public class InventoryUtils {
                     losPoint = entity.getBoundingBox().getCenter();
                 }
 
-                nearbyStorages.add(new Tuple<>((Container) entity, losPoint));
+                nearbyStorages.add(Pair.of((Container) entity, losPoint));
             }
         );
 
