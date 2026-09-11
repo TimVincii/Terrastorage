@@ -21,10 +21,11 @@ public class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     /**
+     * Injects into {@code LocalPlayer#drop} at HEAD.
      * Stops the player from dropping favorite items.
      */
     @Inject(method = "drop", at = @At("HEAD"), cancellable = true)
-    private void onDropSelectedSlot(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
+    private void onDropHead(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
         if (ItemFavoritingUtils.isFavorite(this.getMainHandItem())) {
             cir.cancel();
         }

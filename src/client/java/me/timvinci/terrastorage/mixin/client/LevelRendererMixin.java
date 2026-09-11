@@ -45,10 +45,11 @@ public class LevelRendererMixin {
     private BlockEntityRenderDispatcher blockEntityRenderDispatcher;
 
     /**
+     * Injects into the {@link LevelRenderer} constructor at TAIL.
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(EntityRenderDispatcher entityRenderDispatcher,
+    private void onInitTail(EntityRenderDispatcher entityRenderDispatcher,
                         BlockEntityRenderDispatcher blockEntityRenderDispatcher,
                         ModelManager modelManager,
                         TextureManager textureManager,
@@ -62,6 +63,8 @@ public class LevelRendererMixin {
     }
 
     /**
+     * Injects into {@code LevelRenderer#submitBlockEntities} immediately after {@link BlockEntityRenderDispatcher#submit}
+     * is called, so that a nametag is submitted right after the block entity it belongs to.
      * Adds nametag rendering after block entity rendering takes place.
      */
     @Inject(
@@ -73,7 +76,7 @@ public class LevelRendererMixin {
             ),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION
     )
-    private void afterRenderBlockEntity(
+    private void onSubmitBlockEntitiesAfterSubmit(
             PoseStack poseStack,
             LevelRenderState levelRenderState,
             SubmitNodeCollector submitNodeCollector,

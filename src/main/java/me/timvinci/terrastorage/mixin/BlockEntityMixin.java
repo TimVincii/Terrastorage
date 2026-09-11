@@ -15,17 +15,19 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /**
- * A mixin of the BlockEntity class, used for adding the custom name of lockable container block entities to
- * their initial chunk data.
+ * A mixin of the BlockEntity class, used for adding the custom name of container block entities to the update tag
+ * that is sent to clients.
  */
 @Mixin(BlockEntity.class)
 public abstract class BlockEntityMixin {
 
     /**
-     * Add the custom name to the initial chunk nbt data.
+     * Modifies the return value of {@link BlockEntity#getUpdateTag} at RETURN.
+     * Adds the custom name of container block entities to the tag, so that clients receive it alongside the rest of
+     * the block entity data.
      */
     @ModifyReturnValue(method = "getUpdateTag", at = @At("RETURN"))
-    private CompoundTag toInitialChunkDataNbt(CompoundTag original, HolderLookup.Provider registryLookup) {
+    private CompoundTag modifyGetUpdateTagReturn(CompoundTag original, HolderLookup.Provider registryLookup) {
         if ((BlockEntity) (Object) this instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
             Component customName = baseContainerBlockEntity.getCustomName();
             if (customName != null) {

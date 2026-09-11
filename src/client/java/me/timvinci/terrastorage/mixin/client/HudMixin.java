@@ -23,16 +23,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * A mixin of the Gui class, used for adding item favoriting support.
+ * A mixin of the Hud class, used for adding item favoriting support to the hotbar.
  */
 @Mixin(Hud.class)
-public class GuiMixin {
+public class HudMixin {
     @Unique
     private final Identifier favoriteBorder = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/sprites/favorite_border.png");
     @Shadow
     private Minecraft minecraft;
 
     /**
+     * Injects into {@code Hud#extractSlot} immediately before {@link GuiGraphicsExtractor#itemDecorations} is called.
      * Draws the favorite border on hotbar slots that hold favorite item stacks.
      */
     @Inject(method = "extractSlot",
@@ -40,7 +41,7 @@ public class GuiMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;itemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
                     shift = At.Shift.BEFORE))
-    private void onRenderHotbarItem(GuiGraphicsExtractor graphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int seed, CallbackInfo ci) {
+    private void onExtractSlotBeforeItemDecorations(GuiGraphicsExtractor graphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int seed, CallbackInfo ci) {
         if (!ItemFavoritingUtils.isFavorite(itemStack)) {
             return;
         }
