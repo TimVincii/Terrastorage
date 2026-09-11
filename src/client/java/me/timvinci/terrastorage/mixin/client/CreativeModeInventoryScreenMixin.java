@@ -43,16 +43,17 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     @Shadow @Nullable
     private Slot destroyItemSlot;
 
-    public CreativeModeInventoryScreenMixin(CreativeModeInventoryScreen.ItemPickerMenu handler, Inventory inventory, Component title) {
-        super(handler, inventory, title);
+    public CreativeModeInventoryScreenMixin(CreativeModeInventoryScreen.ItemPickerMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
     }
 
     /**
-     * Stops favorite items from being removed by the 'delete item' slot, and calls the ScreenInteractionUtils class to
-     * process the slot click.
+     * Injects into {@code CreativeModeInventoryScreen#slotClicked} at HEAD.
+     * Stops favorite items from being removed by the 'delete item' slot, and calls {@link ScreenInteractionUtils#processSlotClick}
+     * to process the slot click.
      */
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
-    private void onMouseClick(@Nullable Slot slot, int slotId, int buttonNum, ContainerInput containerInput, CallbackInfo ci) {
+    private void onSlotClickedHead(@Nullable Slot slot, int slotId, int buttonNum, ContainerInput containerInput, CallbackInfo ci) {
         ItemStack cursorStack = this.menu.getCarried();
         if (Objects.equals(slot, destroyItemSlot) && !cursorStack.isEmpty() && ItemFavoritingUtils.isFavorite(cursorStack)) {
             ci.cancel();
@@ -63,6 +64,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     }
 
     /**
+     * Redirects {@link Slot#set} calls inside {@code CreativeModeInventoryScreen#slotClicked}.
      * Stops the client from deleting favorite items when the 'delete item' slot is shift pressed.
      */
     @Redirect(method = "slotClicked",
@@ -71,7 +73,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
                     target = "Lnet/minecraft/world/inventory/Slot;set(Lnet/minecraft/world/item/ItemStack;)V"
             )
     )
-    private void redirectSetStackNoCallbacks(Slot slot, ItemStack emptyStack) {
+    private void redirectSlotClickedSlotSet(Slot slot, ItemStack emptyStack) {
         if (slot.hasItem() && ItemFavoritingUtils.isFavorite(slot.getItem())) {
             return;
         }
@@ -80,12 +82,13 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     }
 
     /**
-     * Stops favorite items from being deleted when the 'delete item' slot is shift pressed.
+     * Redirects {@link MultiPlayerGameMode#handleCreativeModeItemAdd} calls inside {@code CreativeModeInventoryScreen#slotClicked}.
+     * Stops favorite items from being deleted (on the server) when the 'delete item' slot is shift pressed.
      */
     @Redirect(method = "slotClicked",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;handleCreativeModeItemAdd(Lnet/minecraft/world/item/ItemStack;I)V"))
-    private void redirectClickCreativeStack(MultiPlayerGameMode interactionManager, ItemStack clicked, int i, @Nullable Slot slot, int slotId, int buttonNum, ContainerInput containerInput) {
+    private void redirectSlotClickedHandleCreativeModeItemAdd(MultiPlayerGameMode interactionManager, ItemStack clicked, int i, @Nullable Slot slot, int slotId, int buttonNum, ContainerInput containerInput) {
         if (containerInput != ContainerInput.QUICK_MOVE) {
             interactionManager.handleCreativeModeItemAdd(clicked, i);
             return;
@@ -113,6 +116,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     }
 
     /**
+     * Injects into {@code CreativeModeInventoryScreen#init} when {@code CreativeModeInventoryScreen#selectTab} is called.
      * Adds the sort inventory and quick stack to nearby chests buttons once the creative inventory screen is
      * initializing.
      */
@@ -121,7 +125,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen;selectTab(Lnet/minecraft/world/item/CreativeModeTab;)V")
     )
-    private void onInit(CallbackInfo ci) {
+    private void onInitSelectTab(CallbackInfo ci) {
         int buttonX = this.leftPos + 138;
         int buttonY = this.topPos + 19;
         Tuple<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
@@ -133,10 +137,11 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
     }
 
     /**
+     * Injects into {@code CreativeModeInventoryScreen#selectTab} at TAIL.
      * Modifies the visibility of the buttons to only appear in the inventory tab.
      */
     @Inject(method = "selectTab", at = @At("TAIL"))
-    private void onSetSelectedTab(CreativeModeTab tab, CallbackInfo ci) {
+    private void onSelectTabTail(CreativeModeTab tab, CallbackInfo ci) {
         if (BuiltInRegistries.CREATIVE_MODE_TAB.wrapAsHolder(tab).is(CreativeModeTabs.INVENTORY)) {
             quickStackButton.visible = true;
             sortInventoryButton.visible = true;

@@ -33,6 +33,7 @@ public class GuiMixin {
     private Minecraft minecraft;
 
     /**
+     * Injects into {@code Gui#extractSlot} immediately before {@link GuiGraphicsExtractor#itemDecorations} is called.
      * Draws the favorite border on hotbar slots that hold favorite item stacks.
      */
     @Inject(method = "extractSlot",
@@ -40,7 +41,7 @@ public class GuiMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;itemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
                     shift = At.Shift.BEFORE))
-    private void onRenderHotbarItem(GuiGraphicsExtractor graphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int seed, CallbackInfo ci) {
+    private void onExtractSlotBeforeItemDecorations(GuiGraphicsExtractor graphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack itemStack, int seed, CallbackInfo ci) {
         if (!ItemFavoritingUtils.isFavorite(itemStack)) {
             return;
         }
