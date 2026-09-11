@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.util;
 
+import com.mojang.datafixers.util.Pair;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.inventory.*;
@@ -19,7 +20,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
@@ -413,7 +413,7 @@ public class TerrastorageCore {
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
     public static void quickStackToNearbyStorages(ServerPlayer player, boolean hotbarProtection, boolean smartDepositMode) {
-        List<Tuple<Container, Vec3>> nearbyStorages = InventoryUtils.getNearbyStorages(player);
+        List<Pair<Container, Vec3>> nearbyStorages = InventoryUtils.getNearbyStorages(player);
         if (nearbyStorages.isEmpty()) {
             return;
         }
@@ -425,9 +425,9 @@ public class TerrastorageCore {
         PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
         boolean playerInventoryModified = false;
 
-        for (Tuple<Container, Vec3> storagePair : nearbyStorages) {
-            Container storage = storagePair.getA();
-            Vec3 storagePos = storagePair.getB();
+        for (Pair<Container, Vec3> storagePair : nearbyStorages) {
+            Container storage = storagePair.getFirst();
+            Vec3 storagePos = storagePair.getSecond();
 
             StorageAccess access = new ContainerStorageAccess(storage);
             StorageState storageState = new StorageState(access);
