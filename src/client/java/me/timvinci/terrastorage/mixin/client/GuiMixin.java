@@ -7,6 +7,7 @@ import me.timvinci.terrastorage.util.BorderVisibility;
 import me.timvinci.terrastorage.util.Reference;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.Gui;
@@ -33,6 +34,7 @@ public class GuiMixin {
     private Minecraft minecraft;
 
     /**
+     * Injects into {@code Gui#extractSlot} immediately before {@link GuiGraphics#renderItemDecorations(Font, ItemStack, int, int)} is called.
      * Draws the favorite border on hotbar slots that hold favorite item stacks.
      */
     @Inject(method = "renderSlot",
@@ -40,7 +42,7 @@ public class GuiMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V",
                     shift = At.Shift.BEFORE))
-    private void onRenderHotbarItem(GuiGraphics context, int x, int y, DeltaTracker tickCounter, Player player, ItemStack stack, int seed, CallbackInfo ci) {
+    private void onRenderSlotBeforeItemDecorations(GuiGraphics context, int x, int y, DeltaTracker tickCounter, Player player, ItemStack stack, int seed, CallbackInfo ci) {
         if (!ItemFavoritingUtils.isFavorite(stack)) {
             return;
         }

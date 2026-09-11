@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface CompoundContainerAccessor {
 
     @Accessor("container1")
-    Container Container1();
+    Container getContainer1();
 
     @Accessor("container2")
-    Container Container2();
+    Container getContainer2();
 }

@@ -21,12 +21,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class BlockEntityRenderDispatcherMixin {
 
     /**
+     * Injects into {@link BlockEntityRenderDispatcher#getRenderer(BlockEntity)} at RETURN.
      * Provides the nametag renderer for renameable storages that vanilla has no renderer for.
      * The check is performed on the block entity itself rather than on its type, since the size of a storage can
      * differ between block entities of the same type, for example when a mod's storage can be upgraded.
      */
     @Inject(method = "getRenderer(Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;", at = @At("RETURN"), cancellable = true)
-    private void provideNametagRenderer(BlockEntity blockEntity, CallbackInfoReturnable<BlockEntityRenderer<?, ?>> cir) {
+    private void onGetRendererReturn(BlockEntity blockEntity, CallbackInfoReturnable<BlockEntityRenderer<?, ?>> cir) {
         if (cir.getReturnValue() != null) {
             return;
         }
