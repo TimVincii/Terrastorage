@@ -1,9 +1,12 @@
 package me.timvinci.terrastorage.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +29,12 @@ public abstract class BlockEntityMixin {
         if ((BlockEntity) (Object) this instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
             Component customName = baseContainerBlockEntity.getCustomName();
             if (customName != null) {
-                original.putString("CustomName", Component.Serializer.toJson(customName, registryLookup));
+                // The name is encoded straight to NBT, the same way BaseContainerBlockEntity#saveAdditional stores it,
+                // since that's the form BlockEntity#parseCustomNameSafe reads it back in.
+                Tag nameTag = ComponentSerialization.CODEC
+                        .encodeStart(registryLookup.createSerializationContext(NbtOps.INSTANCE), customName)
+                        .getOrThrow();
+                original.put("CustomName", nameTag);
             }
         }
 
