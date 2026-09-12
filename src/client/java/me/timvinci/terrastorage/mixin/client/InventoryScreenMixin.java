@@ -26,15 +26,16 @@ public abstract class InventoryScreenMixin extends EffectRenderingInventoryScree
     @Unique
     private ImageButton sortInventoryButton;
 
-    public InventoryScreenMixin(InventoryMenu screenHandler, Inventory playerInventory, Component text) {
-        super(screenHandler, playerInventory, text);
+    public InventoryScreenMixin(InventoryMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
     }
 
     /**
+     * Injects into {@code InventoryScreen#init} at TAIL.
      * Adds the sort inventory and quick stack to nearby chests buttons once the inventory screen is initializing.
      */
     @Inject(method = "init", at = @At("TAIL"))
-    public void onInit(CallbackInfo ci) {
+    private void onInitTail(CallbackInfo ci) {
         // Return if the player is in spectator mode.
         if (minecraft.player.isSpectator()) {
             return;
@@ -51,17 +52,16 @@ public abstract class InventoryScreenMixin extends EffectRenderingInventoryScree
     }
 
     /**
-     * Modifies the press action of the recipe book to include the re-positioning of the sort inventory and quick
-     * stack to nearby chests buttons.
-     * @param original The original press action.
-     * @return The modified press action.
+     * Modifies the press action argument of the {@link ImageButton} constructor inside {@code InventoryScreen#init}.
+     * This version has no dedicated recipe book toggle method to inject into, so the press action of the recipe book
+     * button is wrapped to also reposition the sort inventory and quick stack to nearby chests buttons.
      */
     @ModifyArg(method = "init", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/gui/components/ImageButton;<init>(IIIILnet/minecraft/client/gui/components/WidgetSprites;Lnet/minecraft/client/gui/components/Button$OnPress;)V"
         )
     )
-    private Button.OnPress modifyRecipeBookButtonPress(Button.OnPress original) {
+    private Button.OnPress modifyInitImageButtonOnPress(Button.OnPress original) {
         if (minecraft.player.isSpectator()) {
             return original;
         }

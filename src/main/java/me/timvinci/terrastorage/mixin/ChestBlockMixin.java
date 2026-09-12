@@ -22,13 +22,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ChestBlockMixin {
 
     /**
+     * Injects into {@code ChestBlock#updateShape} at RETURN.
      * Transfers the custom name from a single chest to a newly formed double chest block entity.
      */
     @Inject(method = "updateShape", at = @At("RETURN"))
-    protected BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos, CallbackInfoReturnable<BlockState> cir) {
+    private void onUpdateShapeReturn(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos, CallbackInfoReturnable<BlockState> cir) {
         // Ignore the call of this method on the client side, since the server sided WorldAccess is needed.
         if (world.isClientSide()) {
-            return cir.getReturnValue();
+            return;
         }
 
         BlockState returnState = cir.getReturnValue();
@@ -46,6 +47,5 @@ public class ChestBlockMixin {
                 });
             }
         }
-        return returnState;
     }
 }

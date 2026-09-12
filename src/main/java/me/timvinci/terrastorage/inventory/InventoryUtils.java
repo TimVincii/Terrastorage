@@ -359,7 +359,7 @@ public class InventoryUtils {
             }
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof Container inventory && inventory.getContainerSize() >= 27) {
+            if (blockEntity instanceof Container container && container.getContainerSize() >= 27) {
                 if (blockEntity instanceof BaseContainerBlockEntity lockable && !lockable.canOpen(player)) {
                     return; // Skip locked containers.
                 }
@@ -379,7 +379,7 @@ public class InventoryUtils {
                 if (blockEntity instanceof ChestBlockEntity) {
                     ChestType chestType = state.getValue(ChestBlock.TYPE);
                     if (chestType == ChestType.SINGLE) {
-                        nearbyStorages.add(Pair.of(inventory, losPoint));
+                        nearbyStorages.add(Pair.of(container, losPoint));
                         return;
                     }
 
@@ -388,20 +388,20 @@ public class InventoryUtils {
                     Container neighboringChestInventory = (Container) world.getBlockEntity(neighboringChestPos);
 
                     CompoundContainer doubleInventory = chestType == ChestType.RIGHT ?
-                            new CompoundContainer(inventory, neighboringChestInventory) :
-                            new CompoundContainer(neighboringChestInventory, inventory);
+                            new CompoundContainer(container, neighboringChestInventory) :
+                            new CompoundContainer(neighboringChestInventory, container);
                     nearbyStorages.add(Pair.of(doubleInventory, doubleChestLosPoint));
                     processedChests.add(neighboringChestPos);
                 }
                 else {
-                    nearbyStorages.add(Pair.of(inventory, losPoint));
+                    nearbyStorages.add(Pair.of(container, losPoint));
                 }
             }
         });
 
         AABB searchBox = new AABB(playerPos).inflate(range);
         world.getEntities(EntityTypeTest.forClass(VehicleEntity.class), searchBox, entity ->
-        entity instanceof Container inventory && inventory.getContainerSize() >= 27)
+        entity instanceof Container container && container.getContainerSize() >= 27)
             .forEach(entity -> {
                 Vec3 losPoint;
                 if (performLosCheck) {
@@ -554,7 +554,7 @@ public class InventoryUtils {
     }
 
     /**
-     * This method acts similarly to the original ItemStack.areItemsAndComponentsEqual, but it will also return true
+     * This method acts similarly to the original ItemStack.isSameItemSameTags, but it will also return true
      * for any two item stacks whose only component difference is one being favorite while the other isn't.
      */
     public static boolean canCombine(ItemStack firstStack, ItemStack secondStack) {
