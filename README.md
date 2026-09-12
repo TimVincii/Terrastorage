@@ -204,7 +204,7 @@ Terrastorage works smoothly with all the vanilla storage blocks like chests, bar
 Compatibility with modded storage blocks varies. Some will work without any issues, while others might not be compatible right away. If you come across a storage block from another mod that doesn’t seem to work with Terrastorage, feel free to open an issue on GitHub, and I’ll see what I can do!
 
 ### Feature Limitations
-Renaming modded storage blocks that do not extend `LockableContainerBlockEntity` or modded storage entities that do not extend `VehicleInventory` is currently not supported. This is a limitation that would be difficult to overcome and is likely to remain for the foreseeable future.
+Renaming modded storage blocks that do not extend `BaseContainerBlockEntity` or modded storage entities that do not extend `ContainerEntity` is currently not supported. This is a limitation that would be difficult to overcome and is likely to remain for the foreseeable future.
 
 # Acknowledgments
 The Minecraft-style textures for the **Quick Stack To Nearby Storages** and **Sort Inventory** buttons were generously provided by Ventgirl_Joanne.
