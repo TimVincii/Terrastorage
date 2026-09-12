@@ -18,10 +18,11 @@ import java.util.List;
 public class ItemStackMixin {
 
     /**
+     * Injects into {@link ItemStack#getTooltipLines} at RETURN.
      * Adds the "Marked as favorite" tooltip if the item stack is favorite.
      */
     @Inject(method = "getTooltipLines", at = @At("RETURN"), cancellable = true)
-    public void onGetTooltipReturn(@Nullable Player player, TooltipFlag context, CallbackInfoReturnable<List<Component>> cir) {
+    public void onGetTooltipLinesReturn(@Nullable Player player, TooltipFlag context, CallbackInfoReturnable<List<Component>> cir) {
         if (!ItemFavoritingUtils.isFavorite(((ItemStack) (Object) this))) {
             return;
         }

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * A mixin of the ClientPlayerEntity class, used for adding item favoriting support.
+ * A mixin of the LocalPlayer class, used for adding item favoriting support.
  */
 @Mixin(LocalPlayer.class)
 public class LocalPlayerMixin extends AbstractClientPlayer {
@@ -21,10 +21,11 @@ public class LocalPlayerMixin extends AbstractClientPlayer {
     }
 
     /**
+     * Injects into {@code LocalPlayer#drop} at HEAD.
      * Stops the player from dropping favorite items.
      */
     @Inject(method = "drop", at = @At("HEAD"), cancellable = true)
-    private void onDropSelectedItem(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
+    private void onDropHead(boolean entireStack, CallbackInfoReturnable<Boolean> cir) {
         if (ItemFavoritingUtils.isFavorite(this.getMainHandItem())) {
             cir.cancel();
         }
