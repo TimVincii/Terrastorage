@@ -25,10 +25,11 @@ public class ItemStackMixin {
     private int count;
 
     /**
+     * Injects into {@link ItemStack#getTooltipLines} at RETURN.
      * Adds the "Marked as favorite" tooltip if the item stack is favorite.
      */
     @Inject(method = "getTooltipLines", at = @At("RETURN"), cancellable = true)
-    public void onGetTooltipReturn(Item.TooltipContext context, @Nullable Player player, TooltipFlag type, CallbackInfoReturnable<List<Component>> cir) {
+    private void onGetTooltipLinesReturn(Item.TooltipContext context, @Nullable Player player, TooltipFlag type, CallbackInfoReturnable<List<Component>> cir) {
         if (!ItemFavoritingUtils.isFavorite(((ItemStack) (Object) this))) {
             return;
         }

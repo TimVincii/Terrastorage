@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Objects;
 
 /**
- * A mixin of the CreativeInventoryScreen class, adds the inventory storage buttons to the creative inventory screen,
+ * A mixin of the CreativeModeInventoryScreen class, adds the inventory storage buttons to the creative inventory screen,
  * and item favoriting related logic.
  */
 @Mixin(CreativeModeInventoryScreen.class)
@@ -43,16 +43,17 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
     @Shadow @Nullable
     private Slot destroyItemSlot;
 
-    public CreativeModeInventoryScreenMixin(CreativeModeInventoryScreen.ItemPickerMenu screenHandler, Inventory playerInventory, Component text) {
-        super(screenHandler, playerInventory, text);
+    public CreativeModeInventoryScreenMixin(CreativeModeInventoryScreen.ItemPickerMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title);
     }
 
     /**
-     * Stops favorite items from being removed by the 'delete item' slot, and calls the ScreenInteractionUtils class to
-     * process the slot click.
+     * Injects into {@code CreativeModeInventoryScreen#slotClicked} at HEAD.
+     * Stops favorite items from being removed by the 'delete item' slot, and calls {@link ScreenInteractionUtils#processSlotClick}
+     * to process the slot click.
      */
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
-    private void onMouseClick(@Nullable Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
+    private void onSlotClickedHead(@Nullable Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
         ItemStack cursorStack = this.menu.getCarried();
         if (Objects.equals(slot, destroyItemSlot) && !cursorStack.isEmpty() && ItemFavoritingUtils.isFavorite(cursorStack)) {
             ci.cancel();
@@ -68,7 +69,7 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
     @Redirect(method = "slotClicked",
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;handleCreativeModeItemAdd(Lnet/minecraft/world/item/ItemStack;I)V"))
-    private void redirectClickCreativeStack(MultiPlayerGameMode interactionManager, ItemStack stack, int i, @Nullable Slot slot, int slotId, int button, ClickType actionType) {
+    private void redirectSlotClickedHandleCreativeModeItemAdd(MultiPlayerGameMode interactionManager, ItemStack stack, int i, @Nullable Slot slot, int slotId, int button, ClickType actionType) {
         if (actionType != ClickType.QUICK_MOVE) {
             interactionManager.handleCreativeModeItemAdd(stack, i);
             return;
@@ -96,6 +97,7 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
     }
 
     /**
+     * Injects into {@code CreativeModeInventoryScreen#init} when {@code CreativeModeInventoryScreen#selectTab} is called.
      * Adds the sort inventory and quick stack to nearby chests buttons once the creative inventory screen is
      * initializing.
      */
@@ -104,7 +106,7 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/screens/inventory/CreativeModeInventoryScreen;selectTab(Lnet/minecraft/world/item/CreativeModeTab;)V")
     )
-    private void onInit(CallbackInfo ci) {
+    private void onInitSelectTab(CallbackInfo ci) {
         int buttonX = this.leftPos + 138;
         int buttonY = this.topPos + 19;
         Tuple<ImageButton, ImageButton> buttons = StorageButtonCreator.createInventoryButtons(buttonX, buttonY);
@@ -116,10 +118,11 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
     }
 
     /**
+     * Injects into {@code CreativeModeInventoryScreen#selectTab} at TAIL.
      * Modifies the visibility of the buttons to only appear in the inventory tab.
      */
     @Inject(method = "selectTab", at = @At("TAIL"))
-    private void onSetSelectedTab(CreativeModeTab group, CallbackInfo ci) {
+    private void onSelectTabTail(CreativeModeTab group, CallbackInfo ci) {
         if (BuiltInRegistries.CREATIVE_MODE_TAB.wrapAsHolder(group).is(CreativeModeTabs.INVENTORY)) {
             quickStackButton.visible = true;
             sortInventoryButton.visible = true;

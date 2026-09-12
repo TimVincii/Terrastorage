@@ -5,6 +5,9 @@ import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
+/**
+ * A mixin accessor for the ContainerScreen class.
+ */
 @Mixin(ContainerScreen.class)
 public interface ContainerScreenAccessor {
 
