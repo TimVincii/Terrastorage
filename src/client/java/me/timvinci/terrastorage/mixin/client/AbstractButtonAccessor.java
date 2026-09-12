@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 /**
- * A mixin accessor for the PressableWidget class.
+ * A mixin accessor for the AbstractButton class.
  */
 @Mixin(AbstractButton.class)
 public interface AbstractButtonAccessor {
