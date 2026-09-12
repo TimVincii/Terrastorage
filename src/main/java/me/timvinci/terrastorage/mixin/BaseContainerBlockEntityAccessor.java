@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 /**
- * A mixin accessor for the LockableContainerBlockEntity class.
+ * A mixin accessor for the BaseContainerBlockEntity class.
  */
 @Mixin(BaseContainerBlockEntity.class)
 public interface BaseContainerBlockEntityAccessor {
