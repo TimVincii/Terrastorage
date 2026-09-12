@@ -1,15 +1,17 @@
 package me.timvinci.terrastorage.mixin;
 
-import me.timvinci.terrastorage.mixin.BaseContainerBlockEntityAccessor;
 import me.timvinci.terrastorage.network.NetworkHandler;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -38,13 +40,23 @@ public class ChestBlockMixin {
 
             if (chestBlockEntity.hasCustomName()) {
                 ServerLevel serverWorld = (ServerLevel) world;
-                serverWorld.getServer().execute(() -> {
-                    BaseContainerBlockEntity chestNeighborBlockEntity = (BaseContainerBlockEntity) serverWorld.getBlockEntity(neighborPos);
-                    ((BaseContainerBlockEntityAccessor)chestNeighborBlockEntity).setName(chestBlockEntity.getCustomName());
+                MinecraftServer server = serverWorld.getServer();
+                Component customName = chestBlockEntity.getCustomName();
+
+                // The transfer is queued rather than passed to MinecraftServer#execute, which runs a task in place
+                // whenever the server thread isn't already inside one. It has to run after the placement is over,
+                // or the item components of the placed chest are applied to its block entity and clear the name.
+                server.tell(new TickTask(server.getTickCount(), () -> {
+                    // The newly formed half may be gone by the time the task runs.
+                    if (!(serverWorld.getBlockEntity(neighborPos) instanceof BaseContainerBlockEntity chestNeighborBlockEntity)) {
+                        return;
+                    }
+
+                    ((BaseContainerBlockEntityAccessor) chestNeighborBlockEntity).setName(customName);
 
                     chestNeighborBlockEntity.setChanged();
-                    NetworkHandler.sendGlobalBlockRenamedPacket(serverWorld, neighborPos, chestBlockEntity.getCustomName().getString());
-                });
+                    NetworkHandler.sendGlobalBlockRenamedPacket(serverWorld, neighborPos, customName.getString());
+                }));
             }
         }
     }
