@@ -38,10 +38,11 @@ public class BlockEntityRenderDispatcherMixin {
     private static NametagRenderer nametagRenderer;
 
     /**
+     * Injects into {@link BlockEntityRenderDispatcher} constructor at TAIL.
      * Initiates the nametag renderer.
      */
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void onInit(Font textRenderer,
+    private void onInitTail(Font textRenderer,
                         Supplier<EntityModelSet> entityModelsGetter,
                         BlockRenderDispatcher blockRenderManager,
                         ItemModelResolver itemModelManager,
@@ -54,7 +55,9 @@ public class BlockEntityRenderDispatcherMixin {
 
 
     /**
-     * Adds nametag rendering after the block entity rendering has finished.
+     * Injects into {@link BlockEntityRenderDispatcher#render} immediately after {@code BlockEntityRenderDispatcher#setupAndRender}
+     * is called, so that a nametag is rendered right after the block entity it belongs to.
+     * Adds nametag rendering after block entity rendering takes place.
      */
     @Inject(method = "render(Lnet/minecraft/world/level/block/entity/BlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;)V",
         at = @At(
@@ -62,7 +65,7 @@ public class BlockEntityRenderDispatcherMixin {
                 target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderDispatcher;setupAndRender(Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;Lnet/minecraft/world/level/block/entity/BlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/phys/Vec3;)V",
                 shift = At.Shift.AFTER),
         locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private <E extends BlockEntity> void afterRender(
+    private <E extends BlockEntity> void onRenderAfterSetupAndRender(
             E blockEntity, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, CallbackInfo ci,
             BlockEntityRenderer<E> blockEntityRenderer) {
         if (blockEntity instanceof RandomizableContainerBlockEntity lootableContainerBlockEntity && nametagRenderer.hasLabel(lootableContainerBlockEntity)) {
@@ -78,12 +81,13 @@ public class BlockEntityRenderDispatcherMixin {
 
 
     /**
+     * Modifies the return value of {@link BlockEntityRenderDispatcher#getRenderer(BlockEntity)} at RETURN.
      * Provides the nametag renderer for renameable storages that vanilla has no renderer for.
      * The check is performed on the block entity itself rather than on its type, since the size of a storage can
      * differ between block entities of the same type, for example when a mod's storage can be upgraded.
      */
     @ModifyReturnValue(method = "getRenderer(Lnet/minecraft/world/level/block/entity/BlockEntity;)Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;", at = @At("RETURN"))
-    private BlockEntityRenderer<?> provideNametagRenderer(BlockEntityRenderer<?> original, BlockEntity blockEntity) {
+    private BlockEntityRenderer<?> modifyGetRendererReturn(BlockEntityRenderer<?> original, BlockEntity blockEntity) {
         if (original == null && blockEntity instanceof RandomizableContainerBlockEntity container && container.getContainerSize() >= 27) {
             return BlockNametagRenderer.INSTANCE;
         }

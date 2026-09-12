@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class ItemEntityMixin {
 
     /**
+     * Modifies the stack argument of {@link ItemEntity#setItem} at HEAD.
      * Based on the keep favorites on drop option, removes the favorite status of an item stack before it is used by
      * the item entity.
      */
@@ -24,7 +25,7 @@ public class ItemEntityMixin {
             at = @At("HEAD"),
             argsOnly = true
     )
-    private ItemStack modifySetStack(ItemStack stack) {
+    private ItemStack modifySetItemHead(ItemStack stack) {
         if (ConfigManager.getInstance().getConfig().getKeepFavoritesOnDrop()) {
             return stack;
         }

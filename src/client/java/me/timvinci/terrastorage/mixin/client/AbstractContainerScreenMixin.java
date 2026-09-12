@@ -13,9 +13,9 @@ import me.timvinci.terrastorage.network.ClientNetworkHandler;
 import me.timvinci.terrastorage.util.*;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -40,9 +40,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 /**
- * A mixin of the HandledScreen class, adds the storage option buttons to storage screens, and provides item favoriting
+ * A mixin of the AbstractContainerScreen class, adds the storage option buttons to storage screens, and provides item favoriting
  * support.
- * @param <T> The screen handler type.
+ * @param <T> The container screen type.
  */
 @Mixin(AbstractContainerScreen.class )
 public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMenu> extends Screen {
@@ -62,19 +62,20 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     /**
-     * Adds the storage option buttons once the handled screen is initializing.
+     * Injects into {@code AbstractContainerScreen#init} at TAIL to add the storage option buttons once the container
+     * screen is finished initializing.
      */
     @Inject(method = "init", at = @At("TAIL"))
-    private void onInit(CallbackInfo ci) {
+    private void onInitTail(CallbackInfo ci) {
         Player player = minecraft.player;
-        // Return if the player is in spectator mode, or if the handled screen is that of the player's inventory.
+        // Return if the player is in spectator mode, or if the container screen is that of the player's inventory.
         if (player.isSpectator() ||
             menu instanceof CreativeModeInventoryScreen.ItemPickerMenu ||
             menu instanceof InventoryMenu) {
             return;
         }
 
-        // Return if the handled screen isn't that of a storage.
+        // Return if the container screen isn't that of a storage.
         if (!InventoryUtils.isStorageMenu(menu, player)) {
             return;
         }
@@ -148,14 +149,15 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     /**
-     * Provides the ability to favorite items stacks.
+     * Injects into {@link AbstractContainerScreen#mouseClicked} immediately after the hovered slot is assigned to
+     * a local variable. Provides the ability to favorite item stacks.
      */
     @Inject(method = "mouseClicked",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/Util;getMillis()J"),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION, cancellable = true)
-    private void mouseClicked(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+    private void onMouseClickedAfterGetMillis(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
         if (button != 0 || slot == null || !slot.hasItem() || !menu.getCarried().isEmpty()) {
             return;
         }
@@ -182,11 +184,12 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     /**
-     * Provides the ability to sort inventories through the sort inventory keybind.
-     * Injected at TAIL to allow any other logic related to the same keybind to happen before the sorting.
+     * Injects into {@link AbstractContainerScreen#mouseClicked} at TAIL, allowing any other logic related to the same
+     * keybind to happen before the sorting.
+     * Provides the ability to sort inventories through the sort inventory keybind if it's a mouse keybind.
      */
     @Inject(method = "mouseClicked", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void mouseClickedTail(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+    private void onMouseClickedTail(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
         if (slot == null || !TerrastorageKeybindings.sortInventoryBind.matchesMouse(button)) {
             return;
         }
@@ -198,19 +201,21 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     /**
-     * Calls the ScreenInteractionUtils to process a slot click.
+     * Injects into {@code AbstractContainerScreen#slotClicked}
+     * Calls {@link ScreenInteractionUtils#processSlotClick} to process a slot click.
      */
     @Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ClickType;)V", at = @At("HEAD"), cancellable = true)
-    private void onMouseClick(Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
+    private void onSlotClickedHead(Slot slot, int slotId, int button, ClickType actionType, CallbackInfo ci) {
         ScreenInteractionUtils.processSlotClick(this.minecraft, this.menu.getCarried(), slot, slotId, button, actionType, ci);
     }
 
     /**
-     * Provides the ability to sort inventories through the sort inventory keybind.
-     * Injected at TAIL to allow any other logic related to the same keybind to happen before the sorting.
+     * Injects into {@link AbstractContainerScreen#keyPressed} at TAIL, allowing any other logic related to the same
+     * keybind to happen before the sorting.
+     * Provides the ability to sort inventories through the sort inventory keybind if it's a keyboard keybind.
      */
     @Inject(method = "keyPressed", at = @At("TAIL"))
-    private void onKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+    private void onKeyPressedTail(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
         if (hoveredSlot == null || !TerrastorageKeybindings.sortInventoryBind.matches(keyCode, scanCode)) {
             return;
         }
@@ -222,6 +227,8 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     /**
+     * Injects into {@code AbstractContainerScreen#extractSlot} immediately before {@link GuiGraphics#renderItemDecorations(Font, ItemStack, int, int, String)}
+     * is called.
      * Draws the favorite border on slots that hold a favorite item stack.
      */
     @Inject(method = "renderSlot",
@@ -230,7 +237,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
                     target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
                     shift = At.Shift.BEFORE),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void drawSlot(GuiGraphics context, Slot slot, CallbackInfo ci, int i, int j, ItemStack itemStack) {
+    private void onRenderSlotBeforeRenderItemDecorations(GuiGraphics context, Slot slot, CallbackInfo ci, int i, int j, ItemStack itemStack) {
         if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(itemStack)) {
             return;
         }

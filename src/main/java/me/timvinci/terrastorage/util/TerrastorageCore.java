@@ -269,8 +269,8 @@ public class TerrastorageCore {
         Component newCustomName = newName.isEmpty() ? null : Component.literal(newName);
         MenuProvider factory;
         Container containerInventory = player.containerMenu.slots.getFirst().container;
-        if (containerInventory instanceof ContainerEntity vehicleInventory) {
-            Entity entity = (Entity) vehicleInventory;
+        if (containerInventory instanceof ContainerEntity containerEntity) {
+            Entity entity = (Entity) containerEntity;
             if (newName.equals(((EntityAccessor)entity).invokeGetTypeName().getString())) {
                 newCustomName = null;
             }
@@ -279,8 +279,8 @@ public class TerrastorageCore {
             factory = (MenuProvider) entity;
         }
         else if (containerInventory instanceof CompoundContainerAccessor accessor) {
-            if (accessor.Container1() instanceof BaseContainerBlockEntity firstPart &&
-                    accessor.Container2() instanceof BaseContainerBlockEntity secondPart) {
+            if (accessor.getContainer1() instanceof BaseContainerBlockEntity firstPart &&
+                    accessor.getContainer2() instanceof BaseContainerBlockEntity secondPart) {
 
                 String containerName = ((BaseContainerBlockEntityAccessor)firstPart).invokeGetDefaultName().getString();
                 String doubleContainerName = Component.translatable("container.chestDouble").getString().replace(Component.translatable("container.chest").getString(), containerName);
@@ -303,18 +303,18 @@ public class TerrastorageCore {
                 return;
             }
         }
-        else if (containerInventory instanceof BaseContainerBlockEntity lockableContainerBlockEntity) {
-            BaseContainerBlockEntityAccessor accessor = (BaseContainerBlockEntityAccessor) lockableContainerBlockEntity;
+        else if (containerInventory instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
+            BaseContainerBlockEntityAccessor accessor = (BaseContainerBlockEntityAccessor) baseContainerBlockEntity;
 
             if (newName.equals(accessor.invokeGetDefaultName().getString())) {
                 newCustomName = null;
             }
 
             accessor.setName(newCustomName);
-            lockableContainerBlockEntity.setChanged();
+            baseContainerBlockEntity.setChanged();
 
-            NetworkHandler.sendGlobalBlockRenamedPayload(player.level(), lockableContainerBlockEntity.getBlockPos(), newCustomName == null ? "" : newCustomName.getString());
-            factory = lockableContainerBlockEntity.getBlockState().getMenuProvider(player.level(), lockableContainerBlockEntity.getBlockPos());
+            NetworkHandler.sendGlobalBlockRenamedPayload(player.level(), baseContainerBlockEntity.getBlockPos(), newCustomName == null ? "" : newCustomName.getString());
+            factory = baseContainerBlockEntity.getBlockState().getMenuProvider(player.level(), baseContainerBlockEntity.getBlockPos());
         }
         else {
             player.sendSystemMessage(Component.literal("The storage you tried to rename is currently unsupported by Terrastorage."));
