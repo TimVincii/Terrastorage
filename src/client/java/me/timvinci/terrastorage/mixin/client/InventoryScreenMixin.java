@@ -4,7 +4,6 @@ import me.timvinci.terrastorage.gui.widget.StorageButtonCreator;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
@@ -14,7 +13,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -27,15 +25,16 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
     @Unique
     private ImageButton sortInventoryButton;
 
-    public InventoryScreenMixin(InventoryMenu handler, RecipeBookComponent<?> recipeBook, Inventory inventory, Component title) {
-        super(handler, recipeBook, inventory, title);
+    public InventoryScreenMixin(InventoryMenu menu, RecipeBookComponent<?> recipeBook, Inventory inventory, Component title) {
+        super(menu, recipeBook, inventory, title);
     }
 
     /**
+     * Injects into {@code InventoryScreen#init} at TAIL.
      * Adds the sort inventory and quick stack to nearby chests buttons once the inventory screen is initializing.
      */
     @Inject(method = "init", at = @At("TAIL"))
-    public void onInit(CallbackInfo ci) {
+    private void onInitTail(CallbackInfo ci) {
         // Return if the player is in spectator mode.
         if (minecraft.player.isSpectator()) {
             return;
@@ -52,10 +51,11 @@ public abstract class InventoryScreenMixin extends AbstractRecipeBookScreen<Inve
     }
 
     /**
+     * Injects into {@code InventoryScreen#onRecipeBookButtonClick} at TAIL.
      * Repositions the inventory buttons once the recipe book is toggled.
      */
     @Inject(method = "onRecipeBookButtonClick", at = @At("TAIL"))
-    private void onRecipeBookToggledTail(CallbackInfo ci) {
+    private void onRecipeBookButtonClickTail(CallbackInfo ci) {
         int buttonX = this.leftPos + 128;
         quickStackButton.setPosition(buttonX, quickStackButton.getY());
         buttonX += 24;

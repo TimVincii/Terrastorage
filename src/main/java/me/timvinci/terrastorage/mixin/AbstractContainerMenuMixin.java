@@ -16,14 +16,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Optional;
 
 /**
- * A mixin of the ScreenHandler class, used to make the favorite item interactions feel and behave similarly to how they
+ * A mixin of the AbstractContainerMenu class, used to make the favorite item interactions feel and behave similarly to how they
  * do in Terraria.
  */
 @Mixin(AbstractContainerMenu.class)
 public abstract class AbstractContainerMenuMixin {
 
     /**
-     * Redirects the Slot.setStack call from within the internalOnSlotClick method.
+     * Redirects {@link Slot#setByPlayer} calls inside {@code AbstractContainerMenu#doClick}.
      * Un-favorites favorite items when they are placed in a slot outside the player's inventory, and makes right click
      * dragging of favorite items over non-favorite slots (and the opposite) respect the slot's favorite state.
      */
@@ -32,7 +32,7 @@ public abstract class AbstractContainerMenuMixin {
                     value = "INVOKE",
                     target = "Lnet/minecraft/world/inventory/Slot;setByPlayer(Lnet/minecraft/world/item/ItemStack;)V"
             ))
-    private void redirectSetStack(Slot slot, ItemStack stack, int slotIndex, int button, ClickType actionType, Player player) {
+    private void redirectDoClickSlotSetByPlayer(Slot slot, ItemStack stack, int slotIndex, int button, ClickType actionType, Player player) {
         if (!InventoryUtils.isPlayerSlot(slot, player)) {
             if (ItemFavoritingUtils.isFavorite(stack)) {
                 ItemFavoritingUtils.setFavorite(stack, false);
@@ -49,7 +49,7 @@ public abstract class AbstractContainerMenuMixin {
     }
 
     /**
-     * Redirects the Slot.insertStack method from within the internalOnSlotClick method.
+     * Redirects {@link Slot#safeInsert(ItemStack, int)} calls inside {@code AbstractContainerMenu#doClick}.
      * Un-favorites favorite items when they are inserted in a slot outside the player's inventory, and makes the item
      * interaction of favorite items with non-favorite items behave like it does in Terraria (when items are combined
      * via left-click and when increasing the count of a stack via right-clicking).
@@ -60,7 +60,7 @@ public abstract class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/inventory/Slot;safeInsert(Lnet/minecraft/world/item/ItemStack;I)Lnet/minecraft/world/item/ItemStack;"
             )
     )
-    private ItemStack redirectInsertStack(Slot slot, ItemStack cursorStack, int count, int slotIndex, int button, ClickType actionType, Player player) {
+    private ItemStack redirectDoClickSlotSafeInsert(Slot slot, ItemStack cursorStack, int count, int slotIndex, int button, ClickType actionType, Player player) {
         if (!slot.hasItem()) {
             if (!InventoryUtils.isPlayerSlot(slot, player) && ItemFavoritingUtils.isFavorite(cursorStack)) {
                 if (count == 1 && cursorStack.getCount() > 1) {
@@ -99,7 +99,7 @@ public abstract class AbstractContainerMenuMixin {
     }
 
     /**
-     * Redirects the ItemStack.areItemsAndComponentsEqual call from within the internalOnSlotClick method.
+     * Redirects {@link ItemStack#isSameItemSameComponents} calls inside {@code AbstractContainerMenu#doClick}.
      * Uses the custom-made comparison method from the InventoryUtils class.
      */
     @Redirect(method = "doClick",
@@ -108,12 +108,12 @@ public abstract class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/item/ItemStack;isSameItemSameComponents(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z"
             )
     )
-    private boolean redirectAreItemsAndComponentsEqual(ItemStack slotStack, ItemStack cursorStack) {
+    private boolean redirectDoClickIsSameItemSameComponents(ItemStack slotStack, ItemStack cursorStack) {
         return InventoryUtils.areItemsAndComponentsEqual(slotStack, cursorStack);
     }
 
     /**
-     * Redirects the ItemStack.areItemsAndComponentsEqual call from within the canInsertItemIntoSlot method.
+     * Redirects {@link ItemStack#isSameItemSameComponents} calls inside {@link AbstractContainerMenu#canItemQuickReplace}.
      * Uses the custom-made comparison method from the InventoryUtils class.
      */
     @Redirect(method = "canItemQuickReplace",
@@ -122,13 +122,13 @@ public abstract class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/item/ItemStack;isSameItemSameComponents(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;)Z"
             )
     )
-    private static boolean redirectAreItemsAndComponentsEqual_(ItemStack firstStack, ItemStack secondStack) {
+    private static boolean redirectCanItemQuickReplaceIsSameItemSameComponents(ItemStack firstStack, ItemStack secondStack) {
         return InventoryUtils.areItemsAndComponentsEqual(firstStack, secondStack);
     }
 
     /**
-     * Redirects the canInsertItemIntoSlot call from within the internalOnSlotClick method.
-     * If the SlotActionType is PICKUP_ALL, redirect the method to the original canInsertItemIntoSlot.
+     * Redirects {@link AbstractContainerMenu#canItemQuickReplace} calls inside {@code AbstractContainerMenu#doClick}.
+     * If the container input is PICKUP_ALL, the call is routed to the unmodified copy of canItemQuickReplace below.
      */
     @Redirect(method = "doClick",
             at = @At(
@@ -136,20 +136,20 @@ public abstract class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/inventory/AbstractContainerMenu;canItemQuickReplace(Lnet/minecraft/world/inventory/Slot;Lnet/minecraft/world/item/ItemStack;Z)Z"
             )
     )
-    private boolean redirectCanInsertItemIntoSlot(@Nullable Slot slot, ItemStack stack, boolean allowOverflow, int slotIndex, int button, ClickType actionType, Player player) {
+    private boolean redirectDoClickCanItemQuickReplace(@Nullable Slot slot, ItemStack stack, boolean allowOverflow, int slotIndex, int button, ClickType actionType, Player player) {
         if (actionType == ClickType.PICKUP_ALL) {
-            return originalCanInsertItemIntoSlot(slot, stack, allowOverflow);
+            return originalCanItemQuickReplace(slot, stack, allowOverflow);
         }
 
         return AbstractContainerMenu.canItemQuickReplace(slot, stack, allowOverflow);
     }
 
     /**
-     * This is the original ScreenHandler.canInsertItemIntoSlot method, we create a copy of it here since the original
-     * method is modified via the @Redirect 2 methods above.
+     * A copy of the original {@link AbstractContainerMenu#canItemQuickReplace} method, kept here since the original is
+     * altered by the isSameItemSameComponents redirect above.
      */
     @Unique
-    private boolean originalCanInsertItemIntoSlot(@Nullable Slot slot, ItemStack stack, boolean allowOverflow) {
+    private boolean originalCanItemQuickReplace(@Nullable Slot slot, ItemStack stack, boolean allowOverflow) {
         boolean bl = slot == null || !slot.hasItem();
         if (!bl && ItemStack.isSameItemSameComponents(stack, slot.getItem())) {
             return slot.getItem().getCount() + (allowOverflow ? 0 : stack.getCount()) <= stack.getMaxStackSize();
@@ -159,7 +159,7 @@ public abstract class AbstractContainerMenuMixin {
     }
 
     /**
-     * Redirects the Slot.tryTakeStackRange call from within the internalOnSlotClick method.
+     * Redirects {@link Slot#tryRemove} calls inside {@code AbstractContainerMenu#doClick}.
      * Removes the favorite status from item stacks created by splitting a favorite stack.
      */
     @Redirect(method = "doClick",
@@ -168,7 +168,7 @@ public abstract class AbstractContainerMenuMixin {
                     target = "Lnet/minecraft/world/inventory/Slot;tryRemove(IILnet/minecraft/world/entity/player/Player;)Ljava/util/Optional;"
             )
     )
-    private Optional<ItemStack> redirectTryTakeStackRange(Slot slot, int min, int max, Player player) {
+    private Optional<ItemStack> redirectDoClickSlotTryRemove(Slot slot, int min, int max, Player player) {
         if (!ItemFavoritingUtils.isFavorite(slot.getItem()) || min == slot.getItem().getCount()) {
             return slot.tryRemove(min, max, player);
         }
