@@ -49,7 +49,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
 
     /**
      * Injects into {@code CreativeModeInventoryScreen#slotClicked} at HEAD.
-     * Stops favorite items from being removed by the 'delete item' slot, and calls {@link ScreenInteractionUtils#processSlotClick}
+     * Stops favorite items from being removed by the destroyItemSlot, and calls {@link ScreenInteractionUtils#processSlotClick}
      * to process the slot click.
      */
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
@@ -65,7 +65,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
 
     /**
      * Redirects {@link Slot#set} calls inside {@code CreativeModeInventoryScreen#slotClicked}.
-     * Stops the client from deleting favorite items when the 'delete item' slot is shift pressed.
+     * Stops the client from deleting favorite items when the destroyItemSlot is shift pressed.
      */
     @Redirect(method = "slotClicked",
             at = @At(
@@ -83,7 +83,7 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
 
     /**
      * Redirects {@link MultiPlayerGameMode#handleCreativeModeItemAdd} calls inside {@code CreativeModeInventoryScreen#slotClicked}.
-     * Stops favorite items from being deleted (on the server) when the 'delete item' slot is shift pressed.
+     * Stops favorite items from being deleted (on the server) when the destroyItemSlot is shift pressed.
      */
     @Redirect(method = "slotClicked",
             at = @At(value = "INVOKE",
@@ -100,10 +100,11 @@ public abstract class CreativeModeInventoryScreenMixin extends AbstractContainer
         }
 
         try {
+            // The slot was already emptied by the Slot#set call preceding this call in the vanilla loop, unless
+            // redirectSlotClickedSlotSet kept its stack because it's favorited. A stack remaining here therefore means
+            // the deletion was refused on the client, and so it mustn't be forwarded to the server.
             ItemStack playerStack = this.minecraft.player.inventoryMenu.getItems().get(i);
-
-            // If the stack is favorited or empty, skip this call entirely
-            if (playerStack.isEmpty() || ItemFavoritingUtils.isFavorite(playerStack)) {
+            if (!playerStack.isEmpty() && ItemFavoritingUtils.isFavorite(playerStack)) {
                 return;
             }
 
