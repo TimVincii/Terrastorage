@@ -49,7 +49,7 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
 
     /**
      * Injects into {@code CreativeModeInventoryScreen#slotClicked} at HEAD.
-     * Stops favorite items from being removed by the 'delete item' slot, and calls {@link ScreenInteractionUtils#processSlotClick}
+     * Stops favorite items from being removed by the destroyItemSlot, and calls {@link ScreenInteractionUtils#processSlotClick}
      * to process the slot click.
      */
     @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
@@ -64,7 +64,7 @@ public abstract class CreativeModeInventoryScreenMixin extends EffectRenderingIn
     }
 
     /**
-     * Stops favorite items from being deleted when the 'delete item' slot is shift pressed.
+     * Stops favorite items from being deleted when the destroyItemSlot is shift pressed.
      */
     @Redirect(method = "slotClicked",
             at = @At(value = "INVOKE",
