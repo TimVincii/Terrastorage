@@ -7,21 +7,22 @@ import me.timvinci.terrastorage.item.StackProcessor;
 import me.timvinci.terrastorage.util.ComparatorTypes;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.util.SortType;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.SlottedStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
-import net.minecraft.world.level.block.state.properties.ChestType;
-import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.PatchedDataComponentMap;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.CompoundContainer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,7 +34,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -313,13 +313,18 @@ public class InventoryUtils {
 
     /**
      * Gets the storages that are nearby the player, as well as their position.
+     * Blocks are reached through the item storage lookup rather than the Container interface, which covers any storage
+     * generic enough to support hoppers. Entities go through their container, as the lookup is for blocks only.
      * @param player The player.
-     * @return A list consisting of pairs of inventories and their position.
+     * @return A list of the nearby storages and the point their fly out animation travels to.
      */
-    public static List<Pair<Container, Vec3>> getNearbyStorages(ServerPlayer player) {
+    public static List<DiscoveredStorage> getNearbyStorages(ServerPlayer player) {
         Level world = player.level();
-        List<Pair<Container, Vec3>> nearbyStorages = new ArrayList<>();
-        Set<BlockPos> processedChests = new HashSet<>();
+        List<DiscoveredStorage> discovered = new ArrayList<>();
+
+        // A storage covering several blocks is found once per block. Its parts are recognized by handing back the same
+        // first slot which points back into a single storage.
+        Map<StorageView<ItemVariant>, DiscoveredStorage> processedViews = new IdentityHashMap<>();
 
         // Getting the range, and whether the los check is enabled.
         int range = ConfigManager.getInstance().getConfig().getQuickStackRange();
@@ -327,54 +332,50 @@ public class InventoryUtils {
         BlockPos playerPos = player.blockPosition();
 
         BlockPos.withinManhattan(playerPos, range, range, range).forEach(pos -> {
-            if (processedChests.contains(pos)) {
-                return;
-            }
-
             BlockState state = world.getBlockState(pos);
             if (state.isAir() || !state.hasBlockEntity()) {
                 return;
             }
 
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof Container container && container.getContainerSize() >= 27) {
-                if (blockEntity instanceof BaseContainerBlockEntity lockableBlockEntity && !lockableBlockEntity.canOpen(player)) {
-                    return; // Skip locked containers.
-                }
+            if (blockEntity == null) {
+                return;
+            }
 
-                Vec3 losPoint;
-                if (performLosCheck) {
-                    losPoint = hasLineOfSight(player, world, pos);
-                    // Return if the player doesn't have line of sight to the block entity.
-                    if (losPoint == Vec3.ZERO) {
-                        return;
-                    }
-                }
-                else {
-                    losPoint = Vec3.atCenterOf(pos);
-                }
+            // A null direction asks for the whole storage, ignoring side restrictions
+            Storage<ItemVariant> storage = ItemStorage.SIDED.find(world, pos, state, blockEntity, null);
+            if (!(storage instanceof SlottedStorage<ItemVariant> slotted) || slotted.getSlotCount() < 27) {
+                return;
+            }
 
-                if (blockEntity instanceof ChestBlockEntity) {
-                    ChestType chestType = state.getValue(ChestBlock.TYPE);
-                    if (chestType == ChestType.SINGLE) {
-                        nearbyStorages.add(Pair.of(container, losPoint));
-                        return;
-                    }
+            // Kept below the checks above, since canOpen notifies the player that the container is locked
+            if (blockEntity instanceof BaseContainerBlockEntity lockable && !lockable.canOpen(player)) {
+                return; // Skip locked containers
+            }
 
-                    BlockPos neighboringChestPos = getNeighboringChestPos(pos, chestType, state.getValue(ChestBlock.FACING));
-                    Vec3 doubleChestLosPoint = getDoubleChestCenter(losPoint, Vec3.atCenterOf(neighboringChestPos));
-                    Container neighboringChestInventory = (Container) world.getBlockEntity(neighboringChestPos);
-
-                    CompoundContainer doubleInventory = chestType == ChestType.RIGHT ?
-                            new CompoundContainer(container, neighboringChestInventory) :
-                            new CompoundContainer(neighboringChestInventory, container);
-                    nearbyStorages.add(Pair.of(doubleInventory, doubleChestLosPoint));
-                    processedChests.add(neighboringChestPos);
-                }
-                else {
-                    nearbyStorages.add(Pair.of(container, losPoint));
+            Vec3 losPoint;
+            if (performLosCheck) {
+                losPoint = hasLineOfSight(player, world, pos);
+                // Return if the player doesn't have line of sight to the block entity.
+                if (losPoint == Vec3.ZERO) {
+                    return;
                 }
             }
+            else {
+                losPoint = Vec3.atCenterOf(pos);
+            }
+
+            // The underlying view is used so that a slot wrapped by a delegate still matches the slot it delegates to.
+            StorageView<ItemVariant> view = slotted.getSlot(0).getUnderlyingView();
+            DiscoveredStorage existing = processedViews.get(view);
+            if (existing != null) {
+                existing.addPoint(losPoint);
+                return;
+            }
+
+            DiscoveredStorage entry = new DiscoveredStorage(new SlottedStorageAccess(slotted), losPoint);
+            processedViews.put(view, entry);
+            discovered.add(entry);
         });
 
         AABB searchBox = new AABB(playerPos).inflate(range);
@@ -392,34 +393,11 @@ public class InventoryUtils {
                     losPoint = entity.getBoundingBox().getCenter();
                 }
 
-                nearbyStorages.add(Pair.of((Container) entity, losPoint));
+                discovered.add(new DiscoveredStorage(new ContainerStorageAccess((Container) entity), losPoint));
             }
         );
 
-        return nearbyStorages;
-    }
-
-    /**
-     * Calculates the block position of the second chest in a double chest setup based on its orientation.
-     * @param chestBlockPos The position of one part of the double chest.
-     * @param chestType The chest type (LEFT or RIGHT).
-     * @param facing The direction the double chest is facing.
-     * @return The block position of the neighboring chest.
-     */
-    private static BlockPos getNeighboringChestPos(BlockPos chestBlockPos, ChestType chestType, Direction facing) {
-        return chestBlockPos.relative(chestType == ChestType.LEFT ?
-                facing.getClockWise() :
-                facing.getCounterClockWise());
-    }
-
-    /**
-     * Calculates the center point of a double chest, averaging the positions of both chest parts.
-     * @param losPoint The line of sight point from the player to one part of the double chest.
-     * @param secondChestCenter The center position of the second chest block in the double chest.
-     * @return The center point of the entire double chest.
-     */
-    private static Vec3 getDoubleChestCenter(Vec3 losPoint, Vec3 secondChestCenter) {
-        return (losPoint.add(secondChestCenter.x, losPoint.y, secondChestCenter.z)).scale(0.5);
+        return discovered;
     }
 
     /**
