@@ -7,7 +7,8 @@ import net.minecraft.world.item.ItemStack;
  * A rule-aware, index-based view of a storage, targeted by all of Terrastorage's storage operations.
  * Every write goes through take/insert, which persist the change to whatever backs the storage, instead of mutating
  * stacks in place (which only works when the storage hands back live stack references).
- * Implemented by {@link SlotStorageAccess} (the primary, slot backed path) and {@link ContainerStorageAccess}.
+ * Implemented by {@link SlotStorageAccess} (the primary, slot backed path), {@link SlottedStorageAccess} (storages
+ * reached through the Fabric Transfer API, which have no open menu) and {@link ContainerStorageAccess}.
  */
 public interface StorageAccess {
 
@@ -53,4 +54,10 @@ public interface StorageAccess {
      * @return The maximum number of items of {@code stack} the slot can hold.
      */
     int maxStackSize(int index, ItemStack stack);
+
+    /**
+     * Notifies the backing storage that an operation modified it, for implementations that don't persist that on their
+     * own. Called once per storage, after an operation finishes, and only if something changed.
+     */
+    default void markDirty() {}
 }

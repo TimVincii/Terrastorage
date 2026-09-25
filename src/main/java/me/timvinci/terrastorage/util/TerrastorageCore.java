@@ -1,6 +1,5 @@
 package me.timvinci.terrastorage.util;
 
-import com.mojang.datafixers.util.Pair;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.config.ConfigManager;
 import me.timvinci.terrastorage.inventory.*;
@@ -407,14 +406,14 @@ public class TerrastorageCore {
 
     /**
      * Performs a quick stack operation on all storage nearby the player.
-     * Nearby storages have no open menu, and so no slots to enforce rules, and are accessed through a
-     * {@link ContainerStorageAccess} instead.
+     * Nearby storages have no open menu, and so no slots to enforce rules. How each one is reached is decided by
+     * {@link InventoryUtils#getNearbyStorages}, which hands back a {@link StorageAccess} per storage.
      * @param player The player who initiated the operation.
      * @param hotbarProtection The player's hotbar protection value.
      * @param smartDepositMode Whether the player's quick stack mode is 'smart deposit'.
      */
     public static void quickStackToNearbyStorages(ServerPlayer player, boolean hotbarProtection, boolean smartDepositMode) {
-        List<Pair<Container, Vec3>> nearbyStorages = InventoryUtils.getNearbyStorages(player);
+        List<DiscoveredStorage> nearbyStorages = InventoryUtils.getNearbyStorages(player);
         if (nearbyStorages.isEmpty()) {
             return;
         }
@@ -426,11 +425,10 @@ public class TerrastorageCore {
         PlayerSlotAccess playerAccess = new PlayerSlotAccess(player.containerMenu, player);
         boolean playerInventoryModified = false;
 
-        for (Pair<Container, Vec3> storagePair : nearbyStorages) {
-            Container storage = storagePair.getFirst();
-            Vec3 storagePos = storagePair.getSecond();
+        for (DiscoveredStorage nearbyStorage : nearbyStorages) {
+            StorageAccess access = nearbyStorage.getAccess();
+            Vec3 storagePos = nearbyStorage.getCenter();
 
-            StorageAccess access = new ContainerStorageAccess(storage);
             StorageState storageState = new StorageState(access);
             StackProcessor processor = InventoryUtils.createStorageStackProcessor(access, storageState, smartDepositMode);
 
@@ -447,7 +445,7 @@ public class TerrastorageCore {
             }
 
             if (storageState.wasModified()) {
-                storage.setChanged();
+                access.markDirty();
                 playerInventoryModified = true;
             }
         }
