@@ -5,8 +5,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * A container only {@link StorageAccess} implementation, used by Quick Stack To Nearby Storages, where storages are
- * discovered as block or vehicle entities with no open menu, and therefore no slots to enforce rules.
+ * A container only {@link StorageAccess} implementation, used by Quick Stack To Nearby Storages for vehicle entities,
+ * which have no open menu, and therefore no slots to enforce rules. Nearby blocks go through
+ * {@link SlottedStorageAccess} instead, as the Fabric Transfer API registers its item storage lookup for blocks only.
  * This honors canPlaceItem and the container's max stack size, mirroring Slot.safeInsert, but it can't enforce slot
  * level rules the way {@link SlotStorageAccess} does.
  */
@@ -73,5 +74,10 @@ public class ContainerStorageAccess implements StorageAccess {
     @Override
     public int maxStackSize(int index, ItemStack stack) {
         return container.getMaxStackSize(stack);
+    }
+
+    @Override
+    public void markDirty() {
+        container.setChanged();
     }
 }
