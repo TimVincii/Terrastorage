@@ -19,6 +19,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.SlottedStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.entity.Entity;
@@ -29,6 +30,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -325,7 +327,7 @@ public class InventoryUtils {
      * Blocks are reached through the item storage lookup rather than the Container interface, which covers any storage
      * generic enough to support hoppers. Entities go through their container, as the lookup is for blocks only.
      * @param player The player.
-     * @return A list of the nearby storages and the point their fly out animation travels to.
+     * @return A list of the nearby storages and the point their fly out animation travels to, closest storage first.
      */
     public static List<DiscoveredStorage> getNearbyStorages(ServerPlayer player) {
         Level world = player.level();
@@ -340,34 +342,26 @@ public class InventoryUtils {
         boolean performLosCheck = ConfigManager.getInstance().getConfig().getLineOfSightCheck();
         BlockPos playerPos = player.blockPosition();
 
-        BlockPos.withinManhattan(playerPos, range, range, range).forEach(pos -> {
-            BlockState state = world.getBlockState(pos);
-            if (state.isAir() || !state.hasBlockEntity()) {
-                return;
-            }
-
-            BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity == null) {
-                return;
-            }
+        for (BlockEntity blockEntity : getBlockEntitiesInRange((ServerLevel) world, playerPos, range)) {
+            BlockPos pos = blockEntity.getBlockPos();
 
             // A null direction asks for the whole storage, ignoring side restrictions
-            Storage<ItemVariant> storage = ItemStorage.SIDED.find(world, pos, state, blockEntity, null);
+            Storage<ItemVariant> storage = ItemStorage.SIDED.find(world, pos, blockEntity.getBlockState(), blockEntity, null);
             if (!(storage instanceof SlottedStorage<ItemVariant> slotted) || slotted.getSlotCount() < 27) {
-                return;
+                continue;
             }
 
             // Kept below the checks above, since canOpen notifies the player that the container is locked
             if (blockEntity instanceof BaseContainerBlockEntity lockable && !lockable.canOpen(player)) {
-                return; // Skip locked containers
+                continue; // Skip locked containers
             }
 
             Vec3 losPoint;
             if (performLosCheck) {
                 losPoint = hasLineOfSight(player, world, pos);
-                // Return if the player doesn't have line of sight to the block entity.
+                // Skip the block entity if the player doesn't have line of sight to it.
                 if (losPoint == Vec3.ZERO) {
-                    return;
+                    continue;
                 }
             }
             else {
@@ -379,13 +373,13 @@ public class InventoryUtils {
             DiscoveredStorage existing = processedViews.get(view);
             if (existing != null) {
                 existing.addPoint(losPoint);
-                return;
+                continue;
             }
 
             DiscoveredStorage entry = new DiscoveredStorage(new SlottedStorageAccess(slotted), losPoint);
             processedViews.put(view, entry);
             discovered.add(entry);
-        });
+        }
 
         AABB searchBox = new AABB(playerPos).inflate(range);
         world.getEntities(EntityTypeTest.forClass(VehicleEntity.class), searchBox, entity ->
@@ -403,10 +397,83 @@ public class InventoryUtils {
                 }
 
                 discovered.add(new DiscoveredStorage(new ContainerStorageAccess((Container) entity), losPoint));
-            }
-        );
+            });
+
+        // Storages receive items in the order they're returned in, so they're sorted to let the closest one fill first.
+        Vec3 playerEyes = player.getEyePosition();
+        discovered.sort(Comparator.comparingDouble(storage -> storage.getCenter().distanceToSqr(playerEyes)));
 
         return discovered;
+    }
+
+    /**
+     * Collects the block entities inside a cube around a position.
+     * Each chunk is gathered from in whichever of two ways is cheaper for it, both of which find the same block
+     * entities, so the result doesn't depend on the choice.
+     * @param world The world to look in.
+     * @param center The center of the cube.
+     * @param range The distance the cube reaches on every axis.
+     * @return The block entities inside the cube.
+     */
+    private static List<BlockEntity> getBlockEntitiesInRange(ServerLevel world, BlockPos center, int range) {
+        List<BlockEntity> found = new ArrayList<>();
+
+        // The cube, in block coordinates
+        int minX = center.getX() - range;
+        int maxX = center.getX() + range;
+        int minY = center.getY() - range;
+        int maxY = center.getY() + range;
+        int minZ = center.getZ() - range;
+        int maxZ = center.getZ() + range;
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        for (int chunkX = SectionPos.blockToSectionCoord(minX); chunkX <= SectionPos.blockToSectionCoord(maxX); chunkX++) {
+            for (int chunkZ = SectionPos.blockToSectionCoord(minZ); chunkZ <= SectionPos.blockToSectionCoord(maxZ); chunkZ++) {
+                // Ask for the chunk without loading it, an unloaded chunk holds nothing the player can see anyway
+                LevelChunk chunk = world.getChunkSource().getChunkNow(chunkX, chunkZ);
+                if (chunk == null) {
+                    continue;
+                }
+
+                // The part of the cube that falls inside this chunk.
+                int fromX = Math.max(minX, SectionPos.sectionToBlockCoord(chunkX));
+                int toX = Math.min(maxX, SectionPos.sectionToBlockCoord(chunkX) + 15);
+                int fromZ = Math.max(minZ, SectionPos.sectionToBlockCoord(chunkZ));
+                int toZ = Math.min(maxZ, SectionPos.sectionToBlockCoord(chunkZ) + 15);
+                int positions = (toX - fromX + 1) * (maxY - minY + 1) * (toZ - fromZ + 1);
+
+                // A chunk's map holds the block entities of its full world height, so reading it only pays off while it
+                // holds fewer of them than this chunk has positions to probe.
+                if (chunk.getBlockEntities().size() <= positions) {
+                    for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
+                        BlockPos pos = entry.getKey();
+                        if (pos.getX() >= fromX && pos.getX() <= toX && pos.getY() >= minY && pos.getY() <= maxY &&
+                                pos.getZ() >= fromZ && pos.getZ() <= toZ) {
+                            found.add(entry.getValue());
+                        }
+                    }
+                }
+                else {
+                    // Simply iterate the cube and search for block entities
+                    for (int y = minY; y <= maxY; y++) {
+                        for (int z = fromZ; z <= toZ; z++) {
+                            for (int x = fromX; x <= toX; x++) {
+                                BlockState state = chunk.getBlockState(cursor.set(x, y, z));
+                                if (!state.isAir() && state.hasBlockEntity()) {
+                                    BlockEntity blockEntity = chunk.getBlockEntity(cursor);
+                                    if (blockEntity != null) {
+                                        found.add(blockEntity);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return found;
     }
 
     /**
