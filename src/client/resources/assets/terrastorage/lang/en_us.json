@@ -76,7 +76,7 @@
   "terrastorage.option.buttons_textures.minecraft": "Minecraft",
   "terrastorage.option.buttons_textures.terraria": "Terraria",
   "terrastorage.option.tooltip.buttons_textures": "The textures used by the inventory storage option buttons.",
-  "terrastorage.keybinding.categories.main": "Terrastorage",
+  "key.category.terrastorage.keybinding_main": "Terrastorage",
   "terrastorage.keybinding.favorite_item_modifier": "Favorite Item (+ Left Click)",
   "terrastorage.keybinding.sort_inventory_bind": "Sort Inventory (Of Hovered Slot)",
   "terrastorage.item.tooltip.favorite": "Marked as favorite",
