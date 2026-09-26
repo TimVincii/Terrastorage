@@ -178,7 +178,7 @@ action_cooldown = 10
 line_of_sight_check = true
 #==========
 #The range of the Quick Stack to Nearby Storages feature, in blocks
-#Range: 3 to 16, inclusive
+#Range: 3 to 48, inclusive
 #Default: 8
 quick_stack_range = 8
 #==========
