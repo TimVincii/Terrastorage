@@ -5,7 +5,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 /**
  * Holds the keybindings used by Terrastorage, and a method for registering them.
@@ -18,8 +17,8 @@ public class TerrastorageKeybindings {
     public static void registerKeybindings() {
         favoriteItemModifier = new KeyMapping(
             "terrastorage.keybinding.favorite_item_modifier",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_LEFT_ALT,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_LALT,
                 terrastorage_main
         );
 
@@ -27,8 +26,8 @@ public class TerrastorageKeybindings {
 
         sortInventoryBind = new KeyMapping(
                 "terrastorage.keybinding.sort_inventory_bind",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_R,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_R,
                 terrastorage_main
         );
 

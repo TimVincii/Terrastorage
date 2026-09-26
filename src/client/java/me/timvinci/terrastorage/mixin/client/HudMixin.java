@@ -55,8 +55,7 @@ public class HudMixin {
 
         // If border visibility is set to ON_PRESS, only render if the key is pressed
         if (borderVisibility == BorderVisibility.ON_PRESS &&
-            !InputConstants.isKeyDown(minecraft.getWindow(),
-                        KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
+            !InputConstants.isKeyDown(KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
             return;
         }
 

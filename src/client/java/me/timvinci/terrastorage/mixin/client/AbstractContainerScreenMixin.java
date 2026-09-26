@@ -157,11 +157,11 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
             locals = LocalCapture.CAPTURE_FAILEXCEPTION,
             cancellable = true)
     private void onMouseClickedAfterGetHoveredSlot(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
-        if (click.button() != 0 || slot == null || !slot.hasItem() || !menu.getCarried().isEmpty()) {
+        if (click.button() != 1 || slot == null || !slot.hasItem() || !menu.getCarried().isEmpty()) {
             return;
         }
 
-        boolean modifierIsPressed = InputConstants.isKeyDown(minecraft.getWindow(), KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue());
+        boolean modifierIsPressed = InputConstants.isKeyDown(KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue());
         boolean playerOwnedSlot = InventoryUtils.isPlayerSlot(slot, minecraft.player);
 
         if (modifierIsPressed && playerOwnedSlot) {
@@ -248,8 +248,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
 
         boolean needsModifierPressed = borderVisibility == BorderVisibility.ON_PRESS || borderVisibility == BorderVisibility.ON_PRESS_NON_HOTBAR;
 
-        if (!needsModifierPressed || InputConstants.isKeyDown(minecraft.getWindow(),
-                KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
+        if (!needsModifierPressed || InputConstants.isKeyDown(KeyMappingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
             graphics.blit(RenderPipelines.GUI_TEXTURED, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
         }
     }

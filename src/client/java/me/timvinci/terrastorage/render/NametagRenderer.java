@@ -66,7 +66,7 @@ public class NametagRenderer {
                 renderPos.z - blockPos.getZ()
         );
 
-        poseStack.mulPose(cameraRenderState.orientation);
+        poseStack.rotate(cameraRenderState.orientation);
         poseStack.scale(0.025F, -0.025F, 0.025F);
         float x = (float)(-font.width(customName) / 2);
 
