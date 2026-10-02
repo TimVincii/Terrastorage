@@ -18,11 +18,12 @@ public class StackProcessor {
     }
 
     public boolean tryProcess(ItemStack stack) {
-        if (shouldProcess.test(stack)) {
-            process.accept(stack);
-            return true;
+        if (!shouldProcess.test(stack)) {
+            return false;
         }
 
-        return false;
+        int countBefore = stack.getCount();
+        process.accept(stack);
+        return stack.getCount() < countBefore;
     }
 }
