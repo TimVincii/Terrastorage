@@ -228,13 +228,15 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      * Injects into {@code AbstractContainerScreen#extractSlot} immediately before {@link GuiGraphicsExtractor#itemDecorations}
      * is called.
      * Draws the favorite border on slots that hold a favorite item stack.
+     * The arguments are captured with {@link Local} so Sinytra Connector can move this injection into NeoForge's
+     * {@code renderSlotContents}.
      */
     @Inject(method = "extractSlot",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;itemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
                     shift = At.Shift.BEFORE))
-    private void onExtractSlotBeforeItemDecorations(GuiGraphicsExtractor graphics, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+    private void onExtractSlotBeforeItemDecorations(CallbackInfo ci, @Local(argsOnly = true) GuiGraphicsExtractor graphics, @Local(argsOnly = true) Slot slot) {
         if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(slot.getItem())) {
             return;
         }
