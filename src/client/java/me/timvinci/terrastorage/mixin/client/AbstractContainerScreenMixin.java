@@ -1,5 +1,6 @@
 package me.timvinci.terrastorage.mixin.client;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import me.timvinci.terrastorage.api.ItemFavoritingUtils;
 import me.timvinci.terrastorage.config.ClientConfigManager;
 import me.timvinci.terrastorage.config.ServerConfigHolder;
@@ -34,7 +35,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 /**
  * A mixin of the AbstractContainerScreen class, adds the storage option buttons to storage screens, and provides item favoriting
@@ -154,9 +154,8 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
                     value = "INVOKE_ASSIGN",
                     target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;getHoveredSlot(DD)Lnet/minecraft/world/inventory/Slot;"
             ),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION,
             cancellable = true)
-    private void onMouseClickedAfterGetHoveredSlot(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+    private void onMouseClickedAfterGetHoveredSlot(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir, @Local Slot slot) {
         if (click.button() != 1 || slot == null || !slot.hasItem() || !menu.getCarried().isEmpty()) {
             return;
         }
@@ -187,8 +186,8 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      * keybind to happen before the sorting.
      * Provides the ability to sort inventories through the sort inventory keybind if it's a mouse keybind.
      */
-    @Inject(method = "mouseClicked", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void onMouseClickedTail(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+    @Inject(method = "mouseClicked", at = @At("TAIL"))
+    private void onMouseClickedTail(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir, @Local Slot slot) {
         if (slot == null || !TerrastorageKeybindings.sortInventoryBind.matchesMouse(click)) {
             return;
         }
