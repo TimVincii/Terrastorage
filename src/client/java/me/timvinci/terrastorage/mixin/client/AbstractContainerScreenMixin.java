@@ -235,10 +235,9 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
-                    shift = At.Shift.BEFORE),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void onRenderSlotBeforeRenderItemDecorations(GuiGraphics context, Slot slot, int mouseX, int mouseY, CallbackInfo ci, int i, int j, ItemStack itemStack, boolean bl, boolean bl2, ItemStack itemStack2, String string) {
-        if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(itemStack)) {
+                    shift = At.Shift.BEFORE))
+    private void onRenderSlotBeforeRenderItemDecorations(GuiGraphics context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+        if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(slot.getItem())) {
             return;
         }
 
@@ -251,7 +250,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
 
         if (!needsModifierPressed || InputConstants.isKeyDown(minecraft.getWindow(),
                 KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
-            context.blit(RenderPipelines.GUI_TEXTURED, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
+            context.blit(RenderPipelines.GUI_TEXTURED, favoriteBorder, slot.x, slot.y, 0, 0, 16, 16, 16, 16);
         }
     }
 }
