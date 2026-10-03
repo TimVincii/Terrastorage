@@ -230,10 +230,9 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;IILjava/lang/String;)V",
-                    shift = At.Shift.BEFORE),
-            locals = LocalCapture.CAPTURE_FAILEXCEPTION)
-    private void onRenderSlotBeforeRenderItemDecorations(GuiGraphics context, Slot slot, CallbackInfo ci, int i, int j, ItemStack itemStack) {
-        if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(itemStack)) {
+                    shift = At.Shift.BEFORE))
+    private void onRenderSlotBeforeRenderItemDecorations(GuiGraphics context, Slot slot, CallbackInfo ci) {
+        if (!InventoryUtils.isPlayerSlot(slot, minecraft.player) || !ItemFavoritingUtils.isFavorite(slot.getItem())) {
             return;
         }
 
@@ -246,7 +245,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
 
         if (!needsModifierPressed || InputConstants.isKeyDown(minecraft.getWindow().getWindow(),
                 KeyBindingHelper.getBoundKeyOf(TerrastorageKeybindings.favoriteItemModifier).getValue())) {
-            context.blit(RenderType::guiTextured, favoriteBorder, i, j, 0, 0, 16, 16, 16, 16);
+            context.blit(RenderType::guiTextured, favoriteBorder, slot.x, slot.y, 0, 0, 16, 16, 16, 16);
         }
     }
 }
