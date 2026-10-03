@@ -157,10 +157,10 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
      */
     @Inject(method = "mouseClicked",
             at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/Util;getMillis()J"),
+                    value = "INVOKE_ASSIGN",
+                    target = "Lnet/minecraft/client/gui/screens/inventory/AbstractContainerScreen;findSlot(DD)Lnet/minecraft/world/inventory/Slot;"),
             locals = LocalCapture.CAPTURE_FAILEXCEPTION, cancellable = true)
-    private void onMouseClickedAfterGetMillis(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
+    private void onMouseClickedAfterFindSlot(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir, boolean bl, Slot slot) {
         if (button != 0 || slot == null || !slot.hasItem() || !menu.getCarried().isEmpty()) {
             return;
         }
